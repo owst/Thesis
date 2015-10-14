@@ -1,0 +1,19 @@
+\penrose's query ports are the same as read arcs in Petri nets, originally
+introduced by Christensen~\cite{Christensen1993}. Nets with read arcs (also
+known as contextual nets) allow the modelling of concurrent checking (but not
+consuming) of a token in a particular place, a natural operation in many
+models. While a read-write loop on a place is similar to a read arc (and gives
+the same reachable markings~\cite{Baldan2008}), several such loops cannot be
+fired concurrently, since they all consume a token from the same place.
+
+{Vogler et al.}~\cite{Vogler1998} give an algorithm for generating the unfolding
+of(certain restricted classes of) contextual nets, which was later generalised
+by {Baldan et al.}~\cite{Baldan2008}. A practical reachability and deadlock
+checking algorithm for contextual nets was introduced by {Rodriguez and
+Schwoon}~\cite{Rodriguez2012} that leverages the high performance of SAT
+solvers for efficiency.
+
+Very recent work by {Rodriguez et al.}~\cite{Rodriguez2013} introduced
+Contextual Merged Processes, which are merged processes applied to contextual
+nets, giving more compact representation compared to merged processes or
+contextual nets alone.

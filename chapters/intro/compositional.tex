@@ -1,0 +1,88 @@
+% What is compositional model checking?
+Compositional approaches to model checking decompose monolithic systems into
+smaller components, which are checked, giving \emph{local} results. These local
+results are combined to form a global result for the original monolithic
+system. Such approaches are known as \emph{divide and conquer} --- the idea
+being that the smaller components are easier to check, and local results carry
+less information than the local component. Thus, by decomposing (checking, and
+composing local results), the amount of information that must be processed is
+(vastly) reduced.
+
+% Examples in the literature
+Clarke et al.~\cite{Clarke1989} describe a compositional approach to model
+checking systems with temporal logic specifications. They observe that the main
+difficulty is the preservation of local properties at a global level, and
+introduce a framework using \emph{interface processes} to model the
+environment, when checking individual components, to ensure that components
+only exhibit globally-valid behaviours.
+
+Compositional approaches using process algebra techniques date back at least to
+Milner's seminal CCS~\cite{Milner1980}. Yeh and Young~\cite{Yeh1991} outline a
+reachability analysis that allows the simplification of ``intermediate''
+components, that helps alleviate the state explosion problem, by replacing
+components with semantically-equivalent, but smaller components. Similarly,
+Valmari~\cite{Valmari1993,Valmari1996} describes compositional state space
+generation, a divide and conquer approach to global state space generation that
+employs minimisation of local state spaces to avoid state explosion. A CSP
+model is used, modelling synchronous communication of labelled Petri nets;
+indeed, this method of decomposition restricts the possible minimisations,
+since the global synchronisations must be preserved.  Furthermore, Valmari does
+not use any form of memoisation to prevent repeated work.  Later,
+Valmari~\cite{Valmari1994} presented a similar decomposition technique, using
+shared ``boundary'' places, instead of shared transition labels. This allowed
+for more natural LTSs: transitions were labelled with the effect on boundary
+places rather than net transition names. A similar approach was taken by
+Kindler~\cite{Kindler1997}, who introduced Petri net components, with
+distinguished input/output places that are fused to form larger components.
+Kindler gave a fully-abstract semantics, whereby the semantics of
+components under composition agrees with that of closed components.  Very
+recent work by {Baldan et al.}~\cite{Baldan2015} has elucidated compositional
+encodings between (a)synchronous process-calculi and a variant of Petri nets,
+with distinguished places/transitions used for synchronisation.  Indeed, such
+an encoding gives ``technology transfer'': techniques for model
+checking properties in process-calculi can inform those in Nets and vice-versa.
+
+An important consideration for compositional model checking approaches was
+noted by {Graf and Steffan}~\cite{Graf1990} and {Cheung and
+Kramer}~\cite{Cheung1993}: local minimisation can be inefficient if it does not
+explicitly exclude behaviours that will never be performed by the context
+of a component. Both use interface constraints similar to the interface
+processes of {Clarke et al.}~\cite{Clarke1989} to prevent spurious behaviours
+of components, with {Cheung and Kramer} giving an algorithm for interface
+generation without requiring an LTS for the context.  {Krimm and
+Mounier}~\cite{Krimm1997} employed these ideas for compositional statespace
+generation for LOTOS programs, including large, complex examples.
+
+In the area of Petri nets, {Lee et al.}~\cite{Lee2000}, and
+Rakow~\cite{Rakow2008} employ \emph{slicing} to decompose a Petri net into
+concurrent units, in order to check reachability on a per-slice basis, thus
+avoiding some of the inherent state explosion due to interleavings. Whereas
+{Lee et al.} and Rakow use a \emph{static} slicing (i.e. without considering
+the markings of a net, just its structure), {Llorens et al.}~\cite{Llorens2008}
+propose a \emph{dynamic} approach, which takes account of an initial marking of
+the net. However, slices are not \emph{true decompositions} (i.e. disjoint:
+transitions (and places) of the original net should appear in only one slice),
+since they necessarily overlap, with transitions being shared among (many)
+slices. Furthermore, if the marking to be checked involves a large proportion
+of places in the net, little benefit will be gained by using slicing.
+
+
+Christensen~\cite{Christensen2000} uses a compositional approach to generate
+the statespace of Petri net components that synchronise via shared places or
+transitions. By generating a \emph{synchronisation graph} capturing component
+communications, in addition to \emph{local} reachability graphs of components,
+the full statespace can be implicitly represented, without generating all
+concurrent transition interleavings. A similar approach was described by
+{Notomi and Murata}~\cite{Notomi1994}, however, whereas at each step of
+Christensen's algorithm the local reachability graphs are only unfolded as far
+as the next \emph{global} synchronisation, {Notomi and Murata}'s approach
+generates full local reachability graphs, before reducing w.r.t.
+synchronisations and combining them. Thus {Notomi and Murata}'s approach may
+explore local reachability graph states that are never explored in the global
+statespace, due to non-synchronisation.  Furthermore, while Notomi and Murata
+describe reduction by merging states that are equivalent w.r.t.
+synchronisations, they do not give an algorithm for determining the set of such
+states. A similar reduction strategy is employed by {Bucholz and
+Kemper}~\cite{Buchholz2002}, who abstract over \emph{autonomous regions} (subnets
+delimited by synchronisations), simplifying the representation of
+local reachability graphs.

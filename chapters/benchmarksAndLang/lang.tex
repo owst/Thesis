@@ -1,0 +1,668 @@
+\newcommand{\mkRuleName}[3]{%
+\expandafter\def\csname #1#2RuleName\endcsname{#3\capitalisewords{#1}}%
+}
+
+\newcommand{\mkRuleNames}[1]{%
+    \mkRuleName{#1}{Ty}{T}
+    \mkRuleName{#1}{Ev}{E}
+}
+
+\mkRuleNames{var}
+\mkRuleNames{bind}
+\mkRuleNames{lam}
+\mkRuleNames{app}
+\mkRuleNames{seq}
+\mkRuleNames{ten}
+\mkRuleNames{nat}
+\mkRuleNames{net}
+\mkRuleNames{fold}
+
+\newcommand{\inferenceRule}[1]{\RefTirName{#1}}
+
+In this section we give a formal description of the language \DSL{} for
+specifying net compositions. In particular, we show how \DSL{} expressions are
+evaluated to nets, and how the type system ensures that only valid expressions
+are processed, via the slogan \emph{well-typed programs are well-composed}
+(\thmref{thm:typeSafety}), in the style of Milner~\cite{Milner1978}.
+
+\DSL{} is a monomorphic, call-by-value functional language; it follows the
+tradition in classic functional programming languages, such as ML, of extending
+the syntax of the lambda calculus with convenient programming constructs. In
+particular, we add natural numbers, net literals/composition, syntax for
+variable binding and recursion over natural numbers.
+
+The abstract syntax of \DSL{} is given in~\figref{fig:syntax}: $\varExpr$ is
+drawn from a countable set of variables, $\netExpr$ is a net literal (defined
+using a low-level syntax that we describe in \secref{sec:netliteralspec}).
+Natural number literals are written as standard: $0,1,\dots$, but semantically
+are in Peano form: $\natExpr$ is either $0$ or $\succNat{\natExpr'}$ for some
+natural literal $\natExpr'$.  Function application is indicated by simple
+juxtaposition: $\appExpr{\expr_1}{\expr_2}$. Following mathematical convention,
+`$\comp$' and `$\tensor$' associate to the left, with `$\tensor$' binding
+tighter than `$\comp$'.
+
+\begin{figure}[ht]
+\begin{align*}
+    \expr &=    \varExpr
+                    & (\text{variable}) \\
+          &\mid \natExpr
+                    & (\text{natural number literal}) \\
+          &\mid \netExpr
+                    & (\text{net literal}) \\
+          &\mid \bindExpr{\varExpr}{\expr_1}{\expr_2}
+                    & (\text{variable binding})\\
+          &\mid \lamExpr{\varExpr}{\type}{\expr}
+                    & (\text{function abstraction})\\
+          &\mid \appExpr{\expr_1}{\expr_2}
+                    & (\text{function application})\\
+          &\mid \compExpr{\expr_1}{\expr_2}
+                    & (\text{sequential net composition})\\
+          &\mid \tensExpr{\expr_1}{\expr_2}
+                    & (\text{tensor net composition})\\
+          &\mid \natRecursionExpr{\expr_n}{\expr_z}{\expr_s}
+                    & (\text{recursion over natural numbers})\\
+\end{align*}
+\caption{Syntax of \DSL{}\label{fig:syntax}}
+\end{figure}
+
+Note that the sequence construction, $\sequenceExpr{\expr_n}{\expr_1}$ for an
+expression $\expr_n$, discussed
+in~\secref{sec:motivation-lang}, does not appear in the formal syntax, since it
+is a syntactic sugar for a fold:
+\[
+    \sequenceExpr{\expr_n}{\expr_1} \defeq
+\natRecursionExpr
+    {\parens{\expr_n - 1}}
+    {\expr_1}
+    {\parens{\lamExpr{\varExpr}{\netType{\aN}{\aN}}{\compExpr{\expr_1}{\varExpr}}}}
+\] where $\succNat{\natExpr} - 1 \defeq \natExpr$.
+Notice however, that $\sequenceExpr{0}{\expr_1}$ cannot appear in any
+expression: $0 - 1$ is undefined\footnote{An alternative, would be to consider
+$n^0$ as $\idC{\aN}$, assuming $n \withNetType{\aN}{\aN}$}. We discuss the
+importance of the type annotation, $\netType{\aN}{\aN}$ on the lambda
+expression in \secref{sec:typechecking}, but briefly, for the sequence to be
+correct, $\expr_1$ must be an expression representing a net with $\aN$ boundary
+ports on each side.
+
+\subsection{Operational Semantics}\label{sec:operationalSemantics}
+
+We define the big-step operational semantics of \DSL{} in \figref{fig:opsem},
+using an explicit variable binding environment $\opEnv$, which we discuss
+shortly. The language is call-by-value, and the evaluation rules reduce \DSL{}
+expressions to values, which have three forms:
+\begin{inlinelist}
+    \item (Composite) nets,
+    \item Natural numbers, and
+    \item Function closures (consisting of an environment and lambda
+        abstraction)
+\end{inlinelist}.  A variable binding environment, $\opEnv$, is simply a map
+from variables, $\varExpr$, to values, $\val$, as shown in \figref{fig:values}.
+
+\begin{figure}[ht]
+\begin{align*}
+    \val &= \netExpr
+                   & (\text{Net Literal}) \\
+         &\mid \natExpr
+                   & (\text{Natural Number Literal}) \\
+         &\mid \closure{\opEnv}{\lamExpr{\varExpr}{\type}{\expr}}
+                   & (\text{Function Abstraction})\\
+\\
+    \opEnv &= \emptyEnv
+               & (\text{Empty Environment}) \\
+           &\mid \extendEnv{\opEnv}{\varExpr}{\val}
+               & (\text{Environment Extension})
+\end{align*}
+\caption{\DSL{} Values and Operational Environments\label{fig:values}}
+\end{figure}
+
+The evaluation rules are of the form:
+\(
+    \opEnv \entails \reducesTo{\expr}{\val}
+\), meaning that in environment $\opEnv$, expression $\expr$ reduces to value
+$\val$. Evaluation intuitively proceeds as follows: variables are simply looked
+up in the environment, lambdas evaluate to a closure over the current
+environment, and numeric/net literals evaluate to themselves. Bindings evaluate
+their body in an extended environment, similarly for applications. Synchronous
+and tensor composition evaluate both expressions to net literals, before
+applying the appropriate net operation. Structural recursion over the natural
+numbers (commonly referred to as a \emph{fold}, e.g. see~\cite{Hinze2005}) is
+implemented via repeated function application of $\expr_s$ to $\expr_z$.
+
+\begin{figure}[ht]
+    \newcommand{\opRule}[2]{\opEnv \entails \reducesTo{#1}{#2}}
+    \newcommand{\opExtendRule}[5]{\extendEnv{#1}{#2}{#3} \entails \reducesTo{#4}{#5}}
+\begin{gather*}
+    \ruleitem{(\varEvRuleName)}{}{\placeholder}{\opRule{\varExpr}{\opEnv(\varExpr)}}
+    \hspace{1cm}
+    \ruleitem{(\lamEvRuleName)}{}{\placeholder}
+        {\opRule{\lamExpr{\varExpr}{\type}{\expr}}
+                {\closure{\opEnv}{\lamExpr{\varExpr}{\type}{\expr}}}}
+    \\[\inferrulespace]
+    \ruleitem{(\bindEvRuleName)}{}
+        {\opRule{\expr_1}{\val_1} \\
+         \opExtendRule{\opEnv}{\varExpr}{\val_1}{\expr_2}{\val_2}}
+         {\opRule{\bindExpr{\varExpr}{\expr_1}{\expr_2}}{\val_2}}
+    \\[\inferrulespace]
+    \ruleitem{(\appEvRuleName)}{}
+    {\opRule{\expr_1}{\closure{\opEnv'}{\lamExpr{\varExpr}{\type}{\expr_3}}} \\
+         \opRule{\expr_2}{\val_2} \\
+         \opExtendRule{\opEnv'}{\varExpr}{\val_2}{\expr_3}{\val_3}}
+         {\opRule{\appExpr{\expr_1}{\expr_2}}{\val_3}}
+    \\[\inferrulespace]
+    \ruleitem{(\natEvRuleName)}{}{\placeholder}{\opRule{\natExpr}{\natExpr}}
+    \hspace{1cm}
+    \ruleitem{(\netEvRuleName)}{}{\placeholder}{\opRule{\netExpr}{\netExpr}}
+    \\[\inferrulespace]
+    \ruleitem{(\seqEvRuleName)}{}
+        {\opRule{\expr_1}{\netExpr_1} \\
+         \opRule{\expr_2}{\netExpr_2} }
+         {\opRule{\compExpr{\expr_1}{\expr_2}}{\netExpr_1 \comp \netExpr_2}}
+    \\[\inferrulespace]
+    \ruleitem{(\tenEvRuleName)}{}
+        {\opRule{\expr_1}{\netExpr_1} \\
+         \opRule{\expr_2}{\netExpr_2} }
+         {\opRule{\tensExpr{\expr_1}{\expr_2}}{\netExpr_1 \tensor \netExpr_2}}
+    \\[\inferrulespace]
+    \ruleitem{(\foldEvRuleName{}z)}{}
+    {\opRule{\expr_n}{0} \\ \opRule{\expr_z}{\val}}
+    {\opRule{\natRecursionExpr{\expr_n}{\expr_z}{\expr_s}}{\val}}
+    \\[\inferrulespace]
+    \ruleitem{(\foldEvRuleName{}s)}{}
+        {\opRule{\expr_n}{\succNat{\natExpr}} \\
+         \opRule
+            {\appExpr{\expr_s}{(\natRecursionExpr{\natExpr}{\expr_z}{\expr_s}})}
+            {\val}}
+        {\opRule{\natRecursionExpr{\expr_n}{\expr_z}{\expr_s}}{\val}}
+\end{gather*}
+\caption{Operational Semantics of \DSL{}}
+\label{fig:opsem}
+\end{figure}
+
+For example, considering the \DSL{} expression given at the end of
+\secref{sec:motivation-lang}; after expanding syntactic sugar, the following
+example reduction holds.
+
+\begin{example}
+\setlength{\abovedisplayskip}{0pt}
+\setlength{\belowdisplayskip}{0pt}
+For expression
+\begin{flalign*}
+    \expr &=
+\begin{aligned}[t]
+    &\bindExpr
+        {\varName{makeRing}}
+        {\lamExpr{\varExpr}{\netType{1}{1}}
+                 {\compExpr{\etaC{}}
+                           {\compExpr{\parens{\tensExpr{\varExpr}{\idC{}}}}
+                                     {\epsilonC{}}}}}
+        {}\\
+    &\bindExpr
+        {\varName{procs}}
+        {\natRecursionExpr{2}{\workerC}{\parens{\lamExpr{\varExpr}{\netType{1}{1}}{\compExpr{\workerC}{\varExpr}}}}}
+        {}\\
+    &\appExpr{\varName{makeRing}}{\parens{\compExpr{\injectorC}{\varName{procs}}}}
+        &
+\end{aligned}\\
+\text{ and value }
+\\
+    \val &= \etaC{} \comp \parens{\injectorC{} \comp \parens{\workerC
+    \comp \parens{\workerC \comp \workerC}}} \tensor \idC{} \comp \epsilonC{}
+\\
+\text{ we have that }
+\\
+\emptyset &\entails \reducesTo{\expr}{\val}
+\end{flalign*}
+\begin{proof}
+    Direct, by the definition of the evaluation rules.
+\end{proof}
+\end{example}
+
+\subsection{Static Type Checking} \label{sec:typechecking}
+
+As mentioned in \secref{sec:motivation-lang}, \emph{run-time} synchronous composition
+errors are encountered when attempting to synchronously compose nets with
+differently-sized boundaries. Such errors can be ruled out \emph{statically},
+that is, before evaluation is performed, by using a \emph{type system}.
+Such a type system ascribes a \emph{type} to each expression, with
+a type being a static approximation of the dynamic (after evaluation, at
+run-time) form of the expression~\cite{Cousot1977}. Indeed, other run-time
+errors can be ruled out by using a static type system; such errors include
+treating a net as a function or trying to tensor two lambda expressions.
+
+In this subsection, we introduce a simple, \emph{monomorphic} type
+system, giving rules for ascribing types to expressions, before proving a
+safety property: if a expression can be typed, it cannot fail to evaluate to a
+value with the same type.
+
+\subsubsection{Monomorphic Type System}
+
+A monomorphic type system ascribes a \emph{single} type to any particular
+expression. Our monomorphic type system uses only two types, as shown in
+\figref{fig:mono-types}.  As we will prove, these types can be used to rule out
+\emph{all} possible run-time failures for \DSL{} expressions. The novel feature
+is that component boundary sizes are tracked, achieved by parameterising the
+net base type: $\netType{l}{r}$ by $l, r\in \N$, which describe the left and
+right boundary sizes respectively. Indeed, the net component type,
+$\netType{\aN}{\bN}$, will be ascribed to any expression, that, when evaluated,
+results in a (composite) net with boundaries $\aN$ and $\bN$, for a particular
+choice of $\aN$ and $\bN$. Thus the type $\netType{\aN}{\bN}$ approximates the
+form of the resulting expression in that it only records the boundary sizes.
+
+The deductive rules for assigning types to \DSL{} expressions are shown in
+\figref{fig:monomorphic-typing}. As is standard (e.g.~\cite{Pierce2002}) for a
+monomorphic language, $\tyEnv$ is a sequence of bindings from variables to
+types (shown in \figref{fig:mono-types}), which is extended in the
+\inferenceRule{\bindTyRuleName} and \inferenceRule{\lamTyRuleName} rules and
+inspected in the \inferenceRule{\varTyRuleName} rule.
+
+It is important to note is that lambda expressions parameters are annotated
+with their type. This is necessary to \emph{infer} the type of arbitrary
+expressions; inference involves reading type rules ``in reverse'', from
+conclusion to premise, and regarding $\tyEnv$ and $\expr$ as \emph{inputs}, and
+$\type$ as an output.  Indeed, in \inferenceRule{\lamTyRuleName}, we require a
+single \emph{monomorphic} type for $\varExpr$, with which to extend the type
+environment; without the annotation, we have no such type. For such a reverse
+reading to be correct, the rules must be \emph{syntax-directed}: each syntactic
+form of the expression language corresponds to exactly one type rule.
+
+\begin{figure}[ht]
+\begin{align*}
+    \type &= \natType
+              & (\text{Natural Number}) \\
+          &\mid \netType{\aN}{\bN}\;\;(\aN,\bN \in \N)
+              & (\text{Net Component}) \\
+          &\mid \arrType{\type_1}{\type_2}
+              & (\text{Function Type}) \\
+    \\
+    \tyEnv &= \emptyEnv
+              & (\text{Empty Environment}) \\
+           &\mid \extendEnv{\tyEnv}{\varExpr}{\type}
+              & (\text{Environment Extension})
+\end{align*}
+\caption{Monomorphic Types and Type Environments of \DSL{}}
+\label{fig:mono-types}
+\end{figure}
+
+\begin{figure}[ht]
+\begin{gather*}
+    \ruleitem{(\varTyRuleName)}{}{\tyEnv(\varExpr) = \type}{\tyRule{\varExpr}{\type}}
+    \hspace{1cm}
+    \ruleitem{(\bindTyRuleName)}{}
+        {\tyRule{\expr_1}{\type_1} \\
+         \tyExtendRule{\varExpr}{\type_1}{\expr_2}{\type_2}}
+        {\tyRule{\bindExpr{\varExpr}{\expr_1}{\expr_2}}{\type_2}}
+    \\[\inferrulespace]
+    \ruleitem{(\lamTyRuleName)}{}
+        {\tyExtendRule{\varExpr}{\type_1}{\expr}{\type_2}}
+        {\tyRule{\lamExpr{\varExpr}{\type_1}{\expr}}{\arrType{\type_1}{\type_2}}}
+    \hspace{1cm}
+    \ruleitem{(\appTyRuleName)}{}
+        {\tyRule{\expr_1}{\arrType{\type_1}{\type_2}} \\
+         \tyRule{\expr_2}{\type_1}}
+        {\tyRule{\appExpr{\expr_1}{\expr_2}}{\type_2}}
+    \\[\inferrulespace]
+    \ruleitem{(\natTyRuleName)}{}{\placeholder}{\tyRule{\natExpr}{\natType}}
+    \hspace{1cm}
+    \ruleitem{(\netTyRuleName)}{}{\netExpr \withNetType{\aN}{\bN}}{\tyRule{\netExpr}{\netType{\aN}{\bN}}}
+    \\[\inferrulespace]
+    \ruleitem{(\tenTyRuleName)}{}{\tyRule{\expr_1}{\netType{\aN}{\bN}} \\
+                        \tyRule{\expr_2}{\netType{\cN}{\dN}}}
+                       {\tyRule{\tensExpr{\expr_1}{\expr_2}}{\netType{\aN+\cN}{\bN+\dN}}}
+    \\[\inferrulespace]
+    \ruleitem{(\seqTyRuleName)}{}{\tyRule{\expr_1}{\netType{\aN}{\bN}} \\
+                        \tyRule{\expr_2}{\netType{\cN}{\dN}} \\ \bN = \cN}
+                       {\tyRule{\compExpr{\expr_1}{\expr_2}}{\netType{\aN}{\dN}}}
+    \\[\inferrulespace]
+    \ruleitem{(\foldTyRuleName)}{}
+        {\tyRule{\expr_n}{\natType} \\
+         \tyRule{\expr_z}{\type} \\
+         \tyRule{\expr_s}{\arrType{\type}{\type}}}
+        {\tyRule{\natRecursionExpr{\expr_n}{\expr_z}{\expr_s}}{\type}}
+\end{gather*}
+\caption{Syntax-directed Monomorphic Typing Rules for \DSL{}}
+\label{fig:monomorphic-typing}
+\end{figure}
+
+We say an expression $\expr$ is \emph{well-typed}, if there exists a type
+environment binding all free variables appearing in $\expr$, $\tyEnv$, and a
+type, $\type$, such that $\tyEnv \entails \hasType{\expr}{\type}$.
+
+As an example use of the typing rules, consider composing the lambda expression
+that forms a loop from a sequence of workers, introduced in
+\secref{sec:motivation-lang}, reproduced here:
+\[
+    \lamExpr{\varExpr}{\netType{1}{1}}
+        {\compExpr{\etaC{}}
+                  {\compExpr{\parens{\tensExpr{\varExpr}{\idC{}}}}
+                            {\epsilonC{}}}}
+\]
+We can confirm that this expression is well-composed (i.e.\ that it contains no
+invalid compositions, a consequence of being well-typed) with the proof
+illustrated in \figref{fig:typingproof} (using $\eta,i,\epsilon$ in place of
+$\component{eta},\component{id},\component{epsilon}$).
+\begin{figure}[ht]
+    \centering
+\newcommand{\theTyEnv}{\extendEnv{\emptyEnv}{\varExpr}{\netType{1}{1}}}
+\[
+\inferrule*
+    {
+    \inferrule*
+        {
+            \inferrule*
+                {\eta \withNetType{0}{2}}
+                {
+                    \tyEnv
+                    \entails
+                    \hasType{\eta}{\netType{0}{2}}
+                }
+            \\
+            \inferrule*
+                {
+                    \inferrule*
+                        {
+                        \inferrule*
+                            {\tyEnv(\varExpr) = \netType{1}{1}}
+                            {
+                                \tyEnv
+                                \entails
+                                \hasType{\varExpr}{\netType{1}{1}}
+                            }
+                        \\
+                        \inferrule*
+                            {i \withNetType{1}{1}}
+                            {
+                                \tyEnv
+                                \entails
+                                \hasType{i}{\netType{1}{1}}
+                            }
+                        }
+                        {
+                            \tyEnv
+                            \entails
+                            \hasType{\tensExpr{\varExpr}{i}}
+                                {\netType{2}{2}}
+                        }
+                    \\
+                    \inferrule*
+                        {\epsilon \withNetType{2}{0}}
+                        {
+                            \tyEnv
+                            \entails
+                            \hasType{\epsilon}{\netType{2}{0}}
+                        }
+                }
+                {
+                    \tyEnv
+                    \entails
+                    \hasType{\compExpr
+                                {\parens{\tensExpr{\varExpr}{i}}}
+                                {\epsilon}}
+                            {\netType{2}{0}}
+                }
+        }
+        {\theTyEnv
+         \entails
+ \hasType{\compExpr{\eta}{\compExpr{\parens{\tensExpr{\varExpr}{i}}}{\epsilon}}}{\netType{0}{0}}}
+    }
+    {
+        \emptyEnv
+        \entails
+        \hasType{\lamExpr{\varExpr}{\netType{1}{1}}{\compExpr{\eta}{\compExpr{\parens{\tensExpr{\varExpr}{i}}}{\epsilon}}}}{\arrType{\netType{1}{1}}{\netType{0}{0}}}
+    }
+\]
+For compact presentation, let $\tyEnv \defeq \theTyEnv$.
+\caption{Example typing proof}
+\label{fig:typingproof}
+\end{figure}
+
+Values can be ascribed types; we write $\dentails \hasType{\val}{\type}$ if
+value $\val$ has type $\type$. Furthermore, an operational environment (mapping
+lambda-bound-variables to values), $\opEnv$, respects a type environment,
+$\tyEnv$, iff the domains of $\tyEnv$ and $\opEnv$ are equal and $\opEnv$
+point-wise respects $\tyEnv$, as per \figref{fig:typingvalues}.
+
+\begin{figure}[ht]
+    \begin{gather*}
+        \ruleitem{}{}
+            {\placeholder}
+            {\dentails \hasType{\emptyEnv}{\emptyEnv}}
+            \hspace{1cm}
+        \ruleitem{}{}
+            {\dentails \hasType{\opEnv}{\tyEnv} \\ \dentails \hasType{\val}{\type}}
+            {\dentails \hasType{\extendEnv{\opEnv}{\varExpr}{\val}}
+                              {\extendEnv{\tyEnv}{\varExpr}{\type}}}
+        \\[\inferrulespace]
+        \ruleitem{}{}
+            {\placeholder}
+            {\dentails \hasType{\natExpr}{\natType}}
+        \hspace{1cm}
+        \ruleitem{}{}
+            {\netExpr \withNetType{\aN}{\bN}}
+            {\dentails \hasType{\netExpr}{\netType{\aN}{\bN}}}
+        \hspace{1cm}
+        \ruleitem{}{}
+            {\dentails \hasType{\opEnv}{\tyEnv} \\
+             \tyExtendRule{\varExpr}{\type_1}{\expr}{\type_2}}
+            {\dentails \hasType{\closure{\opEnv}
+                                       {\lamExpr{\varExpr}{\type_1}{\expr}}}
+                              {\arrType{\type_1}{\type_2}}}
+    \end{gather*}
+    \caption{Typing of Values and Operational Environments}
+    \label{fig:typingvalues}
+\end{figure}
+
+Now we can state our formal notion of well-typed expressions can always be
+evaluated to well-composed values:
+
+\begin{theorem}\label{thm:typeSafety}
+    For a well-typed expression, $\tyEnv \entails \hasType{\expr}{\type}$, and
+    operational environment $\opEnv$ such that $\dentails
+    \hasType{\opEnv}{\tyEnv}$, we have:
+    \[
+        \opEnv \entails \reducesTo{\expr}{\val}
+        \text{ with } \dentails \hasType{\val}{\type}
+    \]
+\end{theorem}
+\begin{proof}
+    Induction over the structure of the proof of $\tyEnv \entails
+    \hasType{\expr}{\type}$, uniquely determined by the structure of $\expr$.
+    We only state the non-standard cases here:
+    \begin{itemize}
+        \item In the base cases of $\expr$ being a net or natural number
+            literal the result is trivial.
+        \item In the case of a tensor composition,
+            $\tensExpr{\expr_1}{\expr_2}$, we apply the \IH{} to $\expr_1$ and
+            $\expr_2$, obtaining values $\val_1$ and $\val_2$ such that
+            $\dentails \hasType{\val_1}{\netType{\aN}{\bN}}$ and
+            $\dentails \hasType{\val_2}{\netType{\cN}{\dN}}$ for some $\aN,
+            \bN, \cN$ and $\dN$. Now, by the inversion of the syntax-directed
+            typing rules, $\val_1$ and $\val_2$ must be net
+            literals, $\netExpr_1 \withNetType{\aN}{\bN}$ and $\netExpr_2
+            \withNetType{\cN}{\dN}$. Thus the premises for
+            \inferenceRule{\tenEvRuleName} are satisfied and we have
+            $\reducesTo{\tensExpr{\expr_1}{\expr_2}}{\netExpr_1 \tensor
+            \netExpr_2}$, where $\netExpr_1 \tensor \netExpr_2 \withNetType{\aN
+            + \cN}{\bN + \dN}$, giving $\dentails \hasType{\netExpr_1 \tensor
+            \netExpr_2}{\netType{\aN + \cN}{\bN + \dN}}$, as required.
+        \item The case of synchronous composition is similar:
+            we apply the \IH{} to $\expr_1$ and
+            $\expr_2$, obtaining values $\val_1$ and $\val_2$ such that
+            $\dentails \hasType{\val_1}{\netType{\aN}{\bN}}$ and
+            $\dentails \hasType{\val_2}{\netType{\cN}{\dN}}$ for some $\aN,
+            \bN, \cN$ and $\dN$. Observe that the conclusion of
+            $\inferenceRule{\seqEvRuleName}$ is only defined when $\bN = \cN$,
+            which is ensured by the final premise on
+            \inferenceRule{\seqTyRuleName}. Thus, by the definition of
+            synchronous composition on net components, $\val$ is a net literal,
+            $\netExpr_1 \comp \netExpr_2 \withNetType{\aN}{\dN}$, giving
+            $\dentails \hasType{\netExpr_1 \comp
+            \netExpr_2}{\netType{\aN}{\dN}}$, as required.
+        \item Finally, for a fold,
+            $\natRecursionExpr{\expr_n}{\expr_z}{\expr_s}$, we apply the \IH{}
+            three times, obtaining values $\val_n, \val_z$ and $\val_s$ such
+            that $\dentails \hasType{\val_n}{\N}$, $\dentails
+            \hasType{\val_z}{\type}$ and $\dentails
+            \hasType{\val_s}{\arrType{\type}{\type}}$.
+
+            Now, we have to consider the the form of $\val_n$, which, by the
+            inversion of the typing rules, must be a natural number literal,
+            either $0$ or $\succNat{\natExpr}$:
+            in the former case, $\opEnv \entails
+            \reducesTo{\natRecursionExpr{0}{\expr_z}{\expr_s}}{\val_z}$, with
+            $\dentails \hasType{\val_z}{\type}$, as required.
+            In the latter case, where $\val_n$ is $\succNat{\natExpr}$, by our
+            assumption that $\tyEnv \entails
+            \hasType{\natRecursionExpr{\expr_n}{\expr_z}{\expr_s}}{\type}$, we
+            have that $\hasType{\expr_s}{\arrType{\type}{\type}}$, and
+            furthermore, that $\tyEnv \entails
+            \hasType{\natRecursionExpr{\natExpr}{\expr_z}{\expr_s}}{\type}$ (by
+            substituting a leaf for $\natExpr$ for the sub-tree corresponding
+            to $\expr_n$). We therefore have the premises for
+            \inferenceRule{\appTyRuleName}, giving the conclusion that
+            $\tyEnv \entails \hasType{\appExpr{\expr_s}
+                {\parens{\natRecursionExpr {\natExpr} {\expr_z}{\expr_s}}}}
+                {\type}$.
+            Now, by the \IH{}, we have that $\opEnv \entails
+            \reducesTo{\appExpr{\expr_s}
+                {\parens{\natRecursionExpr{\natExpr}{\expr_z}{\expr_s}}}}{\val}$
+            and therefore
+            $\reducesTo{\natRecursionExpr{\succNat{\natExpr}}{\expr_z}{\expr_s}}{\val}$,
+            such that $\dentails \hasType{\val}{\type}$, as required.
+    \end{itemize}
+\end{proof}
+
+\subsection{Net Literal Specification}
+\label{sec:netliteralspec}
+
+To finish this chapter, for completeness, we briefly discuss how component nets
+are specified, such that they can be referred to within \DSL{} expressions.
+Later in this thesis, we will be concerned with checking reachability of net
+systems specified by \DSL{} expressions, therefore our component specification
+language incorporates the initial/target markings of component places.
+
+The grammar of the net specification language is as illustrated in
+\figref{fig:literalSpecGrammar}.
+
+\begin{figure}[ht]
+\begin{lstlisting}
+    pnbdef ::= "NET", name, "PLACES", places, "LBOUNDS", bounds,
+                  "RBOUNDS", bounds, "TRANS", transitions ;
+
+    name ::= ?sequence of alphanumeric characters?
+
+    places ::= "[", { place, "," }, place, "]"
+            |  "[", "]" ;
+
+    place ::= "<", name, ",", initialmarking, ",", targetmarking ">" ;
+
+    bounds ::= "[", { name, "," }, name, "]"
+            |  "[", "]" ;
+
+    transitions ::= "{", { transition, "," }, transition, "}"
+                 |  "{", "}";
+
+    transition ::= "{", { port, "," }, port "}"
+                |  "{", "}" ;
+
+    port ::= ">", name
+          |  name, ">"
+          |  name, "?"
+          |  name ;
+
+    initialmarking ::= "0"
+                    |  "1" ;
+
+    targetmarking ::= "0"
+                   |  "1"
+                   |  "*" ;
+
+\end{lstlisting}
+\caption{BNF grammar for the input language}
+\label{fig:literalSpecGrammar}
+\end{figure}
+
+Each component definition specifies a list of places, a list of left and right
+boundary port names, and a set of transitions. Each place is specified as a
+triple of a (unique) name, initial marking and target marking, where the target
+marking can be one of 3 values: ``yes'' (1), ``no'' (0) or ``don't care'' (*).
+N.B.  since we allow ``don't care'' target markings, we are able to specify
+\emph{coverability} problems in addition to \emph{reachability}.  Each
+transition is specified as the set of ports that it connects, where each port
+is one of 5 different types:
+\begin{enumerate}
+    \item Left boundary (denoted by a (left) boundary name),
+    \item Right boundary (denoted by a (right) boundary name),
+    \item Place input ({\bf P}roduce)
+        (denoted by a place name preceded by '>'),
+    \item Place output ({\bf C}onsume)
+        (denoted by a place name followed by '>'),
+    \item Place {\bf R}ead
+        (denoted by a place name followed by '?').
+\end{enumerate}
+
+As an example of the component specification format, we show the definition of
+the \philoC{} component, from \secref{sec:example-philos}.
+
+\newcommand{\colA}{blue}
+\newcommand{\colB}{black}
+\newcommand{\colC}{teal}
+\newcommand{\colD}{red}
+\newcommand{\colE}{orange}
+
+\begin{figure}[ht]
+\begin{subfigure}{0.45\textwidth}
+\centering
+\begin{lstlisting}
+NET philo
+PLACES
+    [ <none,  1,*>
+    , <left,  0,*>
+    , <right, 0,*>
+    , <both,  0,1>
+    ]
+LBOUNDS [takeL, putL]
+RBOUNDS [takeR, putR]
+TRANS
+    { {(*@ \textcolor{\colA}{none>,  takeL,      >left} @*)}
+    , {(*@ \textcolor{\colB}{none>,  takeR,      >right} @*)}
+    , {(*@ \textcolor{\colC}{left>,  takeR,      >both} @*)}
+    , {(*@ \textcolor{\colD}{right>, takeL,      >both} @*)}
+    , {(*@ \textcolor{\colE}{both>,  putL, putR, >none} @*)}
+    }
+\end{lstlisting}
+\end{subfigure}%
+\begin{subfigure}{0.55\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+    \node[pnbplace] (none)  [tokens=1, rotate=270, pnblabel=above:none] {};
+    \node[pnbplace] (left)  [below left of=none, rotate=270, pnblabel=below:left] {};
+    \node[pnbplace] (right) [below right of=none, rotate=270, pnblabel=above:right] {};
+    \node[pnbplace] (both)  [below left of=right, rotate=270, pnblabel=above:both] {};
+
+    \drawBoundaries{2}{2}
+
+    \lBoundaryLabel{1}{takeL}
+    \lBoundaryLabel{2}{putL}
+    \rBoundaryLabel{1}{takeR}
+    \rBoundaryLabel{2}{putR}
+
+    \labelledpnbarr[noneright]{none.out}{right.in}{}{\colB, pnbarrstyle1, o-90i90}{pos=0.9}
+    \draw (r1) edge[\colB, pnbarrstyle1, out=180, in=120] (noneright);
+
+    \labelledpnbarr[noneleft]{none.out}{left.in}{}{\colA, pnbarrstyle2, o-90i90}{pos=0.9}
+    \draw (l1) edge[\colA, pnbarrstyle2, out=0, in=60] (noneleft);
+
+    \labelledpnbarr[rightboth]{right.out}{both.in}{}{\colD, pnbarrstyle1, o-90i90}{}
+    \draw (l1) edge[\colD, pnbarrstyle1, out=30, in=160] (rightboth);
+
+    \labelledpnbarr[leftboth]{left.out}{both.in}{}{\colC, pnbarrstyle2,o-90i90}{}
+    \draw (r1) edge[\colC, pnbarrstyle2, out=150, in=20] (leftboth);
+
+    \labelledpnbarr[bothnone]{both.out}{none.in}{}{\colE, out=-150, in=150}{pos=0.1}
+
+    \draw (l2) edge[\colE, out=-70, in=150] (bothnone);
+    \draw (r2) edge[\colE, out=200, in=-45] (bothnone);
+    \end{tikzpicture}
+\end{subfigure}
+\caption{\philoC{} using component specification format}
+\end{figure}

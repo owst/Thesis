@@ -1,0 +1,34 @@
+Summarising, the contributions presented in this thesis are as follows:
+\begin{enumerate}
+    \item Categorial structure of PNBs and their semantics: we show the
+        well-known property of compositionality in a new light, as the
+        functoriality of a mapping between suitable categories.
+    \item We introduce \emph{contextual PNBs}, adding \emph{read arcs}, which
+        naturally model behaviour that \emph{non-destructively} reads the token
+        state of a place.
+    \item Type-checked specification language: we show that by using a suitable
+        programming language, we can compositionally construct systems to be
+        modelled using PNBs, whilst ensuring that only correct compositions are
+        expressible.
+    \item \emph{Compositional} statespace generation for PNB-specified systems:
+        we show that the statespace of a PNB-specified system can be
+        compositionally generated, and furthermore, used to check
+        reachability, \emph{without} constructing the global net.
+    \item We show that compositional specifications can be exploited, to attack
+        the statespace explosion problem, and improve the efficiency of
+        reachability checking of systems modelled using PNBs. We show that by
+        considering \emph{weak language equivalence} of PNB semantics, we can
+        reduce the representation size of PNB semantics, whilst ensuring global
+        behaviour is preserved. Furthermore, \emph{memoisation} allows us to
+        avoid repeated computations.
+    \item Compositional specification of existing benchmarks, in more natural,
+        component-wise style, with formal, explicit specification of repeated
+        structure.
+\end{enumerate}
+
+These contributions have already been partially presented in three co-authored
+papers~\cite{Sobocinski2013,Sobocinski2014,Rathke2014}. The individual contributions of the author
+of this thesis are the majority of the programming/implementation effort, while the theory was a
+joint effort.
+
+The contributions demonstrated in this thesis are structured as follows:

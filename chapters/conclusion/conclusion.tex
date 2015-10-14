@@ -1,0 +1,54 @@
+\chapter{Conclusion}\label{chp:conclusion}
+
+In this thesis, we investigated and advocated compositional system
+specification and an alternative approach to reachability checking that uses
+the structural compositional information to its advantage, in order to vastly
+improve efficiency in many examples.
+
+The contributions presented in this thesis were:
+\begin{enumerate}
+    \item The elucidation of the categorical structure of PNBs and their
+        semantics: we showed the well-known property of compositionality in a
+        new light, as an instance of functoriality for suitable categories.
+    \item The introduction of \emph{contextual PNBs}, which naturally model
+        behaviour that \emph{non-destructively} reads the token state of a
+        place.
+    \item The motivation and introduction of a type-checked specification
+        programming language for PNBs, which ensures that only correct
+        compositions are expressible.
+    \item We demonstrated \emph{compositional} statespace generation for PNB
+        systems, and that it can be used to check reachability, \emph{without}
+        constructing the global net.
+    \item We showed that compositional specifications can be exploited, to
+        attack the statespace explosion problem, and improve the efficiency of
+        reachability checking of systems modelled using PNBs. We showed that by
+        considering \emph{weak language equivalence} of PNB semantics, we are
+        able to reduce the representation size of PNB semantics, whilst
+        ensuring global behaviour is preserved. We demonstrated that
+        \emph{memoisation} allows us to avoid repeated computation.
+    \item We gave compositional specification of existing benchmarks in a more
+        natural component-wise specification, with  explicit specification of
+        repeated structure.
+\end{enumerate}
+Many of these contributions had been introduced in the author's papers
+\cite{Sobocinski2013,Sobocinski2014,Rathke2014}.
+
+\chpref{chp:prelims} contained the required preliminaries. In
+\chpref{chp:catStructure}, the categorical structure of PNBs and the LTS that
+form their semantics was presented, exposing the notion of compositionality as
+functoriality. \chpref{chp:benchmarksAndLang} introduced the example systems
+that we used to demonstrate and evaluate our technique, and a specification DSL
+that uses a static type system to ensure that only valid component-wise
+specifications can be constructed. In \chpref{chp:compChecking} we introduced a
+compositional technique for generating the statespace of systems specified
+using our DSL, and thus checking marking reachability. We proved the technique
+correct and give some example timings of a tool implementing the technique.
+\chpref{chp:improveEfficiency} showed how to exploit the fact that language
+equivalence is a congruence to vastly improve the performance of our
+reachability-checking technique, introducing the notion of internal behaviour
+that we \emph{ignore} in order to aggressively prune statespace. We proved the
+more-efficient algorithm correct. In \chpref{chp:comparisonAndDiscussion}, we
+discussed the implementation of our technique, and compared and discussed its
+performance relative to current state-of-the-art tools.
+
+\subimport{future}{}

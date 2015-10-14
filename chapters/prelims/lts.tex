@@ -1,0 +1,348 @@
+\section{Labelled Transition Systems}
+
+The notion of a labelled transition system (LTS) is a central conceptual tool
+used to capture semantic models in this thesis. An LTS is a collection of
+states, and (labelled) transitions relating pairs of states:
+
+\begin{definition}[LTS]
+An LTS is a 3-tuple: $(\aLTSAllStates,
+\aLTSAllLabels, \aLTSTransitionRel)$, where $\aLTSAllStates$ is the set of
+states, $\aLTSAllLabels$ the set of labels and $\aLTSTransitionRel{} \subseteq
+\aLTSAllStates \times \aLTSAllLabels \times \aLTSAllStates$ is the labelled
+transition relation. As standard, we write
+\[
+    (\aLTSState, \aLTSLabel, \bLTSState) \in{} \mathord{\aLTSTransitionRel}
+    \,\text{ as }\,
+    \aLTSState \LabelledTrans{\aLTSLabel} \bLTSState.
+\]
+\end{definition}
+
+\begin{definition}[Finite LTS]
+    An LTS, $(\aLTSAllStates, \aLTSAllLabels, \aLTSTransitionRel)$, is finite
+    if both $\aLTSAllStates$ and $\aLTSAllLabels$ are finite.
+\end{definition}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node[state] (0)                    {$0$};
+        \node[state] (1) [below right=of 0] {$1$};
+        \node[state] (2) [below left=of 0]  {$2$};
+
+        \path (0) edge              node {$a$} (1);
+        \path (0) edge [swap]       node {$b$} (2);
+        \path (1) edge [loop left]  node {$c$} (1);
+        \path (2) edge [loop right] node {$d$} (2);
+    \end{tikzpicture}
+\caption{Example LTS}
+\label{fig:exampleLTS}
+\end{figure}
+
+\begin{example}
+An example finite LTS is illustrated in \figref{fig:exampleLTS}, with
+$\aLTSAllStates = \setof{0,1,2}$, $\aLTSAllLabels = \setof{a,b,c,d}$, and\\
+$\mathord{\aLTSTransitionRel} = \setof{(0,a,1), (0,b,2), (1,c,1), (2,d,2)}$.
+\end{example}
+
+The set of finite \emph{runs} of an LTS consists of all finite strings of
+transitions where the states proceed from one transition to the next. The
+\emph{trace} of a run is the sequence of labels of the underlying transitions:
+
+\begin{definition}\label{defn:ltsRun}
+    For an LTS, $(\aLTSAllStates, \aLTSAllLabels, \aLTSTransitionRel)$, a run
+    is a string over $\aLTSTransitionRel$:
+    \[\sequenceof{
+            \aLTSState_0 \LabelledTrans{\aLTSLabel_0} \bLTSState_0,\,
+            \aLTSState_1 \LabelledTrans{\aLTSLabel_1} \bLTSState_1,\,
+            \dots,\,
+            \aLTSState_{n-1} \LabelledTrans{\aLTSLabel_{n-1}} \bLTSState_{n-1}
+        }
+    \]
+    such that $\aLTSState_i = \bLTSState_{i-1}$, for all $1 \le i < n$.
+    The trace of a run simply forgets the states, giving a corresponding
+    sequence of labels:
+    \[
+        \sequenceof{\aLTSLabel_0, \aLTSLabel_1, \dots, \aLTSLabel_{n-1}}
+    \]
+\end{definition}
+
+\begin{example}
+    The set of traces of the LTS in \figref{fig:exampleLTS} is the (infinite)
+    set:
+    \[
+        \setof{\sequenceof{}, \sequenceof{a}, \sequenceof{b},
+        \sequenceof{b,d,d,\dots,d}, \sequenceof{a,c,c,\dots,c}}
+    \]
+\end{example}
+
+In this thesis we frequently use LTSs that have pairs of fixed-length binary
+strings as labels, which we refer to as \TLTS{}s, or \LTSB{\aN}{\bN}s if $\aN$
+and $\bN$ are the binary string lengths.
+
+\begin{definition}
+    An \LTSB{\aN}{\bN} is an LTS, $(\aLTSAllStates, \aLTSAllLabels,
+    \aLTSTransitionRel)$, where $\aLTSAllLabels \subseteq \B^\aN \times
+    \B^\bN$, where we write
+    \[
+        \lbl{x}{y} \,\text{ as syntactic sugar for }\, (x,y) \in \aLTSAllLabels
+    \]
+\end{definition}
+
+\begin{example}
+    Two example \TLTS{}s are illustrated in \figref{fig:exampleTLTSs}.
+\end{example}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[nfa]
+            \node[state] (0)              {$0$};
+            \node[state] (1) [below=of 0] {$1$};
+
+            \path (0) edge [loop right, overlay] node {$\lbl{0}{1}$} (0);
+            \path (0) edge [overlay]             node {$\lbl{1}{0}$} (1);
+        \end{tikzpicture}
+    \caption{\LTSB{1}{2}, $\aLTS$}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+        \begin{tikzpicture}[nfa]
+            \node[state] (2)              {$2$};
+            \node[state] (3) [below=of 2] {$3$};
+
+            \path (2) edge [loop right, overlay] node {$\lbl{1}{0}$} (2);
+            \path (2) edge [overlay]             node {$\lbl{0}{1}$} (3);
+        \end{tikzpicture}
+        \caption{\LTSB{2}{1}, $\bLTS$}
+    \end{subfigure}%
+\caption{Example \TLTS{}s}
+\label{fig:exampleTLTSs}
+\end{figure}
+
+As a notational shorthand, we often write \TLTS{} labels containing one or more
+`$\ast$' characters, to represent the \emph{set} of transitions where each
+`$\ast$' is expanded into a pair of transitions, with a 1 and 0 at that
+position in the label. For example, the label $\lbl{\ast1}{\ast}$ corresponds
+to the set of labels $\setof{\lbl{01}{0},\lbl{01}{1},\lbl{11}{0},\lbl{11}{1}}$
+for a $\LTSB{2}{1}$. When drawing LTSs, we often collapse multiple transitions
+between the same source/target states, drawing a single transition with a
+\emph{set} of labels, which should be understood as a set of singly-labelled
+transitions. These labelling shorthand are illustrated in
+\figref{fig:compactExpandedNotation}, where we give two presentations of the
+same LTS\@.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[nfa]
+            \node[state] (0)              {$0$};
+            \node[state] (1) [below right=of 0] {$1$};
+            \node[state] (2) [above right=of 1] {$2$};
+
+            \path (0) edge [swap] node {$\setof{\lbl{0}{1}, \lbl{1}{0}}$} (1);
+            \path (1) edge [swap] node {$\lbl{*}{1}$} (2);
+        \end{tikzpicture}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+        \begin{tikzpicture}[nfa]
+            \node[state] (0)              {$0$};
+            \node[state] (1) [below right=of 0] {$1$};
+            \node[state] (2) [above right=of 1] {$2$};
+
+            \path (0) edge [pos=0.3, bend left] node {$\lbl{1}{0}$} (1);
+            \path (0) edge [swap, bend right] node {$\lbl{0}{1}$} (1);
+            \path (1) edge [pos=0.7, bend left] node {$\lbl{0}{1}$} (2);
+            \path (1) edge [swap, bend right] node {$\lbl{1}{1}$} (2);
+        \end{tikzpicture}
+    \end{subfigure}%
+\caption{Compact vs Expanded label notation}
+\label{fig:compactExpandedNotation}
+\end{figure}
+
+When considering LTSs we often want to ignore the particular label and state
+names and instead concentrate on the transition connections, allowing us to
+identify those LTSs with the same underlying \emph{structure}. We say that LTSs
+that can be identified in this way are \emph{isomorphic}.
+
+\subsection{Isomorphism of LTSs}
+
+First, we describe how to map one LTS's transition structure onto another,
+known as a \emph{homomorphism} between LTSs\footnote{A more general definition of LTS homomorphism
+allows relabelling of transitions. However, we do not (and indeed, can not, since we must preserve
+labels to preserve compositions: \defnref{defn:sequentialCompositionTLTS}) use such a
+generalisation in this thesis. }:
+
+\begin{definition}
+Consider two LTSs, $(\aLTSAllStates_1, \aLTSAllLabels,
+\aLTSTransitionRel_1)$ and $(\aLTSAllStates_2, \aLTSAllLabels,
+\aLTSTransitionRel_2)$. A mapping, $f$, between the LTSs is a mapping on their states:
+$f : \aLTSAllStates_1 \to \aLTSAllStates_2$. A mapping is said to be an
+LTS homomorphism if for every $\aLTSState \LabelledTransNum{\aLTSLabel}{1}
+\bLTSState$ we have $f(\aLTSState) \LabelledTransNum{\aLTSLabel}{2} f(\bLTSState)$.
+\end{definition}
+
+An LTS homomorphism, $f$, is an isomorphism iff $f$ is a bijection and we have\\
+$f(\aLTSState) \LabelledTransNum{\aLTSLabel}{2} f(\bLTSState)$ iff we have $\aLTSState
+\LabelledTransNum{\aLTSLabel}{1} \bLTSState$, i.e. there is a bijection between the transitions
+that respects the action of $f$ on states. We write $\aLTS \LTSIso \bLTS$ when there exists an LTS
+isomorphism between $\aLTS$ and $\bLTS$.
+
+\subsection{\TLTS{} Compositions}
+
+We define two composition operations on \TLTS{}s, synchronous and tensor, both
+of which are modifications of the cartesian product construction on LTSs. Later
+in the thesis, we will use these compositions to give \emph{compositional}
+semantics of Petri Nets With Boundaries components.
+
+First, we define the cartesian product construction on LTSs, which takes two
+LTSs and generates a new LTS, with the set of states (transitions) being the
+cartesian product of the underlying sets of states (transitions).
+
+\begin{definition}[Cartesian Product of LTSs]
+Given two LTS, $\aLTS_1$:
+\(
+    ( \aLTSAllStates_1
+    , \aLTSAllLabels_1
+    , \aLTSTransitionRel_1
+    )
+\), and $\aLTS_2$:
+\(
+    ( \aLTSAllStates_2
+    , \aLTSAllLabels_2
+    , \aLTSTransitionRel_2
+    )
+\) their cartesian product is:\\
+\(
+    ( \aLTSAllStates_1 \times \aLTSAllStates_2
+    , \aLTSAllLabels_1 \times \aLTSAllLabels_2
+    , \aLTSTransitionRel
+    )
+\), where
+\[
+(\aLTSState, \bLTSState) \LabelledTrans{(\sigma_1, \sigma_2)}
+(\aLTSState', \bLTSState')
+\,\text{ iff }\,
+\aLTSState \LabelledTransNum{\sigma_1}{1} \aLTSState' \conjunction
+\bLTSState \LabelledTransNum{\sigma_2}{2} \bLTSState'
+\]
+\end{definition}
+
+Synchronous composition is defined for pairs of \TLTS{}s that share a common
+``internal'' label size; it restricts transitions in the product to those that
+agree on the shared label:
+
+\begin{definition}[Synchronous Composition]
+\label{defn:sequentialCompositionTLTS}
+    Given a $\LTSB{\aN}{\bN}$ $\aLTS$ and a $\LTSB{\bN}{\cN}$ $\bLTS$,
+    their synchronous composition, written $\aLTS \comp \bLTS$, is the
+    $\LTSB{\aN}{\cN}$ $(\aLTSAllStates,
+    \aLTSAllLabels, \aLTSTransitionRel\syncRestriction)$, where
+    $(\aLTSAllStates, \aLTSAllLabels, \aLTSTransitionRel)$ is the cartesian
+    product of $\aLTS$ and $\bLTS$, and $\aLTSTransitionRel\syncRestriction$
+    is defined:
+    \[
+        (\aLTSState, \bLTSState)
+        \LabelledTrans{\lbl{\aLTSLabel_1}{\aLTSLabel_4}}_{\syncRestriction}
+        (\aLTSState', \bLTSState')
+        \iff
+        \exists\, \aLTSLabel_2, \aLTSLabel_3 \,.\,
+        (\aLTSState, \bLTSState)
+        \LabelledTrans{(\lbl{\aLTSLabel_1}{\aLTSLabel_2},\,\,
+            \lbl{\aLTSLabel_3}{\aLTSLabel_4})}
+        (\aLTSState', \bLTSState')
+        \,
+        \conjunction
+        \,
+        \aLTSLabel_2 = \aLTSLabel_3
+    \]
+    That is, we remove transitions whose labels do not agree on the $\bN$-sized
+    internal boundary; furthermore, we hide the shared label component in the
+    resulting transition. We sometimes write states of a synchronous
+    composition as $\compStates{\aLTSState}{\bLTSState}$ rather than
+    $(\aLTSState,\bLTSState)$.
+\end{definition}
+
+\begin{remark}\label{rem:exponentiationSyntax}
+    For a $\LTSB{\aN}{\aN}$ $\aLTS$, we write $\aLTS^\cN$ for the
+    (left-associated) $\cN$-fold synchronous composition $\aLTS \comp \aLTS
+    \comp \ldots \comp \aLTS$.
+\end{remark}
+
+As we have seen, synchronous composition is only defined when the internal
+boundary sizes match up. Tensor composition, however, is defined for any pair
+of \TLTS{}s, regardless of their boundary sizes:
+
+\begin{definition}[Tensor Composition]\label{defn:tensorCompositionTLTS}
+    Given a $\LTSB{\aN}{\bN}$ $\aLTS$ and a $\LTSB{\cN}{\dN}$ $\bLTS$
+    their tensor composition, written $\aLTS \tensor \bLTS$, is a
+    $\LTSB{\aN + \cN}{\bN + \dN}$, defined as $(\aLTSAllStates, \aLTSAllLabels,
+    \aLTSTransitionRel\tensorRestriction)$, where $(\aLTSAllStates,
+    \aLTSAllLabels, \aLTSTransitionRel)$ is their cartesian product and
+    $\aLTSTransitionRel\tensorRestriction$ is defined:
+    \[
+        (\aLTSState, \bLTSState)
+        \LabelledTrans{\lbl{\aLTSLabel_1\aLTSLabel_3}{\aLTSLabel_2\aLTSLabel_4}}_{\tensorRestriction}
+        (\aLTSState', \bLTSState')
+        \iff
+        (\aLTSState, \bLTSState)
+        \LabelledTrans{(\lbl{\aLTSLabel_1}{\aLTSLabel_2},\,\,
+            \lbl{\aLTSLabel_3}{\aLTSLabel_4})}
+        (\aLTSState', \bLTSState')
+    \]
+    In other words, pairwise concatenation of the labels of the cartesian
+    product. Again, we sometimes write states of the tensor composition as
+    $\tensorStates{\aLTSState}{\bLTSState}$ rather than
+    $(\aLTSState,\bLTSState)$.
+\end{definition}
+
+\begin{example}
+An example of synchronous and tensor composition is given in \figref{fig:exampleTLTScompositions},
+where we compose the LTSs $\aLTS$ and $\bLTS$ from \figref{fig:exampleTLTSs}. Note that while we
+have drawn $\compStates{0}{3}$ and $\compStates{1}{2}$ in~\figref{fig:ltsCompAB}, in general we
+will save space and omit such unconnected states.
+\end{example}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[nfa]
+            \node[state] (02)               {$\compStates{0}{2}$};
+            \node[state] (03) [below=of 02] {$\compStates{0}{3}$};
+            \node[state] (12) [right=of 02] {$\compStates{1}{2}$};
+            \node[state] (13) [below=of 12] {$\compStates{1}{3}$};
+
+            \path (02) edge [loop above] node {$\lbl{0}{0}$} (02);
+            \path (02) edge node {$\lbl{1}{1}$} (13);
+        \end{tikzpicture}
+        \caption{\LTSB{1}{1}, $\aLTS \comp \bLTS$}
+        \label{fig:ltsCompAB}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[nfa]
+            \node[state] (02)               {$\tensorStates{0}{2}$};
+            \node[state] (03) [below=of 02] {$\tensorStates{0}{3}$};
+            \node[state] (12) [right=of 02] {$\tensorStates{1}{2}$};
+            \node[state] (13) [below=of 12] {$\tensorStates{1}{3}$};
+
+            \path (02) edge [loop above] node {$\lbl{01}{10}$} (02);
+            \path (02) edge node {$\lbl{11}{00}$} (12);
+            \path (02) edge node {$\lbl{00}{11}$} (03);
+            \path (02) edge node {$\lbl{10}{01}$} (13);
+        \end{tikzpicture}
+        \caption{\LTSB{2}{2}, $\aLTS \tensor \bLTS$}
+    \end{subfigure}%
+\caption{Example \TLTS{} compositions}
+\label{fig:exampleTLTScompositions}
+\end{figure}
+
+Given a finite LTS, we can consider only its runs that start and finish in
+specified states. To do so, we identify a certain state as being \emph{initial}
+and a collection of states as being \emph{accepting} and then only consider
+runs of the LTS that start with the initial state and finish with an accepting
+state. This, of course, is the familiar concept of a non-deterministic finite
+automaton (NFA).

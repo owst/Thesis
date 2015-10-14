@@ -1,0 +1,183 @@
+Before introducing and specifying our example net systems, we describe a
+collection of ``wiring'' nets that we frequently use in specifications. Such
+wiring nets do not contain places, only transitions connecting the boundary
+ports in various ways. Consider the ``left-end'' components shown in
+\figref{fig:leftendComponents} (such named since they are to be composed on the
+left of other components). Each illustrated component is a representation of a
+parametric family of nets over $\aN \in \N \setminus \setof{0}$; for notational
+convenience we drop the subscript when $\aN = 1$. The $\etaC{\aN}$ net, shown
+in \figref{fig:etaComponent}, has $2\aN$ right boundary ports, with transitions
+connecting the ports $0 \le \bN < \aN$ to $2\aN - 1 - \bN$.
+
+\makesavebox{\etaBox}{%
+\begin{tikzpicture}[pnb, boundaryPort-r5/.style={boundaryPortHidden}]
+
+    \drawBoundaries[2][4]{0}{9}
+
+    \path node [dotsBPort] at (r3) {};
+    \path node [dotsBPort] at (r7) {};
+
+    \foreach \i in {1,2,4}{%
+        \pgfmathtruncatemacro{\other}{10 - \i}
+        \labelledpnbarr{r\i}{r\other}{}{barr, out=180, in=180, looseness=1.5}{}
+    }
+\end{tikzpicture}
+}
+
+\makesavebox{\lendBox}{%
+\begin{tikzpicture}[pnb]
+    \drawBoundaries[2][4]{0}{4}
+
+    \path node [dotsBPort] at (r3) {};
+
+    \foreach \i in {1,2,4}{%
+        \coordinate (l\i) at ([xshift=-1cm]r\i);
+        \labelledpnbarr{l\i}{r\i}{}{barr}{}
+    }
+\end{tikzpicture}
+}
+
+\makesavebox{\ltermBox}{%
+\begin{tikzpicture}[pnb]
+    \drawBoundaries[2][4]{0}{4}
+
+    \path node [dotsBPort] at (r3) {};
+\end{tikzpicture}
+}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\etaBox
+\caption{\etaC{\aN} \withNetType{0}{2\aN}}
+\label{fig:etaComponent}
+\end{subfigure}%
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\lendBox
+\caption{\lendC{\aN} \withNetType{0}{\aN}}
+\label{fig:lendComponent}
+\end{subfigure}%
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\ltermBox
+\caption{\ltermC{\aN} \withNetType{0}{\aN}}
+\label{fig:ltermComponent}
+\end{subfigure}%
+\caption{Left-end Component Families}
+\label{fig:leftendComponents}
+\end{figure}
+
+The $\lendC{\aN}$ net, shown in \figref{fig:lendComponent}, has $\aN$ right
+boundary ports, each with a single corresponding transition; composing with
+such a net completes the partial specification of any transitions connected to
+the shared boundary port, but without adding further connections to places.
+Finally, the $\ltermC{\aN}$ net, shown in \figref{fig:ltermComponent}, has
+$\aN$ right boundary ports, but no transitions; composing with this net
+terminates any transitions, $\aTrans$, connected to the shared boundary ports
+in the other component --- there are no transitions in $\ltermC{}$ to
+synchronise with and thus $\aTrans$ cannot appear as part of a transition in
+the composite net.
+
+\makesavebox{\epsilonBox}{\reflectbox{\usebox\etaBox}}
+\makesavebox{\rendBox}{\reflectbox{\usebox\lendBox}}
+\makesavebox{\rtermBox}{\reflectbox{\usebox\ltermBox}}
+
+Similarly, we have right-end component nets, as shown in
+\figref{fig:rightendComponents} which are reflections of their left-end
+counterparts.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\epsilonBox
+\caption{\epsilonC{\aN} \withNetType{2\aN}{0}}
+\label{fig:epsilonComponent}
+\end{subfigure}%
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\rendBox
+\caption{\rendC{\aN} \withNetType{\aN}{0}}
+\label{fig:rendComponent}
+\end{subfigure}%
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\rtermBox
+\caption{\rtermC{\aN} \withNetType{\aN}{0}}
+\label{fig:rtermComponent}
+\end{subfigure}%
+\caption{Right-end Component Families}
+\label{fig:rightendComponents}
+\end{figure}
+
+Finally, we often use identity net components: such components have $\aN$ left
+and right boundary ports, and $\aN$ transitions, connecting each left boundary
+port to the corresponding right boundary port, as illustrated in
+\figref{fig:idComponent}. Such nets preserve the transitions of any components
+they are composed with (in a formal sense: PNBs form a category, with this
+family of nets as the identity morphisms --- see \secref{sec:pnbCat}).
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+    \drawBoundaries[2][4]{4}{4}
+
+    \path node [dotsBPort] at (l3) {};
+    \path node [dotsBPort] at (r3) {};
+
+    \foreach \i in {1,2,4}{%
+        \labelledpnbarr{l\i}{r\i}{}{barr}{}
+    }
+\end{tikzpicture}
+\caption{$\idC{\aN}$ \withNetType{\aN}{\aN}}
+\label{fig:idComponent}
+\end{figure}
+
+\newcommand{\subsectionImport}[2]{%
+    \subsection{#1}
+    \label{sec:example-#2}
+    \subimport{examples/}{#2}
+}
+\newcommand{\importList}[1]{%
+    \foreach \name/\file in {#1} {%
+        \subsectionImport{\name}{\file}
+    }
+}
+
+We now introduce two basic net systems, the $\aN$-bit Buffer and Token Ring,
+before introducing a convenient programming language to specify such systems.
+
+\importList{$\aN$-bit Buffer/buffer,Token Ring/token-ring}
+
+\subsection{A Language for Net Composition}
+\label{sec:motivation-lang}
+\subimport{}{motivation-lang}
+
+% Require the trailing % so we don't introduce spurious spaces, breaking labels
+\importList{ Complete Trees/trees%
+           , Cliques/cliques%
+           , Powersets/powersets%
+           }
+
+\section{Benchmark Systems}
+
+In this section, we introduce several \emph{more realistic} benchmark systems
+than those introduced thus far. Several of the systems are taken from
+Corbett's~\cite{Corbett1996} benchmark suite, but have been reformulated in
+terms of compositional specifications. To arrive at the component-based
+specifications, we examined the original monolithic Petri net and Ada models,
+as they existed in the Petri net community, and decomposed them into components
+by hand. By doing so, the natural system descriptions in terms of component
+structure and component compositions can be explicitly presented.
+
+\importList{ Overtake Protocol/over%
+           , Hartstone/hartstone%
+           , Iterated Choice/iter-choice%
+           , Replicator/replicator%
+           , DAC: Divide and Conquer/dac%
+           , Dining Philosophers/philos%
+           , Milner's Cyclic Scheduler/cyclic%
+           , $\aN$-bit Counter/counter%
+           }

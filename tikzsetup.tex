@@ -1,0 +1,603 @@
+\pgfdeclarelayer{background}
+\pgfdeclarelayer{foreground}
+\pgfsetlayers{background,main,foreground}
+
+\def\invertTFtrue{false}
+\def\invertTFfalse{true}
+% Allow us to turn off overlay, with overlay=false
+\tikzoption{overlay}[true]{\csname pgf@relevantforpicturesize\csname
+invertTF#1\endcsname\endcsname}
+
+\tikzset{
+    overlabel/.style={label={[overlay]#1}}
+}
+
+\tikzstyle{commarr}=[ ->, shorten <=0.75cm, shorten >=0.75cm, >=stealth', semithick ]
+
+\tikzstyle{dummy}=[inner sep=0pt]
+
+\tikzstyle{hider}=[draw=white, arrows=-, line width=4pt]
+
+\tikzstyle{box}=
+    [rectangle, rounded corners, thick, draw=blue!50!black,
+       text height=1ex, text depth=0.1ex, minimum size=4ex,
+       top color=white, bottom color=blue!15]
+
+\tikzstyle{petriplace}=[circle, draw, inner sep=0pt, minimum size=6mm]
+\tikzstyle{petritransition}=[ rectangle, draw=black!50 %, fill=black!20
+                            , inner sep=0pt , minimum height=7mm
+                            , minimum width=1.8mm
+                            ]
+\tikzstyle{petriarr}=[ ->, shorten <=1pt, >=stealth', semithick ]
+
+%\tikzstyle{pnbplace}=[circle, draw, inner sep=0pt, minimum size=6mm]
+%\tikzstyle{pnbarr}=[ -, semithick, shorten <=1pt, shorten >=1pt]
+
+\tikzstyle{loose1.5}=[looseness=1.5]
+
+%\tikzstyle{nwbjoin}=
+%    [rectangle, fill, inner sep=0pt , minimum height=3mm, minimum width=0.6mm]
+
+\tikzstyle{cross at}=
+    [postaction={
+        decorate,
+        decoration={
+            markings,
+            mark=at position #1 with {\draw[-, double=black, white, semithick] (-0.05,0) -- (0.05,0);}
+        }
+    }]
+
+\tikzstyle{mark inside}=
+    [postaction={
+        decorate,
+        decoration={
+            markings,
+            mark=at position #1 with {\draw[-, solid] (0,-0.12) -- (0,0.12);}
+        }
+    }]
+
+\newcommand{\marknode}[1]{\draw[-] (#1.center) -- ++(-0.12,0) -- ++(0.24,0);}
+
+\tikzstyle{pn}=[node distance=1cm]
+\tikzstyle{pnb}=[node distance=2cm]
+\tikzstyle{nfa}=[ ->, >=stealth', shorten >=1pt, auto, node distance=2.5cm
+                , semithick, inner sep=0, initial text=]
+\tikzset{init/.style={ initial text=, initial above}}
+%, every initial by arrow/.style={overlay}}
+
+\tikzstyle{boundaryPort}=[fill,shape=rectangle,inner sep=0pt, outer sep=0pt,
+bPortSize=0.2cm]
+\tikzstyle{boundaryPortHidden}=[boundaryPort, draw=none, fill=none]
+\tikzset{bPortSize/.append style={minimum width=#1, minimum height=#1}}
+\tikzstyle{dotsBPort}=[boundaryPort, minimum height=0.5cm, fill=white, label={[rotate=90]center:$\dots$}]
+
+% Taken from http://tex.stackexchange.com/questions/129547/tikz-surrounding-box-with-automatically-drawn-border-ports/129555?noredirect=1#129555
+% #1 = y padding
+% #2 = x padding
+% #3 = left ports
+% #4 = right ports
+\DeclareDocumentCommand{\drawBoundaries}{ O{0.8} O{0.8} m m }{
+    \node[inner sep=0pt, outer sep=0pt] (foo1) at ($(current bounding box.south west)+(-#1,-#2)$) {};
+    \node[inner sep=0pt, outer sep=0pt] (foo2) at ($(current bounding box.north east)+(#1,#2)$) {};
+
+    \node[draw, fit=(foo1) (foo2), outer sep=0pt] (bbox) {};
+
+    % coordinates of bounding box
+    \drawBoundaryPortsOnInternal{bbox}{#3}{#4}{}
+}
+
+\newcommand{\drawBoundaryPortsOnInternal}[4]{
+    % Define these once, since e.g. when we use the bounding box to draw the
+    % boundaries, the bounding box can grow if we add more nodes after drawing
+    % the boundaries
+    \coordinate(#1-nw)at(#1.north west);
+    \coordinate(#1-ne)at(#1.north east);
+    \coordinate(#1-sw)at(#1.south west);
+    \coordinate(#1-se)at(#1.south east);
+
+    \drawLRBoundaryPorts{#2}{#3}{#4}{#1}
+}
+
+\newcommand{\drawBoundaryPortsOn}[3]{%
+    \drawBoundaryPortsOnInternal{#1}{#2}{#3}{#1-}
+}
+
+% Draws boundary ports, assuming coordinates nw,sw,ne and se to delimit
+% "border" bounding box.
+\newcommand{\drawLRBoundaryPorts}[4]{%
+    \drawPorts{#1}{#4-nw}{#4-sw}{#3l}
+    \drawPorts{#2}{#4-ne}{#4-se}{#3r}
+}
+
+% Draws #1 ports between top, #2 and bottom, #3 with prefix #4.
+\newcommand{\drawPorts}[4]{%
+    \ifnum#1=0,,
+    \else
+    \foreach \portloopvar in {1,...,#1} {
+        \pgfmathparse{\portloopvar/(#1+1)}
+        % Generate a style for every port, such that we can customise
+        % individual boundary ports.
+        \tikzset{boundaryPort-#4\portloopvar/.append style={}}
+        \node(#4\portloopvar)[boundaryPort, boundaryPort-#4\portloopvar]at($(#2)!\pgfmathresult!(#3)$){};
+    }
+    \fi
+}
+
+\newcommand{\connectedBetweenL}[3]{%
+    \rPortAtHeightOf{#1}{#2}{#3}
+    \draw (#1-r#3) -- (#2);
+}
+
+\newcommand{\connectedBetweenR}[3]{%
+    \lPortAtHeightOf{#1}{#2}{#3}
+    \draw (#2) -- (#1-l#3);
+}
+
+
+% 1 = node name (optional)
+% 2 = from
+% 3 = to
+% 4 = label
+% 5 = edge properties
+% 6 = node properties
+\DeclareDocumentCommand{\labelledpnbarr}{ O{joinnode} m m m m m }{
+    \draw (#2) edge[pnbarr,o0i180,#5] node (#1) [pnbjoin,pnblabel=#4,#6] {} (#3);
+}
+
+\DeclareDocumentCommand{\pnbarr}{ O{joinnode} m m }{
+    \labelledpnbarr[#1]{#2}{#3}{}{}{}
+}
+
+% 1 = edge style (optional)
+% 2 = node style (optional)
+% 3 src
+% 4 tgt
+% 5 left label component
+% 6 left label component
+\DeclareDocumentCommand{\nfaArr}{ O{} O{} m m m m }{%
+    \draw (#3) edge [#1] node [#2] {$\lbl{#5}{#6}$} (#4);
+}
+
+\def\mainsize{3cm}
+
+\tikzset{schematic/.append style={node distance=0.4cm,
+                                  boundaryPort/.append style={bPortSize=0.125cm}}}
+
+\tikzstyle{schematicnode}=[draw, rectangle, inner sep=0.25cm, outer sep=0pt
+                          , minimum height=1.3cm]
+
+\tikzset{alignbot/.style={right=of #1.south east, anchor=south west}}
+\tikzset{aligntop/.style={right=of #1.north east, anchor=north west}}
+\tikzset{alignright/.style={below=of #1.south east, anchor=north east}}
+\tikzset{alignleft/.style={below=of #1.south west, anchor=north west}}
+
+\tikzset{
+    slimmer head/.style args={#1 at #2}{
+        -triangle 45, line width=#1*.4, #2,
+        postaction={draw, line width=#1, shorten >=0.4cm, -}
+    }
+}
+
+\newcommand{\translateArr}[3][]{\draw[-stealth, line width=0.15cm, gray!40] (#2) to (#3);}
+
+% From: http://tex.stackexchange.com/a/64454
+\makeatletter
+\tikzset{
+    samewidthas/.style args={#1 and #2}{
+    samewidthasc={#1}{#2},minimum width=\mylength
+    },
+    samewidthasc/.code 2 args={
+        \pgfpointdiff{\pgfpointanchor{#1}{west}}{\pgfpointanchor{#2}{east}}
+        \xdef\mylength{\the\pgf@x}
+    }
+}
+\makeatother
+
+\newcommand\boundaryAlignedWith[4]{
+    \path let \p1 = (#1), \p2=(#2) in node (#3#4) [boundaryPort] at (\x1,\y2) {};
+}
+\newcommand\rBAlignedWith[2]{\boundaryAlignedWith{bbox-ne}{#1}{r}{#2}}
+\newcommand\lBAlignedWith[2]{\boundaryAlignedWith{bbox-nw}{#1}{l}{#2}}
+
+% percentage, num
+\newcommand{\rBPortAt}[2]{
+    \bPortAtHelper{#1}{#2}{bbox-ne}{r}
+}
+\newcommand{\lBPortAt}[2]{
+    \bPortAtHelper{#1}{#2}{bbox-nw}{l}
+}
+
+\newcommand{\bPortAtHelper}[4]{
+    \portAtHeightOf{#3}{$(bbox-nw)!#1!(bbox-sw)$}{#4#2}
+}
+
+% node, percentage, num
+\newcommand{\leftBPort}[3]{
+    \coordinate(nw)at(#1.north west);
+    \coordinate(sw)at(#1.south west);
+    \node(#1-l#3)[boundaryPort]at($(nw)!#2!(sw)$){};
+}
+\newcommand{\rightBPort}[3]{
+    \coordinate(ne)at(#1.north east);
+    \coordinate(se)at(#1.south east);
+    \node(#1-r#3)[boundaryPort]at($(ne)!#2!(se)$){};
+}
+
+% x-pos, height of, name
+\newcommand{\portAtHeightOf}[3]{
+    \path let \p1=(#1),\p2=(#2) in node (#3)[boundaryPort] at (\x1, \y2) {};
+}
+
+\newcommand{\rPortAtHeightOf}[3]{
+    \portAtHeightOf{#1.east}{#2}{#1-r#3}
+}
+
+\newcommand{\lPortAtHeightOf}[3]{
+    \portAtHeightOf{#1.west}{#2}{#1-l#3}
+}
+
+\makeatletter
+\pgfdeclareshape{nwbplaceshape}
+{
+    \inheritsavedanchors[from=circle]
+    \inheritanchorborder[from=circle]
+    \inheritanchor[from=circle]{center}
+    \inheritanchor[from=circle]{north west}
+    \inheritanchor[from=circle]{north}
+    \inheritanchor[from=circle]{north east}
+    \inheritanchor[from=circle]{east}
+    \inheritanchor[from=circle]{south east}
+    \inheritanchor[from=circle]{south}
+    \inheritanchor[from=circle]{south west}
+    \inheritanchor[from=circle]{west}
+    \inheritbackgroundpath[from=circle]
+    \anchor{in}{%
+        \centerpoint
+        \pgf@xa=\radius
+        \advance\pgf@x by-1.18\pgf@xa
+    }
+    \anchor{out}{%
+        \centerpoint
+        \pgf@xa=\radius
+        \advance\pgf@x by1.23\pgf@xa
+    }
+    \foregroundpath{
+       \centerpoint%
+       \pgf@xc=\pgf@x % \pgf@xc = x value of centerpoint
+       \pgf@yc=\pgf@y % \pgf@yc = y value of centerpoint
+       \pgfutil@tempdima=\radius% \pgfutil@tempdima = radius
+       % top left of triangle pointing out l -> r
+       \pgfpathmoveto{\pgfpointadd{\pgfqpoint{\pgf@xc}{\pgf@yc}}
+            {\pgfqpoint{0.8\pgfutil@tempdima}{-0.25\pgfutil@tempdima}}}
+       % bottom left of triangle pointing out l -> r
+       \pgfpathlineto{\pgfpointadd{\pgfqpoint{\pgf@xc}{\pgf@yc}}
+            {\pgfqpoint{0.8\pgfutil@tempdima}{0.25\pgfutil@tempdima}}}
+       % right point of triangle pointing out l -> r
+       \pgfpathlineto{\pgfpointadd{\pgfqpoint{\pgf@xc}{\pgf@yc}}
+            {\pgfqpoint{1.3\pgfutil@tempdima}{0mm}}}
+       \pgfpathclose
+       % top left of triangle pointing in l -> r
+       \pgfpathmoveto{\pgfpointadd{\pgfqpoint{\pgf@xc}{\pgf@yc}}
+            {\pgfqpoint{-1.2\pgfutil@tempdima}{-0.25\pgfutil@tempdima}}}
+       % bottom left of triangle pointing in l -> r
+       \pgfpathlineto{\pgfpointadd{\pgfqpoint{\pgf@xc}{\pgf@yc}}
+            {\pgfqpoint{-1.2\pgfutil@tempdima}{0.25\pgfutil@tempdima}}}
+       % right point of triangle pointing in l -> r
+       \pgfpathlineto{\pgfpointadd{\pgfqpoint{\pgf@xc}{\pgf@yc}}
+            {\pgfqpoint{-0.7\pgfutil@tempdima}{0mm}}}
+       \ifx\tikz@strokecolor\pgfutil@empty
+       \def\my@strokecolor{black}
+       \else
+       \let\my@strokecolor\tikz@strokecolor
+       \fi \pgfpathclose
+       \pgfsetfillcolor{\my@strokecolor}
+       \pgfusepath{fill}
+    }
+}
+\makeatother
+
+\makeatletter
+\pgfdeclareshape{pnbjoinshape}
+{
+    \inheritsavedanchors[from=rectangle]
+    \inheritanchor[from=rectangle]{center}
+    \inheritanchor[from=rectangle]{north west}
+    \inheritanchor[from=rectangle]{north}
+    \inheritanchor[from=rectangle]{north east}
+    \inheritanchor[from=rectangle]{east}
+    \inheritanchor[from=rectangle]{south east}
+    \inheritanchor[from=rectangle]{south}
+    \inheritanchor[from=rectangle]{south west}
+    \inheritanchor[from=rectangle]{west}
+
+    \inheritbackgroundpath[from=rectangle]
+    \inheritforegroundpath[from=rectangle]
+}
+\makeatother
+
+ % TODO: tweak anchors so that they are on the triangle west/east
+ %       align center of triangles on border of place
+\makeatletter
+\tikzset{pnbplace/.style ={on grid, nwbplaceshape, draw, inner sep=0pt, minimum size=6mm}}
+
+\tikzset{every node/.add code={}{\def\nodedist{\tikz@node@distance}}}
+\def\nodedist{\tikz@node@distance}
+\makeatother
+
+\tikzset{
+    pnblabel/.style={
+        label={#1},
+        prefix after command= {\pgfextra{\tikzset{every label/.append style={opacity=1, overlay, black!60}}}}
+    }
+}
+
+\tikzstyle{pnbhidden}=[pnbplace, stroke=white, draw=white, fill=white]
+
+\tikzset{pnbarr/.style ={-, semithick}}
+\tikzset{pnbarrstyle1/.append style={pnbarr,densely dotted}}
+\tikzset{pnbarrstyle2/.append style={pnbarr,densely dashdotted}}
+\tikzset{pnbarrstyle3/.append style={pnbarr,loosely dotted}}
+\tikzset{pnbarrstyle4/.append style={pnbarr,dashed}}
+% make "boundary" arrows lighter
+\tikzset{barr/.append style={pnbarr, opacity=0.3}}
+%Problems with meeting points when using this
+\tikzset{overlap/.style ={white, double=black, thin}}
+\newcommand{\joinwidth}{7pt}
+\tikzstyle{pnbjoin}=[pnbjoinshape, draw, solid, sloped, inner sep=0pt, rotate=90, minimum height=0pt, minimum width=\joinwidth, pos=0.5]
+
+% For some reason this needs a minimum height that isn't 0 whereas nwbjoin
+% doesn't
+\tikzstyle{nwbjoinExtra}=[fill, inner sep=0pt, minimum height=0.5pt, minimum width=\joinwidth]
+
+\tikzstyle{nfa}=[->,>=stealth', shorten >=1pt, auto, node distance=2.1cm, semithick, state/.append style={inner sep=0.02cm}]
+
+\tikzstyle{brace}=[decoration={brace}, decorate]
+\tikzstyle{mirrorbrace}=[brace, decoration={mirror}]
+%
+\tikzstyle{nwblbl}=[black!70,scale=0.85]
+
+\tikzstyle{boundarylbl}=[nwblbl,overlay]
+
+% Draw labels on boundary ports
+\newcommand{\lBoundaryLabel}[2]{\node (blbl) [label={[boundarylbl]west:#2}] at (l#1) {};}
+\newcommand{\rBoundaryLabel}[2]{\node (blbl) [label={[boundarylbl]0:#2}] at (r#1) {};}
+
+\tikzstyle{wantedTokenPlace}=[pattern=north east lines, pattern color=gray!50]
+
+\newcommand{\drawBuf}{
+    \pgfmathtruncatemacro\prev{int(\x-1)}
+
+    \node[petriplace] (p\x0) [above right of=t\prev, tokens=1] {};
+    \node[petriplace,wantedTokenPlace] (p\x1) [below right of=t\prev] {};
+
+    \node[petritransition] (t\x) [below right of=p\x0, rotate=90] {}; %, label={above:$t_\x$}] {};
+
+    \draw [petriarr] (t\prev) to [bend left=30] (p\x0);
+    \draw [petriarr] (p\x1) to [bend left=30] (t\prev);
+    \draw [petriarr] (t\x) to [bend left=30] (p\x1);
+    \draw [petriarr] (p\x0) to [bend left=30] (t\x);
+}
+
+\tikzset{wanted style/.style={}}
+
+% #1: draw marked?
+% #2: draw labels?
+% #3: draw boundary ports?
+% #4: buffer count
+\DeclareDocumentCommand{\nBufPNB}{ O{0} O{0} O{0} m }{
+{%
+    \begin{tikzpicture}[pnb, place label/.style={}]
+
+    \ifthenelse{#1 = 1}{%
+        \tikzset{wanted style/.style=wantedTokenPlace}
+    }{}
+
+    \ifthenelse{#2 = 1}{%
+        \tikzset{place label/.style={pnblabel=above:##1}}
+    }{}
+
+    \node[pnbplace] (p10) [tokens=1, place label=$\aPlace_1$]{};
+    \node[pnbplace] (p11) [wanted style, below of=p10, rotate=180, place label=$\aPlace_2$] {};
+
+    \def\tlblA{}
+    \def\tlblB{}
+    \ifthenelse{#2 = 1}{%
+        \def\tlblA{$\aTrans_2$}
+        \def\tlblB{$\aTrans_1$}
+    }{}
+
+    \labelledpnbarr[p10p11]{p10.out}{p11.in}{below left:\tlblA}{out=0, in=0}{}
+    \labelledpnbarr[p11p10]{p11.out}{p10.in}{below left:\tlblB}{out=180, in=180}{}
+
+    \ifthenelse{#4 > 1}{%
+    \foreach \x in {2, ..., #4} {%
+        \pgfmathtruncatemacro\prev{int(\x-1)}
+        \pgfmathtruncatemacro\tname{int(\x + 1)}
+        \pgfmathtruncatemacro\pname{int((\x - 1) * 2 + 1)}
+        \pgfmathtruncatemacro\nextpname{int(\pname + 1)}
+
+        \node[pnbplace] (p\x0) [right of=p\prev0, tokens=1, place label=$\aPlace_\pname$] {};
+        \node[pnbplace] (p\x1) [wanted style, below of=p\x0, rotate=180, place label=$\aPlace_\nextpname$]{};
+
+        \def\tlbl{}
+        \ifthenelse{#2 = 1}{%
+            \def\tlbl{$\aTrans_\tname$}
+        }{}
+
+        \labelledpnbarr[p\x0p\x1]{p\x0.out}{p\x1.in}{below left:\tlbl}{out=0, in=0}{}
+
+        \draw (p\x1.out) edge[pnbarr, out=180, in=-90] (p\prev0p\prev1);
+        \draw (p\x0.in) edge[pnbarr, out=180, in=90] (p\prev0p\prev1);
+    }
+    }{}
+
+    \ifthenelse{#3 = 1}{%
+        \drawBoundaries{1}{1}
+        \draw (p11p10) edge[barr, out=90, in=0] (l1);
+        \draw (p#40p#41) edge[barr, out=90, in=180] (r1);
+    }{%
+        \drawBoundaries{0}{0}
+    }
+\end{tikzpicture}
+}
+}
+
+% Spacing for "tree-like" PNBs
+\newcommand{\levelSepA}{1cm}
+\newcommand{\levelSepB}{0.6cm}
+
+\tikzset{wiringTree/.style={level distance=1.5cm,sibling distance=0.2cm,
+every tree node/.append style={anchor=north}}}
+
+\tikzset{loop below right/.style={looseness=8, min distance=5mm, out=-30, in=-60}}
+\tikzset{loop below left/.style={looseness=8, min distance=5mm, out=-120, in=-150}}
+
+% BDDs
+\newcommand{\bddedge}[3]{\draw (#1) edge [->, shorten <=3pt, shorten >=3pt, #3] (#2.north);}
+\newcommand{\falseEdge}[3][]{\bddedge{#2}{#3}{dashed,#1}}
+\newcommand{\trueEdge}[3][]{\bddedge{#2}{#3}{solid,#1}}
+
+\tikzset{bdd/.style={node distance=2cm
+        ,every edge/.append style={}
+        ,var/.append style={draw, circle, inner sep=0.05cm}%
+        ,leaf/.append style={draw, rectangle, minimum height=0.75cm}}}
+
+% between nodes
+\newcommand{\bn}[3]{($(#1)!#2!(#3)$)}
+
+
+\makesavebox{\lendOneBox}{%
+\begin{tikzpicture}[pnb]
+    \node[pnbhidden] {};
+    \drawBoundaries{0}{1}
+
+    \coordinate (l1) at ([xshift=-0.5 * \nodedist]r1);
+    \labelledpnbarr{l1}{r1}{}{barr}{}
+\end{tikzpicture}
+}
+\makesavebox{\rendOneBox}{%
+\begin{tikzpicture}[pnb]
+    \node[pnbhidden] {};
+    \drawBoundaries{1}{0}
+
+    \coordinate (r1) at ([xshift=0.5 * \nodedist]l1);
+    \labelledpnbarr{l1}{r1}{}{barr}{}
+\end{tikzpicture}
+}
+\makesavebox{\rtermOneBox}{%
+\begin{tikzpicture}[pnb]
+    \node[pnbhidden] {};
+    \drawBoundaries{1}{0}
+\end{tikzpicture}
+}
+
+\makesavebox{\bufferBox}{%
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, pnblabel=above:$\aPlace_0$] {};
+    \node[pnbplace] (p1) [wantedTokenPlace, below=of p0, rotate=180, pnblabel=above:$\aPlace_1$] {};
+
+    \drawBoundaries[1.2]{1}{1}
+
+    \foreach \from/\to/\side/\in/\out in {p0/p1/r1/180/0, p1/p0/l1/0/180}{%
+        \labelledpnbarr[\from\to]{\from.out}{\to.in}{}{out=\out, in=\out}{}
+        \draw (\from\to) edge[barr, out=90, in=\in] (\side);
+    }
+\end{tikzpicture}
+}
+
+\newcommand{\disLeaf}[1]{%
+\begin{tikzpicture}[pnb]
+    \node (hidden) [pnbhidden] {};
+    \ifthenelse{#1 = 1}{%
+        \tikzset{wanted style/.style=wantedTokenPlace}
+    }{}
+
+    \node (tok) [pnbplace, wanted style, yshift=0.5\nodedist, below=of hidden] {};
+
+    \drawBoundaries{0}{0}
+    \lBAlignedWith{hidden}{1}
+    \rBAlignedWith{hidden}{1}
+
+    \labelledpnbarr{l1}{tok.in}{}{barr}{}
+    \labelledpnbarr{l1}{r1}{}{barr}{}
+\end{tikzpicture}
+}
+
+\makesavebox{\disNodeBox}{%
+\begin{tikzpicture}[pnb]
+    \node (hidden) [pnbhidden] {};
+    \node (tok) [pnbplace, yshift=0.5\nodedist, below=of hidden] {};
+
+    \drawBoundaries{0}{0}
+
+    \lBAlignedWith{hidden}{1}
+    \rBAlignedWith{hidden}{1}
+    \rBAlignedWith{tok}{2}
+
+    \labelledpnbarr{l1}{r1}{}{barr}{}
+    \labelledpnbarr{l1}{tok.in}{}{barr}{}
+    \labelledpnbarr{tok.out}{r2}{}{barr}{}
+\end{tikzpicture}
+}
+
+% #1 = 1: is bigger row (first node goes left), 0: smaller row, 2: same row
+% #2 = rowid
+% #3 = row size
+\newcommand{\nodeRow}[3][1]{%
+    \pgfmathtruncatemacro{\prevrow}{#2 - 1}
+
+    \ifthenelse{#1=1}{
+        \node (#20) [state, below left=of \prevrow0] {};
+    }{\ifthenelse{#1=0}{
+        \node (#20) [state, below right=of \prevrow0] {};
+        \nfaArr{\prevrow1}{#20}{1}{0}
+    }{
+        \node (#20) [state, below=of \prevrow0] {};
+    }}
+
+    \nfaArr{\prevrow0}{#20}{1}{0}
+    \nfaArr[loop left, overlay]{#20}{#20}{\aLbl}{\aLbl}
+
+    \foreach \nodeId in {1,...,#3}{%
+        \pgfmathtruncatemacro{\prevNodeId}{\nodeId - 1}
+
+        \ifthenelse{#1=0}{
+            \def\belowof{\prevrow\nodeId}
+        }{
+            \def\belowof{\prevrow\prevNodeId}
+        }
+
+        \ifthenelse{#1=0}{
+            \pgfmathtruncatemacro{\added}{\nodeId + 1}
+            \def\prevRowNext{\prevrow\added}
+        }{
+            \def\prevRowNext{\prevrow\nodeId}
+        }
+
+        \ifthenelse{#1=2}{
+            \node (#2\nodeId) [state, below=of \prevrow\nodeId] {};
+        }{
+            \node (#2\nodeId) [state, below right=of \belowof] {};
+        }
+
+        \nfaArr[loop left]{#2\nodeId}{#2\nodeId}{\aLbl}{\aLbl}
+
+        \nfaArr{\belowof}{#2\nodeId}{1}{0}
+        \def\nodeRowHelper{\nfaArr{\prevRowNext}{#2\nodeId}{1}{0}}
+
+        % If we're getting bigger, there's no ``wider'' node to draw from
+        \ifthenelse{#1=1}{
+            \ifthenelse{\nodeId<#3}{
+                \nodeRowHelper
+            }{}
+        }{
+            \nodeRowHelper
+        }
+    }
+}
+
+% #1 = first place
+% #2 = second place
+% #3 = name
+\newcommand{\xHalfwayYFirst}[3]{
+    \path let \p1 = (#1.out), \p2 = ($(#1.out)!.5!(#2.in)$) in coordinate (#3) at (\x2, \y1);}

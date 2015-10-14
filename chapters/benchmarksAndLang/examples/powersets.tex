@@ -1,0 +1,154 @@
+\newcommand{\startPlace}{S}
+\newcommand{\powersetC}{\component{powerset1}}
+
+A \powersetSys{\aN} net has $\aN + 1$ places. There is a chosen start place,
+\startPlace, with the remaining places being the elements of $\ordinal{\aN}$.
+There are $2^\aN$ transitions, all with a single source, \startPlace, and with
+targets being the elements of $2^{\ordinal{\aN}}$. For example, \powersetSys{3}
+is illustrated in \figref{fig:powerset3}, where transition $t_X$ connects $S$
+to all $x \in X$.
+
+\begin{figure}[ht]
+    \centering
+    \def\thevsep{6cm}
+    \def\thehsep{4cm}
+    \begin{tikzpicture}[pnb, node distance=\thevsep]
+
+    \node[pnbplace] (S) [label={[overlay]above:$\startPlace$}, rotate=-90] {};
+    \node[pnbplace] (1) [label={[overlay]above:$1$}, below of=S, rotate=-90] {};
+    \node[pnbplace] (0) [label={[overlay]above:$0$}, node distance=\thehsep, left of=1, rotate=-90] {};
+    \node[pnbplace] (2) [label={[overlay]above:$2$}, node distance=\thehsep, right of=1, rotate=-90] {};
+
+    \coordinate (e) at ([xshift=-1cm, yshift=0.25cm]S.out);
+
+    \newcommand{\coordBetween}[5]{
+        \coordinate [yshift=#1cm] (#2) at ($ (#3.in) !.#4! (#5.in) $);
+    }
+
+    \coordBetween{2}{two1}{0}{3}{1}
+    \coordBetween{2}{two2}{1}{7}{2}
+    \coordBetween{3}{two3}{0}{7}{1}
+    \coordBetween{3}{three}{1}{3}{2}
+
+    \drawBoundaries{0}{0}
+
+    \newcommand{\transSet}[1]{\aTrans_{\scriptstyle\setof{#1}}}
+
+    \labelledpnbarr{S.out}{e}{{$\aTrans_\emptyset$}}{o180i0}{}
+    \labelledpnbarr{S.out}{0.in}{{left:$\transSet{0}$}}{o200i80}{}
+    \labelledpnbarr{S.out}{1.in}{{[yshift=0.2cm, xshift=0.1cm]left:$\transSet{1}$}}{o-90i90}{}
+    \labelledpnbarr{S.out}{2.in}{{right:$\transSet{2}$}}{o-20i100}{}
+
+    \labelledpnbarr{S.out}{two1}{{[pos=1]right:$\transSet{0,1}$}}{pnbarrstyle2, out=225, in=90}{pos=0.99}
+    \draw (two1)  edge[pnbarrstyle2,  pnbarr, out=-90, in=80] (0.in);
+    \draw (two1)  edge[pnbarrstyle2,  pnbarr, out=-90, in=135] (1.in);
+
+    \labelledpnbarr{S.out}{two2}{{[pos=1]left:$\transSet{1,2}$}}{pnbarrstyle3, out=-45, in=90}{pos=0.99}
+    \draw (two2)  edge[pnbarrstyle3, pnbarr, out=-90, in=45] (1.in);
+    \draw (two2)  edge[pnbarrstyle3, pnbarr, out=-90, in=110] (2.in);
+
+    \labelledpnbarr{S.out}{two3}{{[pos=1]left:$\transSet{0,2}$}}{pnbarrstyle4, o-90i90}{pos=0.99}
+    \draw (two3)  edge[pnbarrstyle4, pnbarr, out=-90, in=60] (0.in);
+    \draw (two3)  edge[pnbarrstyle4, pnbarr, out=-90, in=130] (2.in);
+
+    \labelledpnbarr{S.out}{three}{{[pos=1]right:$\transSet{0,1,2}$}}{pnbarrstyle1, o-90i90}{pos=0.99}
+    \draw (three) edge[pnbarrstyle1, out=-110, in=50] (0.in);
+    \draw (three) edge[pnbarrstyle1, out=-100, in=60] (1.in);
+    \draw (three) edge[pnbarrstyle1, out=-90, in=125] (2.in);
+
+    \end{tikzpicture}
+    \caption{\powersetSys{3}}
+    \label{fig:powerset3}
+\end{figure}
+
+To obtain a component-wise specification, consider partitioning the non-start
+places of the net into individual components. Then, the global transitions must
+be constructed from compositions of suitable local transitions.
+Locally, each incoming partially specified transition should be connected to
+the place of the component (and other components) in three ways:
+\begin{enumerate}
+    \item To the local place and any further specified places
+    \item To the local place alone,
+    \item Only to the further specified places.
+\end{enumerate}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) {};
+
+    \drawBoundaries{1}{1}
+
+    \coordinate[node distance=0.75cm, above right=of p0.out] (e) ;
+    \labelledpnbarr{p0.out}{e}{}{o0i180}{}
+
+    \draw[barr, mark inside=0.5] (p0.out) to (r1);
+    \draw[barr, mark inside=0.5] (l1) to (p0.in);
+\end{tikzpicture}
+\caption{\rootC{} \withNetType{1}{1}}
+\label{fig:powersetRootComponent}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node (p0) [pnbplace] {};
+
+    \drawBoundaries[1.5][1]{1}{1}
+
+    \labelledpnbarr{l1}{p0.in}{}{barr, bend right=45}{}
+    \labelledpnbarr{l1}{r1}{}{barr, bend right=45}{}
+
+    \labelledpnbarr[l1r1]{l1}{r1}{}{barr, bend left=45}{pos=0.15}
+    \draw (l1r1) edge[barr, out=0, in=180] (p0.in);
+\end{tikzpicture}
+\caption{$\powersetC \withNetType{1}{1}$}
+\label{fig:powersetComponent}
+\end{subfigure}%
+\caption{\powersetSys{\aN} component nets}
+\label{fig:powersetNets}
+\end{figure}
+
+Such a component is illustrated in \figref{fig:powersetComponent}. With the
+\rootC{} component illustrated in \figref{fig:powersetRootComponent} (which
+either passes its token into a sequence of \powersetC{} components or not) and
+the \injectorC{} component from $\tokenringSys{\aN}$, we have:
+\[
+    \powersetSys{\aN} \defeq
+    \compExpr{\ltermC{}}{\compExpr{\injectorC}{\compExpr{\rootC}{\compExpr{\sequenceExpr{\aN}{\powersetC}}{\rtermC{}}}}}
+\]
+
+The schematic for the \powersetSys{3} net illustrated in
+\figref{fig:powerset3}, is shown in \figref{fig:powersetschematic}.
+
+\begin{figure}[ht]%
+\centering
+\makebox[\textwidth][c]{
+\begin{tikzpicture}[schematic]
+    \node[schematicnode] (-1) []           {$\ltermC{}$};
+    \node[schematicnode] (0) [right=of -1] {$\injectorC$};
+    \node[schematicnode] (1) [right=of 0]  {$\rootC$};
+    \node[schematicnode] (2) [right=of 1]  {\powersetC};
+    \node[schematicnode] (3) [right=of 2]  {\powersetC};
+    \node[schematicnode] (4) [right=of 3]  {\powersetC};
+    \node[schematicnode] (5) [right=of 4]  {$\rtermC{}$};
+
+    \newcommand{\offset}{0.5}
+
+    \rightBPort{-1}{\offset}{1}
+    \foreach \i in {0,1,2,3,4} {
+        \leftBPort{\i}{\offset}{1}
+        \rightBPort{\i}{\offset}{1}
+    }
+    \leftBPort{5}{\offset}{1}
+
+    \foreach \i in {-1,...,4} {
+        \pgfmathtruncatemacro{\next}{\i + 1}
+        \draw (\i-r1) -- (\next-l1);
+    }
+\end{tikzpicture}
+}
+\caption{Schematic of \powersetSys{3}}
+\label{fig:powersetschematic}
+\end{figure}

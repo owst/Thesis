@@ -1,0 +1,435 @@
+\section{Petri nets}
+
+Petri nets are a mathematical model with a vivid graphical presentation, used to
+model concurrent and distributed systems. A Petri net consists of a set of
+places, and a set of transitions that connect sets of places to sets of places.
+\begin{definition}[Petri net]
+A Petri net is a 4-tuple:
+$(\aPnAllPlaces,\aPnAllTrans,\pre{-},\post{-})$, where:
+\begin{itemize}
+\item $\aPnAllPlaces$ is the set of places,
+\item $\aPnAllTrans$ is the set of transitions,
+\item $\pre{-},\,\post{-}:\aPnAllTrans \to 2^{\aPnAllPlaces}$ give,
+    respectively, the pre- and post-sets of each transition.
+\end{itemize}
+\end{definition}
+
+For $\aTrans \in \aPnAllTrans$, its preset, $\pre{\aTrans}$ is the set of places that
+connect to $\aTrans$, and its postset, $\post{\aTrans}$, is the set of
+places to which $\aTrans$ connects. The
+\emph{neighbourhood} of $\aTrans$ is $\prepost{\aTrans} \defeq \pre{\aTrans}
+\union \post{\aTrans}$.  We write $\places{\aPn}$ and $\trans{\aPn}$
+respectively, for the place and transition sets of $\aPn$.
+
+In this thesis, we consider the class of Petri nets where each place can only contain zero or one
+\emph{token}. Other classes of Petri nets (e.g. P/T nets~\cite{Desel1998}) lift this restriction,
+but we do not use this generalisation, instead focussing on \emph{1-bounded}, or \emph{safe} nets.
+The definitions in this chapter essentially follow those of~\cite{Engelfriet1998}, albeit with a
+slightly different presentation. For example, we use a functional, rather than relational
+presentation of transition connections; this alternative presentation makes the extension of Petri
+nets to Petri nets with boundaries clearer (indeed, every Petri net is a degenerate Petri net with
+boundaries).
+
+\begin{definition}[Marking]
+    A marking of a net $N$ is a function $m : \places{N} \to \setof{0,1}$.
+\end{definition}
+
+Graphically, a marking is illustrated by drawing black circles inside each
+place that is assigned a token by the marking.
+
+\begin{example}
+An example Petri net, $\aPn$, is illustrated in \figref{fig:examplePetriNet},
+with 7 places, 5 transitions, and with the marking function:
+\(
+    \markedAt{\aPnMarking}{\aPlace_i} \defeq \begin{cases}
+        1 & \mbox{if } i \le 1 \\
+        0 & \mbox{otherwise} \\
+    \end{cases}
+\)
+
+In $\aPn$, for example, $\pre{\aTrans_4}=\setof{\aPlace_2, \aPlace_4}$,
+$\pre{\aTrans_1}=\setof{\aPlace_1}$ and
+$\post{\aTrans_1}=\setof{\aPlace_2,\aPlace_5}$.
+\end{example}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pn]
+\node[petriplace]      (p0) [pnblabel=right:$\aPlace_0$, tokens=1]              {};
+\node[petritransition] (t0) [above right=of p0, pnblabel=above:$\aTrans_0$]     {};
+\node[petriplace]      (p1) [right=of t0, pnblabel=above:$\aPlace_1$, tokens=1] {};
+\node[petritransition] (t1) [right=of p1, pnblabel=above:$\aTrans_1$]           {};
+\node[petriplace]      (p2) [right=of t1, pnblabel=above:$\aPlace_2$]           {};
+\node[petritransition] (t2) [below right=of p0, pnblabel=above:$\aTrans_2$]     {};
+\node[petriplace]      (p3) [right=of t2, pnblabel=above:$\aPlace_3$]           {};
+\node[petritransition] (t3) [right=of p3, pnblabel=above:$\aTrans_3$]           {};
+\node[petriplace]      (p4) [right=of t3, pnblabel=above:$\aPlace_4$]           {};
+\node[petriplace]      (p5) [pnblabel=above:$\aPlace_5$] at ($(p2)!.5!(p4)$)    {};
+\node[petritransition] (t4) [above right=of p4, pnblabel=left:$\aTrans_4$]      {};
+\node[petriplace]      (p6) [right=of t4, pnblabel=above:$\aPlace_6$]           {};
+\draw [petriarr] (p0) to [bend left=45]  (t0);
+\draw [petriarr] (p0) to [bend right=45] (t2);
+\draw [petriarr] (t0) to                 (p1);
+\draw [petriarr] (p1) to                 (t1);
+\draw [petriarr] (t1) to                 (p2);
+\draw [petriarr] (t1) to [out=0,in=170]  (p5);
+\draw [petriarr] (t2) to                 (p3);
+\draw [petriarr] (p3) to                 (t3);
+\draw [petriarr] (t3) to                 (p4);
+\draw [petriarr] (t3) to [out=0,in=190]  (p5);
+\draw [petriarr] (p2) to [bend left=45]  (t4);
+\draw [petriarr] (p4) to [bend right=45] (t4);
+\draw [petriarr] (t4) to                 (p6);
+\end{tikzpicture}
+\caption{Example Petri net}
+\label{fig:examplePetriNet}
+\end{figure}
+
+
+The marking of a Petri net is transformed by \emph{firing} transitions; we say
+one marking is \emph{reachable} from another if there is a sequence of
+transition firings that transforms one marking to the other. Intuitively, when
+fired, a transition, $\aTrans$, consumes tokens from all $\aPlace \in
+\pre{\aTrans}$ and produces a token at all $\bPlace \in \post{\aTrans}$, giving
+a new marking.
+
+However, it is not the case that arbitrary subsets of net transitions can
+necessarily be fired at the same time. Two transitions cannot fire
+simultaneously if they attempt to produce a token at the same place (e.g.
+$\aTrans_1$ and $\aTrans_3$ in \figref{fig:examplePetriNet}), or both consume
+the token from a place, (e.g. $\aTrans_0$ and $\aTrans_2$ in
+\figref{fig:examplePetriNet}). To specify the transitions that may fire
+concurrently, we define the notion of \emph{contention} between transitions.
+
+\begin{definition}[Transition contention]
+    For a Petri net $\aPn$, we say that $\aTrans, \bTrans \in
+    \trans{N}$ are in contention (written $\aTrans \contention \bTrans$)
+    when $\pre{\aTrans} \cap \pre{\bTrans} \neq \emptyset$ or
+    $\post{\aTrans} \cap \post{\bTrans} \neq \emptyset$.
+\end{definition}
+
+Note that contention is a property of the net's topology and does \emph{not}
+depend on any particular marking. We say a set of transitions is
+\emph{contention-free} if it contains no pair of \emph{distinct} transitions in
+contention:
+
+\begin{definition}[Contention-free transition sets]\label{defn:pnContentionFreeSet}
+    For a Petri net $\aPn$, we say that $\aPnTransSet \subseteq \trans{\aPn}$
+    is contention-free if $\,\forall \aTrans, \bTrans \in \aPnTransSet$, we
+    have:
+    \[
+        \aTrans \contention \bTrans \implies \aTrans = \bTrans
+    \]
+\end{definition}
+
+For example, in the net shown in \figref{fig:examplePetriNet}, $\setof{\aTrans_0,
+\aTrans_3}$ is contention-free, but $\setof{\aTrans_0,\aTrans_2}$ is not.
+
+A transition may only be fired if it is \emph{enabled}: when each place of its
+pre-set is marked, and no places in its post-set are marked:
+
+\begin{definition}[EN enabled transitions]\label{defn:pnEnabledTrans}
+For a net $\aPn$, $\aTrans \in \trans{\aPn}$ is enabled for a marking
+$\aPnMarking$, written $\enabledTrans{\aTrans}{\aPnMarking}$, if for all
+$\aPlace \in \pre{\aTrans}$, $\markedAt{\aPnMarking}{\aPlace} = 1$ and
+for all $\bPlace \in \post{\aTrans}$, $\markedAt{\aPnMarking}{\bPlace}
+= 0$.
+\end{definition}
+
+\begin{remark}\label{rem:contentionEnabled}
+    A trivial observation is that a particular transition will be enabled at
+    some, but not all, markings of the same net, whereas a given pair of
+    transitions will either always be in contention, or never. Put differently,
+    contention is a static property of the net, while a particular transition
+    being enabled is a \emph{dynamic} property of the net. Determining if we
+    are able to fire a particular set of transitions thus relies on a mixture
+    of static and dynamic information: we must have no transitions in
+    contention in the set, and the current marking should enable all of the
+    transitions. In some net models, such as P/T nets, the enabled condition of
+    \defnref{defn:pnEnabledTrans} is relaxed, allowing transitions to fire even
+    if a token is already present on the place. However, in this thesis we do
+    not consider such nets: their semantics are more complex, and their
+    statespaces are often infinite.
+\end{remark}
+
+We may lift several of the previous definitions from individual transitions to
+sets of transitions, in a straightforward manner. In the following,
+$\aPnTransSet \subseteq \trans{\aPn}$, for some net, $\aPn$:
+\begin{align*}
+    \pre{\aPnTransSet} &\defeq \bigcup_{\aTrans \in
+        \aPnTransSet}\pre{\aTrans}\\
+    \post{\aPnTransSet} &\defeq \bigcup_{\aTrans \in
+        \aPnTransSet}\post{\aTrans}\\
+    \enabledTrans{\aPnTransSet}{\aPnMarking} &\defeq \bigwedge_{\aTrans
+            \in \aPnTransSet}\enabledTrans{\aTrans}{\aPnMarking}
+\end{align*}
+
+\begin{remark}\label{rem:classes}
+Before continuing, we briefly mention that the class of all Petri nets can be
+sub-divided based upon either structure, token numbers and transition firing
+rules. Common net classes relating to structure are \emph{pure}, \emph{simple}
+or \emph{finite} nets, to tokens and structure are \emph{bounded} or
+\emph{safe} nets and to transition firing rules are \emph{elementary} nets.
+In turn, we have that a Petri net, $\aPn$ is:
+\begin{itemize}
+    \item \emph{pure} if, for any $\aTrans \in \trans{\aPn}$, $\pre{\aTrans}
+        \intersect \post{\aTrans} = \emptyset$
+    \item \emph{simple} if, for any $\aTrans, \bTrans \in \trans{\aPn}$,
+        $\pre{\aTrans} = \pre{\bTrans} \implies \aTrans = \bTrans$,
+    \item $\aN$-\emph{bounded} if, every reachable marking, $\aPnMarking$, has
+        that: $\forall \aPlace \in \places{\aPn},
+        \markedAt{\aPnMarking}{\aPlace} \le \aN$,
+    \item \emph{safe} if it is 1-bounded,
+    \item \emph{finite} if both $\places{\aPn}$ and $\trans{\aPn}$ are finite,
+\end{itemize}
+\end{remark}
+
+We may now define the \emph{step firing} semantics of a Petri net, in which
+(sets of) transitions are fired: a set of transitions may fire if it is both
+contention-free (a static property) and enabled in the current marking of the
+net (a dynamic property):
+
+\begin{definition}[EN Firing Semantics] \label{defn:firePetriTransitions}
+Given a net $\aPn$ and a marking $\aPnMarking$, a set $\aPnTransSet \subseteq
+\trans{\aPn}$ can fire iff $\aPnTransSet$ is contention-free and
+$\enabledTrans{\aPnTransSet}{\aPnMarking}$ (by \defnref{defn:pnEnabledTrans}).
+Firing $\aPnTransSet$ creates a new marking $\bPnMarking$, defined thus:
+\[
+    \markedAt{\bPnMarking}{\aPlace_i} \defeq \begin{cases}
+        0 & \mbox{if } \aPlace_i \in \pre{\aPnTransSet} \\
+        1 & \mbox{if } \aPlace_i \in \post{\aPnTransSet} \\
+        \markedAt{\aPnMarking}{\aPlace_i} & \mbox{otherwise}
+    \end{cases}
+\]
+that is, tokens are consumed from all places in the pre-set of $\aPnTransSet$,
+produced at all places in the post-set of $\aPnTransSet$, and otherwise
+unchanged from $\aPnMarking$. If $\aPnTransSet$ can be fired to transform
+$\aPn$ from $\aPnMarking$ to $\bPnMarking$, we write
+$\PnFiringSemantics{\aPn}{\aPnTransSet}{\aPnMarking}{\bPnMarking}$.
+\end{definition}
+
+For the remainder of this thesis, we only consider finite, pure and simple
+(\remref{rem:classes}) Elementary Nets~\cite{Thiagarajan1987}, which are
+defined in \defnref{defn:EN}.
+
+\begin{definition}[Elementary Net]\label{defn:EN}
+    An elementary net (EN) is a Petri net,
+    $(\aPnAllPlaces,\aPnAllTrans,\pre{-},\post{-})$, that uses the firing rule
+    in \defnref{defn:firePetriTransitions}.
+\end{definition}
+
+Since ENs do not allow transitions to be enabled when there are tokens in any
+of their post-set places, safeness (\remref{rem:classes}) is guaranteed.
+As a consequence, the state space---set of reachable markings---of an EN $\aPn$
+is \emph{finite} since the markings of $\aPn$ put at most one token in each
+place.  Furthermore, markings can be identified with the sets of places $M
+\subseteq \places{\aPn}$ they characterise.
+
+In standard presentations, an EN $\aPn$ must have no unconnected places (i.e
+$\forall \aPlace \in \places{\aN}$, $\exists \aTrans \in\trans{\aPn} \text{ s.t.
+} \aPlace \in \prepost{\aTrans}$) or transitions (i.e $\forall \aTrans \in
+\trans{\aN}, \prepost{\aTrans} \neq \emptyset$).  However in this thesis we
+lift this restriction, allowing transitions to not connect to places, as will
+be discussed when introducing Petri Nets With Boundaries.
+
+\subsection{Labelled transition system semantics of Petri
+Nets}\label{sec:PNLTSSemantics}
+
+The firing semantics of a Petri net can be used to construct an LTS---known as
+its \emph{reachability graph}~\cite{Murata1989}---representing the
+relationships between all markings of the net.
+
+The LTS semantics for a net $\aPn$ has states the markings of $\aPn$, with
+transitions between markings $\aPnMarking$ and $\bPnMarking$ being labelled by
+sets of (enabled, contention-free) transitions:
+
+\begin{definition}[LTS semantics of a Petri net]
+    \newcommand{\firedRel}{\mathit{fired}}
+    The LTS semantics of a net $\aPn$ is defined to be the LTS
+    $(2^{\places{\aPn}}, 2^{\trans{\aPn}}, \firedRel)$, where $(\aPnMarking,
+    \aPnTransSet, \bPnMarking) \in \firedRel$ iff $\aPnTransSet$ is
+    contention-free and enabled by $\aPnMarking$, and
+    $\PnFiringSemantics{\aPn}{\aPnTransSet}{\aPnMarking}{\bPnMarking}$.
+\end{definition}
+
+\begin{example}
+The LTS semantics of the Petri net of \figref{fig:examplePetriNet} is shown in
+\figref{fig:exampleLTSSemantics}. Recall that net markings are identified
+with the set of net states to which they assign a token, and that LTS states
+correspond to markings of the underlying net, therefore, we draw LTS states
+containing sets of net states. The LTS transitions are labelled with sets of
+net transitions, fired to transform between the two markings. Note that each
+state of the LTS has a self-loop: the empty set of transitions can always be
+fired. For clarity, the 122 (out of 128 total) states that are not reachable
+from the illustrated marking $\setof{\aPlace_0, \aPlace_1}$ have not been
+drawn.
+
+For example, we have that
+\(\setof{\aPlace_0,\aPlace_1} \LabelledTrans{\setof{\aTrans_1,\aTrans_2}}
+\setof{\aPlace_2,\aPlace_3,\aPlace_5} \) and $\setof{\aPlace_1,\aPlace_3} \LabelledTrans{\emptyset}
+\setof{\aPlace_1,\aPlace_3}$.  Observe that the net transition $\aTrans_4$ doesn't appear in the
+label of any LTS transition - it can never be fired since no reachable marking places a token in
+both $\aPlace_2$ and $\aPlace_4$.
+\end{example}
+
+\begin{figure}[!ht]
+\centering
+\begin{tikzpicture}[nfa, node distance=3cm, every state/.append style={inner
+    sep=1mm, minimum size=1.35cm, font=\footnotesize}]
+\node[state] (01)                       {$\setof{\aPlace_0,\aPlace_1}$};
+\node[state] (13)  [above right of=01]  {$\setof{\aPlace_1,\aPlace_3}$};
+\node[state] (025) [below right of=01]  {$\setof{\aPlace_0,\aPlace_2,\aPlace_5}$};
+\node[state] (235) [below right of=13]  {$\setof{\aPlace_2,\aPlace_3,\aPlace_5}$};
+\node[state] (145) [above right of=235] {$\setof{\aPlace_1,\aPlace_4,\aPlace_5}$};
+\node[state] (125) [below right of=235] {$\setof{\aPlace_1,\aPlace_2,\aPlace_5}$};
+\path (01)  edge [bend left]  node           {$\setof{\aTrans_2}$}     (13)
+            edge [bend right] node [swap]    {$\setof{\aTrans_1}$}     (025)
+            edge              node           {$\setof{\aTrans_1,\aTrans_2}$} (235)
+            edge [loop left]  node [overlay] {$\emptyset$}       (01)
+      (13)  edge [bend left]  node [swap]    {$\setof{\aTrans_1}$}     (235)
+            edge [loop above] node           {$\emptyset$}       (13)
+            edge              node           {$\setof{\aTrans_3}$}     (145)
+      (025) edge [bend right] node           {$\setof{\aTrans_2}$}     (235)
+            edge [loop below] node           {$\emptyset$}       (025)
+            edge              node [swap]    {$\setof{\aTrans_0}$}     (125)
+      (235) edge [loop right] node [overlay] {$\emptyset$}       (235)
+      (145) edge [loop right] node [overlay] {$\emptyset$}       (145)
+ ;
+\end{tikzpicture}
+\caption{LTS semantics of the Petri net in \figref{fig:examplePetriNet}. }
+\label{fig:exampleLTSSemantics}
+\end{figure}
+
+Finally, as a consequence of the definition of Petri net LTS semantics, we
+observe that trace membership of an LTS semantics implies a valid corresponding
+sequence of firings in the underlying net:
+
+\begin{remark}\label{rem:validTraceImpliesFiring}
+    Consider a net $\aPn$ and its LTS semantics $\aLTS$. Any trace,
+    $\aLTSTrace = \sequenceof{\aLTSLabel_0,\aLTSLabel_1,\dots,\aLTSLabel_n}$,
+    of $\aLTS$ is a valid sequence of firings of $\aPn$, between the markings
+    corresponding to the states of \emph{any} run with trace $\aLTSTrace$.
+\end{remark}
+
+\section{Reachability and Coverability in Petri Nets}
+
+A natural question to ask about a Petri net is whether it is possible to reach
+a particular target marking from some initial marking. That is, does there
+exist a firing sequence that transforms the net from the initial marking to the
+target marking. This question is known as the \emph{reachability
+problem}~\cite{Peterson1977}, and is PSPACE-complete~\cite{Cheng1995}.
+
+Due to the correspondence between Petri net firing sequences and traces of
+their LTS semantics (\remref{rem:validTraceImpliesFiring}), reachability
+checking coincides with checking the existence of a trace between the states
+corresponding to the initial and target markings. For example, there is a
+trace between $\setof{\aPlace_0,\aPlace_1}$ and
+$\setof{\aPlace_1,\aPlace_4,\aPlace_5}$ in
+\figref{fig:exampleLTSSemantics}.
+
+We often want to consider a particular net and pair of its markings, and refer
+to such a triple as a \emph{marked} net:
+\begin{definition}[Marked Net]
+    A marked net, $(\aPn, \aMarkedNetInitial, \aMarkedNetTarget)$, is comprised
+    of a Petri net $\aPn$ and the initial/target markings:
+    $\aMarkedNetInitial,\aMarkedNetTarget \subseteq \places{\aPn}$.
+\end{definition}
+
+A related concept from the literature is a \emph{net
+system}~\cite{Engelfriet1998}, which is simply a net along with a chosen
+initial marking.
+
+Graphically, we represent a marked net as a Petri net with tokens on each place
+in the initial marking, and shading on each place in the target marking. For
+example, consider the net illustrated in \figref{fig:markedPNet}, representing
+a fork-join system containing 2 tasks; the initial marking is $\setof{\aPlace_0}$
+(representing the initial, ready state of the system) and the target marking is
+$\setof{\aPlace_3,\aPlace_4}$, where both tasks have finished, but have not
+been joined.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pn]
+    \node[petriplace]      (p0) [pnblabel=below:$\aPlace_0$, tokens=1]        {};
+    \node[petritransition] (t0) [right=of p0, pnblabel=below:$\aTrans_{\text{fork}}$]   {};
+    \node[petriplace]      (p1) [above right=of t0, pnblabel=below:$\aPlace_1$]   {};
+    \node[petriplace]      (p2) [below right=of t0, pnblabel=below:$\aPlace_2$] {};
+    \node[petritransition] (t1) [right =of p1, pnblabel=below:$\aTrans_{\text{finish1}}$]   {};
+    \node[petritransition] (t2) [right =of p2, pnblabel=below:$\aTrans_{\text{finish2}}$] {};
+    \node[petriplace, wantedTokenPlace] (p3) [right =of t1, pnblabel=below:$\aPlace_3$]   {};
+    \node[petriplace, wantedTokenPlace] (p4) [right =of t2, pnblabel={[overlay=false]below:$\aPlace_4$}] {};
+    \node[petritransition] (t3) [below right=of p3, pnblabel=below:$\aTrans_{\text{join}}$] {};
+
+    \draw (p0) edge[petriarr] (t0);
+    \foreach \x/\t/\y in {p1/t1/p3, p2/t2/p4} {
+        \draw (t0) edge[petriarr, o0i180] (\x);
+        \draw (\x) edge[petriarr] (\t);
+        \draw (\t) edge[petriarr] (\y);
+        \draw (\y) edge[petriarr, o0i180] (t3);
+    }
+    \draw (t3) edge[petriarr,out=80, in=90,looseness=1.2] (p0);
+
+\end{tikzpicture}
+    \caption{Marked Petri net representing a fork-join system}
+    \label{fig:markedPNet}
+\end{figure}
+
+Given a marked Petri net and the LTS semantics of the net, we can construct
+a NFA, recognising the set of traces between the pair of states:
+
+\begin{definition}[NFA Semantics of a marked Petri Net]\label{defn:PnNFA}
+    Given a marked net, $(\aPn, \aMarkedNetInitial, \aMarkedNetTarget)$, the
+    NFA semantics extends the LTS semantics: the initial state is
+    $\aMarkedNetInitial$ and the set of accepting states
+    is the singleton set $\setof{\aMarkedNetTarget}$.
+\end{definition}
+
+\begin{example}
+    Consider the LTS shown in \figref{fig:exampleLTSSemantics}, representing
+    the semantics of the net in \figref{fig:examplePetriNet}. Take the initial
+    state to be the original marking shown in \figref{fig:examplePetriNet},
+    i.e. $\setof{\aPlace_0,\aPlace_1}$, and the accepting states to be
+    $\setof{\setof{\aPlace_2,\aPlace_3,\aPlace_5}}$. Now, the language of the
+    NFA, $\aNFA$, obtained from the LTS and chosen initial/accepting states is
+    simple:
+    \[
+        \langOf{\aNFA} =
+            \setof{ \sequenceof{\setof{t_1,t_2}}
+                  , \sequenceof{\setof{t_2},\setof{t_1}}
+                  , \sequenceof{\setof{t_1},\setof{t_2}}
+                  }
+    \] that is, we can either fire $t_2$ and $t_1$ in order, or concurrently,
+    to reach the desired marking.
+\end{example}
+
+A simple observation following from \remref{rem:validTraceImpliesFiring}
+is that a trace being a member of the language of an NFA for a particular
+reachability problem implies that the reachability problem is satisfiable:
+
+\begin{remark}\label{rem:nonEmptyLanguageImpliesReachability}
+If $\aNFAWord \in \langOf{\aNFA}$, where $\aNFA$ is the NFA representing the
+reachability problem for a given marked net, then $\aNFAWord$ is a
+\emph{witness} of the final marking being reachable from the initial marking in
+the net. Generally, if $\langOf{\aNFA} \neq \emptyset$, then the reachability
+problem \emph{is} satisfiable, whereas if $\langOf{\aNFA} = \emptyset$, then
+the reachability problem is \emph{not} satisfiable.
+\end{remark}
+
+Finally, we close this section by giving the definition of a slight
+modification of the reachability problem, that of \emph{coverability}.
+Coverability of a marking, $\aPnMarking$, checks if any marking that
+\emph{contains} $\aPnMarking$ as a \emph{sub-marking} is reachable:
+
+\begin{definition}[Sub-marking]
+    Given a Petri net, $\aPn$, and two of its markings, $\aPnMarking$ and
+    $\bPnMarking$, we say that $\aPnMarking$ is a sub-marking of $\bPnMarking$,
+    written $\aPnMarking \subPnMarking \bPnMarking$, iff $\forall \aPlace \in
+    \aPnMarking, \bPlace \in \bPnMarking$.
+\end{definition}
+
+\begin{definition}[Coverability]
+    Given a marked Petri net, $(\aPn, \aMarkedNetInitial, \aMarkedNetTarget)$,
+    we say that $\aMarkedNetTarget$ is coverable if $\exists \aPnMarking \,.\,
+    \aMarkedNetTarget \subPnMarking \aPnMarking$ such that the reachability
+    problem $(\aPn, \aMarkedNetInitial, \aPnMarking)$ is satisfiable.
+\end{definition}

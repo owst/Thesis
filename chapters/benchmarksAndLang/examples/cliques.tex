@@ -1,0 +1,120 @@
+\newcommand{\cliqueC}{\component{clique1}}
+
+A (directed) clique is a (directed) graph where there is an edge between every
+pair of nodes. Similarly, a clique net has transitions such that for every pair
+of distinct places, there are transitions to-and-from the places.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb, every edge/.append style={barr}]
+    \node (p0) [pnbplace] {};
+
+    \drawBoundaries[1][1.5]{0}{0}
+
+    \rBPortAt{0.2}{1}
+    \rBPortAt{0.8}{2}
+    \lBPortAt{0.2}{1}
+    \lBPortAt{0.8}{2}
+
+    \pnbarr{l1}{r1}
+    \labelledpnbarr{p0.out}{l1}{}{o0i0}{pos=0.7}
+    \labelledpnbarr{r1}{p0.in}{}{o180i180,pnbarrstyle1}{pos=0.3}
+
+    \pnbarr{l2}{r2}
+    \pnbarr{p0.out}{r2}
+    \pnbarr{l2}{p0.in}
+\end{tikzpicture}
+\caption{$\cliqueC \withNetType{2}{2}$}
+\label{fig:cliqueC}
+\end{figure}
+
+Perhaps surprisingly, a compact, component-wise specification can be given for
+cliques; if we specify a single ``clique component'', we can construct a
+(suitably terminated) sequence of such components to arrive at the
+specification of a clique. Indeed, a single clique component, \cliqueC{}, is
+illustrated in \figref{fig:cliqueC}. Such a component has transitions that
+allow it to produce tokens at the next and previous components, consume tokens
+from the next and previous components, and pass tokens through from left to
+right boundaries and vice-versa (it is these last transitions that allow, say,
+the $3^{\text{rd}}$ component to produce tokens at the $1^\text{st}$, only via
+connections to the $2^\text{nd}$. Using the previously-defined $\injectorC$
+component, we can inject a single token into the clique system.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+
+\node (0) [pnbplace] {};
+\node (1) [pnbplace, right=of 0] {};
+\node (2) [pnbplace, right=of 1] {};
+\node (i) [pnbplace, left=of 0, tokens=1] {};
+
+\drawBoundaries[1][1.5]{0}{0}
+
+\labelledpnbarr{0.out}{1.in}{}{}{}
+\labelledpnbarr{0.out}{2.in}{}{bend left=45}{}
+\labelledpnbarr{1.out}{2.in}{}{}{}
+\labelledpnbarr{1.out}{0.in}{}{o-60i240}{}
+\labelledpnbarr{2.out}{0.in}{}{o-60i240}{}
+\labelledpnbarr{2.out}{1.in}{}{o60i120,pnbarrstyle1}{}
+\labelledpnbarr{i.out}{0.in}{}{}{}
+
+
+\end{tikzpicture}
+\caption{\cliqueSys{3}}
+\label{fig:clique3}
+\end{figure}
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[schematicnode/.append style={minimum height=2.2cm}, schematic]
+    \node[schematicnode] (1) []           {$\ltermC{2}$};
+    \node[schematicnode] (3) [minimum height=1cm, alignbot=1] {\injectorC};
+    \node[schematicnode] (2) [minimum height=1cm, aligntop=1, samewidthas={3 and 3}] {\idC{}};
+    \node[schematicnode] (4) [aligntop=2] {\cliqueC};
+    \node[schematicnode] (5) [right=of 4] {\cliqueC};
+    \node[schematicnode] (6) [right=of 5] {\cliqueC};
+    \node[schematicnode] (7) [right=of 6] {$\rtermC{2}$};
+
+    \newcommand{\leftPorts}[1]{
+        \drawBoundaryPortsOn{#1}{2}{0}
+    }
+    \newcommand{\rightPorts}[1]{
+        \drawBoundaryPortsOn{#1}{0}{2}
+    }
+
+    \drawBoundaryPortsOn{3}{1}{1}
+    \drawBoundaryPortsOn{2}{1}{1}
+
+    \foreach \i in {1,4,5,6}{%
+        \rPortAtHeightOf{\i}{2-r1}{1}
+        \rPortAtHeightOf{\i}{3-r1}{2}
+    }
+    \foreach \i in {4,5,6,7}{%
+        \lPortAtHeightOf{\i}{2-l1}{1}
+        \lPortAtHeightOf{\i}{3-l1}{2}
+    }
+
+    \draw (1-r1) -- (2-l1);
+    \draw (1-r2) -- (3-l1);
+    \draw (2-r1) -- (4-l1);
+    \draw (3-r1) -- (4-l2);
+
+    \foreach \i in {4,...,6} {
+        \pgfmathtruncatemacro{\next}{\i + 1}
+        \foreach \p in {1,2}{
+            \draw (\i-r\p) -- (\next-l\p);
+        }
+    }
+\end{tikzpicture}
+\caption{Schematic of \cliqueSys{3}} \label{fig:cliqueschematic}
+\label{fig:cliqueSchematic}
+\end{figure}
+
+As an example, \cliqueSys{3} is illustrated in \figref{fig:clique3}, with its
+schematic shown in \figref{fig:cliqueSchematic}. Cliques of arbitrary size are
+defined:
+\begin{flalign*}
+    \cliqueSys{\aN} \defeq
+    \compExpr{\ltermC{2}}{\compExpr{\parens{\tensExpr{\idC{}}{\injectorC}}}{\compExpr{\sequenceExpr{\aN}{\cliqueC}}{\rtermC{2}}}}
+\end{flalign*}

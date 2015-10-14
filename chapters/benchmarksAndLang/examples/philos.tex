@@ -1,0 +1,118 @@
+The \diningphilosophersSys{\aN} system is the classic example of a concurrent
+system modelled by Petri nets. A natural compositional specification is to
+describe components for individual philosophers and forks, which are connected
+in a loop. The \philoC{} component, shown in \figref{fig:philoC}, attempts to
+take the forks on its left and right (in either order), before eating and
+replacing the forks. A \forkC{} component, illustrated in \figref{fig:forkC},
+can be taken and replaced from either its left or right.
+
+\begin{figure}[ht]%
+\centering
+\begin{subfigure}{0.6\textwidth}%
+\centering
+\begin{tikzpicture}[pnb]
+\node[pnbplace] (none)  [tokens=1, rotate=270] {};
+\node[pnbplace] (left)  [below left of=none, rotate=270] {};
+\node[pnbplace] (right) [below right of=none, rotate=270] {};
+\node[pnbplace] (both)  [below left of=right, rotate=270] {};
+
+\drawBoundaries{2}{2}
+
+\lBoundaryLabel{1}{takeL}
+\lBoundaryLabel{2}{putL}
+\rBoundaryLabel{1}{takeR}
+\rBoundaryLabel{2}{putR}
+
+\labelledpnbarr[noneright]{none.out}{right.in}{}{pnbarrstyle1, o-90i90}{pos=0.9}
+\draw (r1) edge[barr, pnbarrstyle1, out=180, in=120] (noneright);
+
+\labelledpnbarr[noneleft]{none.out}{left.in}{}{pnbarrstyle2, o-90i90}{pos=0.9}
+\draw (l1) edge[barr, pnbarrstyle2, out=0, in=60] (noneleft);
+
+\labelledpnbarr[rightboth]{right.out}{both.in}{}{pnbarrstyle1, o-90i90}{}
+\draw (l1) edge[barr, pnbarrstyle1, out=30, in=160] (rightboth);
+
+\labelledpnbarr[leftboth]{left.out}{both.in}{}{pnbarrstyle2,o-90i90}{}
+\draw (r1) edge[barr, pnbarrstyle2, out=150, in=20] (leftboth);
+
+\labelledpnbarr[bothnone]{both.out}{none.in}{}{out=-150, in=150}{pos=0.1}
+
+\draw (l2) edge[barr, out=-70, in=150] (bothnone);
+\draw (r2) edge[barr, out=200, in=-45] (bothnone);
+\end{tikzpicture}%
+\caption{\philoC{} \withNetType{2}{2}}
+\label{fig:philoC}
+\end{subfigure}%
+\begin{subfigure}{0.4\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, rotate=90] {};
+
+    \drawBoundaries{2}{2}
+
+    \labelledpnbarr{l1}{p0.out}{}{barr, out=0, in=90}{}
+    \labelledpnbarr{r1}{p0.out}{}{barr, out=180, in=90}{}
+    \labelledpnbarr{l2}{p0.in}{}{barr, out=0, in=-90}{}
+    \labelledpnbarr{r2}{p0.in}{}{barr, out=180, in=-90}{}
+\end{tikzpicture}
+\caption{\forkC{} \withNetType{2}{2}}
+\label{fig:forkC}
+\end{subfigure}%
+\caption{Dining Philosophers component nets}
+\end{figure}
+
+To form a ``dining table'' of philosophers, a sequence of alternating
+philosopher/forks is created, before connecting the first philosopher to the
+last fork to close the `loop'' of the table. The following expression embodies
+this specification:
+\begin{flalign*}
+    \diningphilosophersSys{\aN} \defeqsp
+    &\bindExpr
+        {\varName{philoFork}}
+        {\compExpr{\philoC}{\forkC}} \\
+        &\compExpr{\etaC{2}}{\compExpr{\parens{\tensExpr{\sequenceExpr{\aN}{\varName{philoFork}}}{\idC{2}}}}{\epsilonC{2}}}
+\end{flalign*}
+The schematic for \diningphilosophersSys{2} is shown in
+\figref{fig:diningphilosophersschematic}.
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[schematic]
+    \def\upperSizeRatio{4/8}
+    \def\lowerSizeRatio{3/8}
+
+    \tikzset{main/.append style={minimum height=\mainsize}}
+    \tikzset{int21/.append style={minimum height=\upperSizeRatio * \mainsize}}
+    \tikzset{int22/.append style={minimum height=\lowerSizeRatio * \mainsize}}
+
+    \node [schematicnode] (eta) [main]                {$\etaC{2}$};
+    \node [schematicnode] (ph1) [int21, aligntop=eta] {\philoC};
+    \node [schematicnode] (fk1) [int21, aligntop=ph1] {\forkC};
+    \node [schematicnode] (ph2) [int21, aligntop=fk1] {\philoC};
+    \node [schematicnode] (fk2) [int21, aligntop=ph2] {\forkC};
+
+    \node [schematicnode] (id) [int22, alignbot=eta, samewidthas={ph1 and fk2}] {$\idC{2}$};
+    \node [schematicnode] (epsilon) [main, aligntop=fk2] {$\epsilonC{2}$};
+
+    \foreach \n in {ph1,ph2,fk1,fk2,id}{%
+        \drawBoundaryPortsOn{\n}{2}{2}
+    }
+
+    \foreach \sameas/\num in {ph1-l1/1, ph1-l2/2, id-l1/3, id-l2/4}{%
+        \lPortAtHeightOf{epsilon}{\sameas}{\num}
+        \rPortAtHeightOf{eta}{\sameas}{\num}
+    }
+
+    \foreach \from/\to in {eta/ph1, ph1/fk1, fk1/ph2, ph2/fk2, fk2/epsilon}{%
+         \draw(\from-r1) -- (\to-l1);
+         \draw(\from-r2) -- (\to-l2);
+    }
+
+    \draw(eta-r3) -- (id-l1);
+    \draw(eta-r4) -- (id-l2);
+    \draw(epsilon-l3) -- (id-r1);
+    \draw(epsilon-l4) -- (id-r2);
+\end{tikzpicture}
+\caption{Schematic of \diningphilosophersSys{2}}
+\label{fig:diningphilosophersschematic}
+\end{figure}

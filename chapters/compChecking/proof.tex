@@ -1,0 +1,203 @@
+\section{Proof of Correctness}\label{sec:compCheckingProof}
+
+In the previous section we gave an intuitive view of the first step of our
+compositional approach to checking reachability in systems modelled by \DSL{}
+expressions. To complete this chapter, we now prove that
+\algref{alg:compositionalAlgorithm} is correct. Correctness in this case refers
+to obtaining isomorphic \TNFA{}s by \algref{alg:compositionalAlgorithm} and
+\algref{alg:naiveAlgorithm}.
+
+First, we give a formal definition of PNB expressions. As discussed in
+\remref{rem:evalExpr}, we evaluate \DSL{} expressions to PNB
+expressions, which are formed of two types of composition and component nets.
+Therefore, we represent PNB expressions using \emph{wiring expressions}; a
+wiring expression is the abstract syntax tree of a PNB expression, where
+internal nodes are labelled with either $\comp$ or $\tensor$, and leaves are
+variables. The grammar of wiring expressions is simply:
+\[
+    T \bnfEq x \bnfSep T \comp T \bnfSep T \tensor T
+\]
+where we again take `$\comp$' and `$\tensor$' to be left associative, with
+`$\tensor$' binding tighter than `$\comp$'.
+
+Now, a wiring expression, $\wiringExpr$, together with an assignment map,
+$\wiringVarAssign$, taking variables to \emph{marked} PNBs, can be evaluated
+recursively to obtain a single marked PNB, which we write as
+$\wiringExprToPNB{\wiringExpr}{\wiringVarAssign}$. However, as mentioned
+in~\remref{rem:compositionMarkedPNB}, before we can define this evaluation, we
+require definitions of synchronous and tensor composition on \emph{marked} PNBs:
+\begin{align*}
+    \parens{\aPNB, \aPNBMarking, \bPNBMarking} \comp
+    \parens{\bPNB, \cPNBMarking, \dPNBMarking} &=
+    \parens{\aPNB \comp \bPNB, \aPNBMarking \disjointUnion \cPNBMarking,
+        \bPNBMarking \disjointUnion \dPNBMarking} \\
+    \parens{\aPNB, \aPNBMarking, \bPNBMarking} \tensor
+    \parens{\bPNB, \cPNBMarking, \dPNBMarking} &=
+    \parens{\aPNB \tensor \bPNB, \aPNBMarking \disjointUnion \cPNBMarking,
+        \bPNBMarking \disjointUnion \dPNBMarking}
+\end{align*}
+we assure ourselves that the definition is correct by a simple lemma:
+\begin{lemma}\label{lem:compositeMarkings}
+    For PNBs, $\aPNB$ and $\bPNB$, $\aPNBMarking$ and $\bPNBMarking$ are
+    markings of $\aPNB$ and $\bPNB$, respectively, iff $\aPNBMarking
+    \disjointUnion \bPNBMarking$ is a marking of $\aPNB \comp \bPNB$ (and
+    $\aPNB \tensor \bPNB$).
+\end{lemma}
+\begin{proof}
+    Immediate, since $\places{\aPNB \comp \bPNB} = \places{\aPNB}
+    \disjointUnion \places{\bPNB} = \places{\aPNB \tensor \bPNB}$.
+\end{proof}
+
+Now we may define $\wiringExprToPNB{\wiringExpr}{\wiringVarAssign}$:
+\begin{align*}
+    \wiringExprToPNB{x}{\wiringVarAssign} &= \wiringVarAssign(x) \\
+    \wiringExprToPNB{\wiringExpr_1 \comp \wiringExpr_2}{\wiringVarAssign} &=
+        \wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}
+        \comp
+        \wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign} \\
+    \wiringExprToPNB{\wiringExpr_1 \tensor \wiringExpr_2}{\wiringVarAssign} &=
+        \wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}
+        \tensor
+        \wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign}
+\end{align*}
+where we implicitly assume that variable assignments are compatible with
+$\wiringExpr$, in the sense that only nets with compatible boundaries are
+composed. However, recall that in \secref{sec:lang}, we introduced a type
+system for the more expressive language, \DSL{}, which disallows invalid
+expressions, and could be trivially adapted to wiring expressions.
+
+\begin{example}\label{ex:wiringDecomp}
+The following are the wiring expression and variable assignment corresponding
+to~\eqref{eq:buf3}:
+\[
+    \wiringExpr
+    =
+    \wiringVar_1 \comp
+    \wiringVar_2 \comp
+    \wiringVar_2 \comp
+    \wiringVar_2 \comp \wiringVar_3
+\qquad
+    \wiringVarAssign
+    =
+    \setof{
+    \wiringVar_1 \mapsto \lendC{},
+    \wiringVar_2 \mapsto \bufferC{},
+    \wiringVar_3 \mapsto \rendC{}
+    }
+\]
+observe that $\wiringExprToPNB{\wiringExpr}{\wiringVarAssign}$ is isomorphic to
+the PNB shown in \figref{fig:markedbuffer3}.
+\end{example}
+
+At this point, we have defined the operation to collapse a wiring expression
+with corresponding variable assignment, into a single composite \emph{PNB}. We
+now turn to defining an operation to collapse a wiring expression into a single
+\emph{\TNFA{}}.
+
+Given a wiring expression $\wiringExpr$ and variable assignment
+$\wiringVarAssign$ we can recursively translate $\wiringExpr$ into a \TNFA{},
+which we write as $\wiringExprToTNFA{\wiringExpr}{\wiringVarAssign}$. Recall
+from~\defnref{defn:PNBTNFA}, that for a marked PNB $\aPNB$, $\PNBToTNFA{\aPNB}$
+is the corresponding \TNFA{} encoding reachability. We define
+$\wiringExprToTNFA{\wiringExpr}{\wiringVarAssign}$ as follows:
+\begin{align*}
+    \wiringExprToTNFA{x}{\wiringVarAssign} &= \PNBToTNFA{\wiringVarAssign(x)} \\
+    \wiringExprToTNFA{\wiringExpr_1 \comp \wiringExpr_2}{\wiringVarAssign} &=
+        \wiringExprToTNFA{\wiringExpr_1}{\wiringVarAssign}
+        \comp
+        \wiringExprToTNFA{\wiringExpr_2}{\wiringVarAssign} \\
+    \wiringExprToTNFA{\wiringExpr_1 \tensor \wiringExpr_2}{\wiringVarAssign} &=
+        \wiringExprToTNFA{\wiringExpr_1}{\wiringVarAssign}
+        \tensor
+        \wiringExprToTNFA{\wiringExpr_2}{\wiringVarAssign}
+\end{align*}
+
+Finally, we can state and prove correctness: converting a wiring expression to
+a PNB and \emph{then} constructing its \TNFA{} semantics is equivalent to
+\emph{directly constructing} the \TNFA{} semantics of the wiring expression.
+This property is known as \emph{compositionality}.
+
+\def\amPNB{\parens{\aPNB, \aPNBMarking, \bPNBMarking}}
+\def\bmPNB{\parens{\bPNB, \cPNBMarking, \dPNBMarking}}
+\begin{proposition}[Compositionality]\label{prop:compsem}
+    $\wiringExprToTNFA{\wiringExpr}{\wiringVarAssign}
+     \NFAIso \PNBToTNFA{\wiringExprToPNB{\wiringExpr}{\wiringVarAssign}}$
+\end{proposition}
+\begin{proof}
+    We proceed by induction on the structure of $\wiringExpr$:
+    \begin{itemize}
+        \item In the base case of a variable, the result is trivial: the
+            \TNFA{}s on both sides are equal by definition.
+        \item In the case of $\wiringExpr_1 \comp \wiringExpr_2$, we must show
+            that $\wiringExprToTNFA{\wiringExpr_1 \comp
+            \wiringExpr_2}{\wiringVarAssign} \NFAIso
+            \PNBToTNFA{\wiringExprToPNB{\wiringExpr_1 \comp
+            \wiringExpr_2}{\wiringVarAssign}}$. After expanding the definitions
+            of $\wiringExprToTNFA{-}{\wiringVarAssign}$ and
+            $\wiringExprToPNB{-}{\wiringVarAssign}$, we obtain:
+            \begin{equation}\label{eqn:foo}
+                \wiringExprToTNFA{\wiringExpr_1}{\wiringVarAssign}
+                    \comp
+                    \wiringExprToTNFA{\wiringExpr_2}{\wiringVarAssign}
+                 \NFAIso \PNBToTNFA{\wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}
+                    \comp
+                    \wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign}}
+            \end{equation}
+            To proceed, we apply the \IH{} to $\wiringExpr_1$ and $\wiringExpr_2$,
+            obtaining
+            \begin{equation}\label{eqn:foo1}
+                \wiringExprToTNFA{\wiringExpr_1}{\wiringVarAssign}
+             \NFAIso \PNBToTNFA{\wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}}
+            \end{equation}
+            and
+            \begin{equation}\label{eqn:foo2}
+            \wiringExprToTNFA{\wiringExpr_2}{\wiringVarAssign}
+             \NFAIso \PNBToTNFA{\wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign}}
+            \end{equation}
+            Substituting~\ref{eqn:foo1} and~\ref{eqn:foo2} into~\ref{eqn:foo}
+            gives:
+            \[
+              \PNBToTNFA{\wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}}
+              \comp
+              \PNBToTNFA{\wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign}}
+              \NFAIso
+              \PNBToTNFA{\wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}
+                         \comp
+                         \wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign}}
+            \]
+            Now, letting, $\amPNB =
+            \wiringExprToPNB{\wiringExpr_1}{\wiringVarAssign}$ and
+            $\bmPNB =
+            \wiringExprToPNB{\wiringExpr_2}{\wiringVarAssign}$, we obtain:
+            \[
+              \PNBToTNFA{\amPNB} \comp \PNBToTNFA{\bmPNB}
+              \NFAIso
+              \PNBToTNFA{\amPNB \comp \bmPNB}
+            \]
+            Now, by \propref{prop:functorComps}, the underlying
+            \TLTS{}s are isomorphic, thus it only remains to show that states
+            are initial/accepting in the LHS iff they are in the RHS\@.
+            A state of $\PNBToTNFA{\amPNB} \comp \PNBToTNFA{\bmPNB}$, is
+            $\pairof{\aNFAState}{\bNFAState} \in \powerset{\places{\aPNB}}
+            \times 2^{\places{\bPNB}}$, and
+            is initial iff $\aNFAState = \aPNBMarking$ and $\bNFAState =
+            \cPNBMarking$; applying the state component of the \TLTS{}
+            isomorphism, we obtain the state
+            $\setBuilder{\inl{\aPlace}}{\aPlace \in \aNFAState} \union
+            \setBuilder{\inr{\bPlace}}{\bPlace \in \bNFAState}$, i.e.
+            $\aPNBMarking \disjointUnion \bPNBMarking$, which is
+            initial in $\PNBToTNFA{\amPNB \comp \bmPNB}$ by the definition of
+            composition on marked PNBs. In the reverse direction, a state of
+            $\PNBToTNFA{\amPNB \comp \bmPNB}$, is $\cNFAState \in
+            \powerset{\places{\aPNB} \disjointUnion \places{\bPNB}}$, and
+            initial iff $\cNFAState = \aPNBMarking \disjointUnion
+            \cPNBMarking$. The state component of the isomorphism partitions
+            this state into $\pairof{\aPNBMarking}{\cPNBMarking} \in
+            \powerset{\places{\aPNB}} \times 2^{\places{\bPNB}}$, which is
+            initial in $\PNBToTNFA{\amPNB} \comp \PNBToTNFA{\bmPNB}$.
+            The case for accepting states follows the same argument.
+        \item Finally, the case for $\wiringExpr_1 \tensor \wiringExpr_2$, is
+            similar, but using \propref{prop:functorTensors} in place of
+            \propref{prop:functorComps}.
+    \end{itemize}
+\end{proof}

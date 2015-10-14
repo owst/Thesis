@@ -1,0 +1,64 @@
+\label{sec:tweaks}
+Due to the performance penalty due to non-associativity, mentioned in the
+previous section, we specify some of our benchmarks in a ``lower-level'' style,
+to obtain the associativity we require. In each case, the alternative
+expression leads to right-associated compositions, rather than left-associated
+compositions.
+
+\bufferSys{\aN}(\secref{sec:example-buffer}):
+\begin{align*}
+    \textbf{old: }\bufferSys{\aN} &\defeq
+        \lendC{} \comp \bufferC^\aN \comp \rendC{}\\
+    \textbf{new: }\bufferSys{\aN} &\defeq
+    \compExpr{\lendC{}}
+        {\natRecursionExpr{\aN}
+                          {\rendC}
+                          {\parens{\lamExpr{\varExpr}
+                                   {\netType{1}{0}}
+                                   {\compExpr{\bufferC}{\varExpr}}}}}
+\end{align*}
+
+\iteratedchoiceSys{\aN}(\secref{sec:example-iter-choice}):
+\begin{align*}
+    \textbf{old: } \iteratedchoiceSys{\aN} &\defeq
+    \compExpr{\addtokC}{\compExpr{\sequenceExpr{\aN}{\choiceC}}{\rendC{}}}\\
+    \textbf{new: } \iteratedchoiceSys{\aN} &\defeq
+    \compExpr{\addtokC}{\natRecursionExpr{\aN}{\rendC{}}{
+        \parens{\lamExpr{\varExpr}{\netType{1}{0}}
+            {\compExpr{\choiceC}{\varExpr}}}}}
+\end{align*}
+
+\overtakeSys{\aN} (\secref{sec:example-over}):
+\begin{align*}
+\textbf{old: }\overtakeSys{\aN} \defeqsp&
+    \bindExpr
+        {\varName{iLock}}
+        {\compExpr{\rLockInterfaceC}{\compExpr{\lockC}{\fLockInterfaceC}}}
+        {}\\
+    &\bindExpr
+        {\varName{lockCar}}
+        {\compExpr{\varName{iLock}}{\carC}}
+        {}\\
+    & \compExpr
+        {\ltermC{4}}
+        {\compExpr{\sequenceExpr{\aN}{\varName{lockCar}}}
+                  {\compExpr{\varName{iLock}}
+                            {\rtermC{4}}}}\\
+    \textbf{new: }\overtakeSys{\aN} \defeqsp&
+    \bindExpr
+        {\varName{iLock}}
+        {\compExpr{\rLockInterfaceC}{\compExpr{\lockC}{\fLockInterfaceC}}}
+        {}\\
+    &\bindExpr
+        {\varName{lockCar}}
+        {\compExpr{\varName{iLock}}{\carC}}
+        {}\\
+    & \compExpr
+        {\ltermC{4}}
+        {\natRecursionExpr
+            {\aN}
+            {\parens{\compExpr{\varName{iLock}}{\rtermC{4}}}}
+            {\parens{\lamExpr{\varExpr}{\netType{4}{0}}
+                {\compExpr{\varName{lockCar}}{\varExpr}}}}
+        }
+\end{align*}

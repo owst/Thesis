@@ -1,0 +1,1206 @@
+\section{Petri nets with boundaries}
+
+Petri nets with boundaries (PNBs) extend the definition of the EN nets introduced in the previous
+section by adding left and right boundaries, to which transitions of the net can also connect. PNBs
+are composed using two operations: a synchronising composition (an intuitive example is illustrated
+in \figref{fig:examplePNBcomposition}; the graphical notation will be explained shortly), and a
+non-interacting, parallel composition. Indeed, by allowing transitions to connect to boundary
+ports, their behaviour can be \emph{partially} specified; synchronously composing PNBs
+\emph{completes} the specification of transitions by
+supplementing the places that the transition connects to.
+
+\begin{definition}[Petri net with Boundaries]
+    $ $\\
+    A PNB is a 9-tuple:
+    $(\aPNBAllPlaces, \aPNBAllTrans, \pre{-}, \post{-}, l, r, \source{-},
+    \target{-}, \contention)$, where:
+    \begin{itemize}
+        \item $(\aPNBAllPlaces, \aPNBAllTrans, \pre{-}, \post{-})$ is an EN,
+        \item $l,r \in \N$ are respectively, the left and the right
+            boundaries,
+        \item $\source{-} : \aPNBAllTrans \to \powerset{\ordinal{l}}$ and
+            $\target{-} : \aPNBAllTrans \to \powerset{\ordinal{r}}$ connect a
+            transition to the left and right boundaries,
+        \item $\contention$ is a contention relation (see
+            Definition~\ref{defn:contentionRelation} below).
+    \end{itemize}
+\end{definition}
+
+We will refer to PNBs simply as nets herein; when we need to be precise we will
+explicitly name the type of nets being considered. As the definitions of
+$\pre{-},\post{-}$ were lifted to sets of transitions, so are $\source{-},
+\target{-}$: for a PNB, $\aPNB$, and $\aPNBTransSet \subseteq \trans{\aPNB}$:
+\[
+    \source{\aPNBTransSet} \defeq \bigcup_{\aTrans \in \aPNBTransSet}\source{\aTrans}
+\] and similarly for
+$\target{\aPNBTransSet}$. We frequently need to state the boundaries of a given
+PNB, writing $\aPNB \withNetType{\aN}{\bN}$ to indicate that $\aPNB$ has left
+and right boundaries $\aN$ and $\bN$, respectively.
+
+\begin{figure}[ht]
+\centering
+\scalebox{0.9}{
+\begin{subfigure}{0.3\textwidth}
+\captionsetup{labelformat=empty}
+    \centering
+\begin{tikzpicture}[node distance=1.25cm]
+	\node[pnbplace, tokens=1] (p0) {};
+	\node[pnbplace, below of=p0, rotate=180] (p1) {};
+	\node[node distance=0.75cm, below of=p1, pnbplace, draw=white, fill=white] (p2) {};
+	\node[below of=p2, pnbplace, draw=white] (p3) {};
+
+	\drawBoundaries{0}{0}
+	\rBAlignedWith{p0}{1}
+	\rBAlignedWith{p1}{2}
+	\rBAlignedWith{p2}{3}
+	\rBAlignedWith{p3}{4}
+
+    \labelledpnbarr{p0.out}{r1}{$t$}{o0i180}{}
+    \labelledpnbarr{p1.in}{r2}{$u$}{o0i180}{}
+    \labelledpnbarr{r4}{p3}{$v$}{out=180, in=-60}{}
+\end{tikzpicture}
+\caption{$\aPNB\withNetType{0}{4}$}
+\end{subfigure}%
+\begin{subfigure}{0.3\textwidth}
+\captionsetup{labelformat=empty}
+    \centering
+\begin{tikzpicture}[node distance=1.25cm]
+	\node[pnbplace] (p0) {};
+	\node[pnbplace, below of=p0, draw=white, fill=white] (p1) {};
+	\node[node distance=0.75cm, below of=p1, pnbplace, rotate=180, tokens=1] (p2) {};
+	\node[below of=p2, pnbplace, rotate=180, tokens=1] (p3) {};
+
+	\drawBoundaries{0}{0}
+	\lBAlignedWith{p0}{1}
+	\lBAlignedWith{p1}{2}
+	\lBAlignedWith{p2}{3}
+	\lBAlignedWith{p3}{4}
+
+    \labelledpnbarr{p0.in}{l1}{$a$}{o180i0}{}
+    \labelledpnbarr{l1}{l2}{right:$b$}{bend left=60}{}
+    \labelledpnbarr{p2.out}{l3}{$c$}{o180i0}{}
+    \labelledpnbarr{p3.out}{l4}{$d$}{o180i0}{}
+\end{tikzpicture}
+\caption{$\bPNB\withNetType{4}{0}$}
+\end{subfigure}%
+\begin{subfigure}{0.4\textwidth}
+\captionsetup{labelformat=empty}
+\centering
+\begin{tikzpicture}[node distance=1.25cm]
+	\node[pnbplace, tokens=1] (p0) {};
+	\node[pnbplace, below of=p0, rotate=180] (p1) {};
+	\node[node distance=0.75cm, below of=p1, pnbplace, draw=white, fill=white] (p2) {};
+	\node[below of=p2, pnbplace, draw=white] (p3) {};
+
+	\node[pnbplace, node distance=1.5cm, right of=p0] (r0) {};
+	\node[pnbplace, below of=r0, draw=white, fill=white] (r1) {};
+	\node[node distance=0.75cm, below of=r1, pnbplace, rotate=180, tokens=1] (r2) {};
+	\node[below of=r2, pnbplace, rotate=180, tokens=1] (r3) {};
+	\drawBoundaries{0}{0}
+
+    \labelledpnbarr{r0.in}{p0.out}{{[yshift=0.25cm]$\pairof{\setof{t}}{\setof{a}}$}}{}{}
+    \labelledpnbarr{p0.out}{p1.in}{below right:$\pairof{\setof{t,u}}{\setof{b}}$}{bend left=60}{}
+    \labelledpnbarr{r3.out}{p3.out}{below left:$\pairof{\setof{v}}{\setof{d}}$}{o-180i-60}{}
+\end{tikzpicture}
+\caption{$\aPNB \comp \bPNB\withNetType{0}{0}$}
+\end{subfigure}
+}
+\caption{Example Synchronous Composition}
+\label{fig:examplePNBcomposition}
+\end{figure}
+
+
+\subsection{Graphical Notation}\label{sec:PNBgraphicalNotation}
+
+PNBs are represented using an alternative to the classic Petri net graphical
+notation. The alternative notation is lighter weight than the classic notation,
+and is more intuitive when reasoning about and presenting PNB compositions.
+
+In the alternative graphical representation, each place is drawn as
+\emph{directed}, having an \textit{in} and \textit{out} port, drawn as a
+triangle pointing into and out of the place, respectively. Transitions are
+undirected links that connect an arbitrary set of boundary and place ports.
+The standard graphical presentation of Petri nets has directed arcs, where the
+direction is either ``place to transition'' or ``transition to place'', as
+determined by the pre- and post-sets of each transition.
+
+With our alternative notation, then, the pre-set of a transition is just the
+set of places to which the transition is connected via the \textit{out} port,
+symmetrically, its post-set is the set of places to which the
+transition is connected via the \textit{in} port.
+
+In order to distinguish individual transitions and increase legibility,
+individual transitions are drawn with a small perpendicular mark.
+
+We demonstrate the graphical notation in \figref{fig:PNBExamplePetriNet}, which
+represents the same Petri net as that of \figref{fig:examplePetriNet}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbplace] {};
+        \node (p1) [pnbplace, above right=of p0] {};
+        \node (p2) [pnbplace, below right=of p0] {};
+        \node (p3) [pnbplace, right=of p1] {};
+        \node (p4) [pnbplace] at (p0 -| p3) {};
+        \node (p5) [pnbplace, right=of p2] {};
+        \node (p6) [pnbplace, right=of p4] {};
+
+        \labelledpnbarr{p0.out}{p1.in}{}{}{}
+        \labelledpnbarr{p0.out}{p2.in}{}{}{}
+
+        \labelledpnbarr[p1p3]{p1.out}{p3.in}{}{}{pos=0.2}
+        \labelledpnbarr[p2p5]{p2.out}{p5.in}{}{}{pos=0.2}
+
+        \path (p1p3) edge[pnbarr, o0i180] (p4.in);
+        \path (p2p5) edge[pnbarr, o0i180] (p4.in);
+
+        \coordinate (joinp6) at ([xshift=-0.25cm]p6.in);
+
+        \path (p3.out) edge[pnbarr, o0i180] (joinp6);
+        \path (p5.out) edge[pnbarr, o0i180] (joinp6);
+        \path (joinp6) edge[pnbarr, mark inside=0] (p6.in);
+
+        \drawBoundaries{0}{0}
+    \end{tikzpicture}
+    \caption{PNB representation of the Petri net in
+    \figref{fig:examplePetriNet}.}
+    \label{fig:PNBExamplePetriNet}
+\end{figure}
+
+To emphasise the ``internal'' structure of a PNB, we often draw transitions (or
+parts thereof) that connect to boundary ports in a lighter colour; of course,
+formally there is no distinction, and therefore lighter sections can always be
+ignored. Additionally, where transitions cross, we sometimes use different
+patterns to make the structure of the transitions clearer.
+
+Though we are yet to define composition of PNBs, we can give a graphical
+intuition, which we will make precise later in this chapter: synchronous
+composition corresponds to fusing the \emph{inner} boundary ports of two PNBs,
+suitably synchronising the transitions connecting to those boundary ports.
+Parallel composition, on the other hand, corresponds to stacking two PNBs upon
+one another without fusing transitions.
+
+\subsection{PNB Firing Semantics}\label{sec:PNBfiring}
+
+As for explained in \remref{rem:contentionEnabled}, transitions in contention
+cannot be fired concurrently; in Petri nets, two transitions are in contention
+precisely when they compete for a resource, i.e. they consume a token from, or
+produce a token at the same place.
+
+For PNBs, there are \emph{two} additional sources of contention between transitions; essentially,
+if the two transitions connect to the same boundary port, or were created by \emph{fusing} multiple
+transitions that connected to the same boundary port, then they should be in contention.  For now,
+we outline the definition of a contention relation, but defer discussion of its role in composition
+until \secref{sec:nwbComposition}. Note that a contention relation \emph{must} contain all
+pairs of transitions that have structural contention (i.e. connecting to a common boundary/place
+port), but \emph{may} also contain additional pairs, as
+in~\exref{exm:nonCompositionalWithoutContention}.
+
+\begin{definition}[Contention Relation]\label{defn:contentionRelation}
+    For a net, $\aPNB$, a symmetric relation, $\contention$, on
+    $\trans{\aPNB}$ is said to be a contention relation, if for all $(\aTrans,
+    \bTrans) \in \trans{\aPNB} \times \trans{\aPNB}$, $\aTrans \neq \bTrans$,
+    when any of the following hold:
+
+    \makebox[\textwidth][c]{%
+    \begin{minipage}[t]{.75\textwidth}
+    \begin{multicols}{2}
+    \begin{enumerate}[(i)]
+        \item $\pre{t} \intersection \pre{u} \neq \emptyset$,
+        \item $\post{t} \intersection \post{u} \neq \emptyset$,
+        \item\label{item:contentionItem1} $\source{t} \intersection \source{u} \neq \emptyset$,
+        \item\label{item:contentionItem2} $\target{t} \intersection \target{u} \neq \emptyset$.
+    \end{enumerate}
+    \end{multicols}
+    \end{minipage}}
+    then $\aTrans \contention \bTrans$.
+\end{definition}
+
+We can lift contention from individual transitions to sets of transitions; indeed, abusing
+notation, we write $\aPNBTransSet \contention \bPNBTransSet$ for $\aPNBTransSet, \bPNBTransSet
+\subseteq \trans{\aPNB}$, if $\aTrans \contention \bTrans$ for some $\aTrans \in \aPNBTransSet$,
+$\bTrans\in \bPNBTransSet$.
+
+We define contention-free (\defnref{defn:pnContentionFreeSet}) and enabled
+(\defnref{defn:pnEnabledTrans}) \emph{sets} of transitions in the same was as
+for Petri nets. Firing is also defined in the same way, though we repeat the
+definition here, for clarity:
+
+\begin{definition}[Firing Semantics for PNBs] \label{defn:firePNBTransitions}
+Given a PNB $\aPNB$ and a marking $\aPNBMarking$, a set $\aPNBTransSet
+\subseteq \trans{\aPNB}$ can fire iff $\aPNBTransSet$ is contention-free and is
+enabled by marking $\aPNBMarking$.
+Firing $\aPNBTransSet$ creates a new marking $\bPNBMarking$, defined as follows:
+\[
+    \markedAt{\bPNBMarking}{\aPlace_i} \defeq \begin{cases}
+        0 & \mbox{if } \aPlace_i \in \pre{\aPNBTransSet} \\
+        1 & \mbox{if } \aPlace_i \in \post{\aPNBTransSet} \\
+        \markedAt{\aPNBMarking}{\aPlace_i} & \mbox{otherwise}
+    \end{cases}
+\]
+that is, tokens are consumed from all places in the pre-set of $\aPNBTransSet$,
+produced at all places in the post-set of $\aPNBTransSet$, and otherwise
+unchanged from $\aPNBMarking$. If $\aPNBTransSet \subseteq \trans{\aPNB}$ is
+enabled and contention-free at $\aPNBMarking$, and transforms the
+marking to $\bPNBMarking$ when fired, we write
+$\PNBFiringSemantics{\aPNB}{\aPNBTransSet}{\aPNBMarking}{\bPNBMarking}$.
+\end{definition}
+
+To illustrate the use of boundary ports, we make precise the synchronous
+composition of PNBs, which connects the boundary ports of suitable pairs of
+PNBs.
+
+\subsection{Synchronous composition of PNBs}
+\label{sec:nwbComposition}
+
+In order to synchronously compose two PNBs, they must share a boundary with the
+same number of ports. Intuitively, composition forms a new net which has the
+places of both nets, and transitions that are formed of sets of transitions,
+one from each of the underlying nets. We often call nets that are to be
+composed \emph{component nets}, or simply \emph{components}.
+
+To define composition, we require the notion of a \emph{synchronisation}
+between two nets, which is a particular choice of transitions from the two
+components:
+
+\begin{definition}[Synchronisations]\label{defn:synch}
+    A synchronisation between two PNBs, $\aTypedPNB$ and $\bTypedPNB$ is a pair
+    \[
+        \pairof{\aPNBTransSet}{\bPNBTransSet} \in \powerset{\trans{\aPNB}} \times
+    \powerset{\trans{\bPNB}}
+    \]
+    of contention-free sets of transitions, such that $\target{\aPNBTransSet} =
+    \source{\bPNBTransSet}$.
+\end{definition}
+
+Synchronisations inherit an ordering from the subset ordering, pointwise:
+\[
+    \aPNBSync \subseteq \bPNBSync \defeq \aPNBTransSet \subseteq \aPNBTransSet'
+\,\conjunction\, \bPNBTransSet \subseteq \bPNBTransSet'
+\] We call the empty synchronisation, $(\emptyset, \emptyset)$, \emph{trivial}.
+A synchronisation $\aPNBSync$ is \emph{minimal} when it is not trivial, and for
+all synchronisations $\bPNBSync \subseteq \aPNBSync$, then $\bPNBSync$ is
+trivial or equal to $\aPNBSync$. Intuitively, minimal synchronisations are the
+smallest collections of transitions from both nets that share a common set of
+boundary ports; put differently, we only retain those transitions that
+\emph{must} fire together, to synchronise the two nets.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.5\textwidth}
+    \centering
+\begin{tikzpicture}[pnb]
+	\node[pnbplace, tokens=1] (p0) {};
+	\node[pnbplace, tokens=1, below of=p0] (p1) {};
+
+	\drawBoundaries{0}{0}
+	\rBAlignedWith{p0}{1}
+	\rBAlignedWith{p1}{2}
+
+    \labelledpnbarr{p0.out}{r1}{$\aTrans$}{}{}
+    \labelledpnbarr{p1.out}{r2}{$\bTrans$}{}{}
+\end{tikzpicture}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+    \centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1] {};
+    \node[pnbplace] (p1) [right=of p0] {};
+    \node[pnbplace] (p2) [below=of p0] {};
+    \node[pnbplace] (p3) at ($(p2.out)!.5!(p1.in)$) {};
+
+    \coordinate (join) at ([xshift=-0.5cm]p3.in);
+
+	\drawBoundaries{0}{0}
+	\lBAlignedWith{p0}{1}
+	\lBAlignedWith{p2}{2}
+
+    \labelledpnbarr{p0.out}{p1.in}{$\cTrans$}{}{}
+    \labelledpnbarr{l2}{p2.in}{below:$\eTrans$}{}{}
+    \labelledpnbarr{join}{p3.in}{$\dTrans$}{pos=0}{pos=0}
+
+    \draw (l1) edge[pnbarr,o0i180] (join);
+    \draw (l2) edge[pnbarr,o0i180] (join);
+\end{tikzpicture}
+\end{subfigure}%
+\caption{Components to be composed}
+\label{fig:exampleSeqComp}
+\end{figure}
+
+\begin{example}
+    Consider the two nets in~\figref{fig:exampleSeqComp}; we have the
+    following:
+    \begin{itemize}
+        \item $\pairof{\setof{\aTrans}}{\emptyset}$ is not a
+            synchronisation since $\target{\setof{\aTrans}} = \setof{0} \neq
+            \emptyset = \source{\emptyset}$,
+        \item $\pairof{\setof{\bTrans}}{\setof{\cTrans,\eTrans}}$ and
+            $\pairof{\setof{\aTrans, \bTrans}}{\setof{\cTrans, \dTrans}}$ are
+            synchronisations, but are not minimal,
+        \item $\pairof{\setof{\bTrans}}{\setof{\eTrans}}$,
+            $\pairof{\setof{\aTrans, \bTrans}}{\setof{\dTrans}}$ and
+            $\pairof{\emptyset}{\setof{\cTrans}}$ are all minimal
+            synchronisations.
+    \end{itemize}
+\end{example}
+
+Indeed, since we wish to use minimal synchronisations as the transitions of
+composed PNBs, we require the notion of contention between synchronisations:
+
+\begin{definition}[Contention between synchronisations]\label{defn:synchcontention}
+    Contention is lifted to synchronisations between $\aPNB$ and $\bPNB$:
+    \[
+        \aPNBSync \contention \bPNBSync \defeq \aPNBTransSet \contention_\aPNB
+        \aPNBTransSet' \, \disjunction\, \bPNBTransSet \contention_\bPNB
+        \bPNBTransSet'
+    \]
+    where $\contention_X$ is the contention relation of net $X$.
+\end{definition}
+
+For nets $\aPNB \withNetType{\aN}{\bN}$ and $\bPNB \withNetType{\bN}{\cN}$, let
+$\minsync{\aPNB}{\bPNB}$ be the set of minimal synchronisations between them.
+
+\begin{remark}
+    For any $\aPNBSync \in \minsync{\aPNB}{\bPNB}$, we have that
+    $\cardinalityof{\aPNBTransSet} > 1$, or $\cardinalityof{\bPNBTransSet} > 1$
+    only if there exists a transition in $\aPNB$ or $\bPNB$ that is connected
+    to more than one common boundary port. If this were not the case,
+    $\aPNBSync$ would not be a \emph{minimal} synchronisation, since we could
+    remove a transition while preserving the synchronisation property.
+    Properties concerning composition of nets with transitions that are only
+    connected to one boundary port are explored in \chpref{chp:catStructure},
+    where we elucidate the categorical structure of PNBs. For each transition
+    $\aTrans \in \trans{\aPNB}$ with $\target{\aTrans} = \emptyset$, we have
+    $(\setof{\aTrans}, \emptyset) \in \minsync{\aPNB}{\bPNB}$, and similarly
+    for $\trans{\bPNB}$. In other words, transitions in the components are free
+    to fire without affecting the other component as long as they do not
+    connect to the common boundary. If they do, the transitions must
+    synchronise with transitions in the other component respecting their
+    interaction on the shared boundary.
+\end{remark}
+
+We can now give the definition of synchronous composition of nets with
+boundaries:
+
+\begin{definition}[Synchronous composition]\label{defn:sequentialCompositionPNB}
+The composition of PNBs $\aTypedPNB$ and $\bTypedPNB$, is written $\abPNBComp
+\withNetType{\aN}{\cN}$, and has the following structure:
+\begin{itemize}
+    \item $\places{\abPNBComp}$ is $\places{\aPNB} \disjointUnion
+        \places{\bPNB}$,
+    \item $\trans{\abPNBComp}$ is $\minsync{\aPNB}{\bPNB}$, the set of minimal
+        synchronisations,
+    \item $\pre{\aPNBSync} \defeq \pre{\aPNBTransSet} \disjointUnion
+        \pre{\bPNBTransSet}$ and $\post{\aPNBSync} \defeq \post{\aPNBTransSet}
+        \disjointUnion \post{\bPNBTransSet}$,
+    \item $\source{\aPNBSync} \defeq \source{\aPNBTransSet}$ and
+        $\target{\aPNBSync} \defeq \target{\bPNBTransSet}$,
+    \item Contention is lifted to minimal synchronisations, as described in
+        \defnref{defn:synchcontention}, but is subtle, as we discuss in
+        \remref{rem:contentionpreserved}.
+\end{itemize}
+\end{definition}
+
+In order for the composition to be well-defined, lifting the contention
+relations from PNBs $\aPNB$ and $\bPNB$ as per \defnref{defn:synchcontention}
+must yield a well-defined contention relation for $\abPNBComp$, which is
+confirmed in~\cite[Definition 3.4]{Bruni2013}.
+
+\begin{remark}\label{rem:contentionpreserved}
+    We require that contention is \emph{explicitly} preserved by synchronous
+    composition: if certain transitions are in contention in the component
+    nets, transitions containing them in the nets' composition should also be
+    in contention. Indeed, this is the reason for requiring an explicit
+    contention relation, rather than relying on the connectivity of the
+    transitions alone to determine contention. As we will demonstrate shortly
+    (\exref{exm:nonCompositionalWithoutContention}), certain PNBs, when
+    composed, form transitions in the composite that should be in contention,
+    but are not, structurally. The intuition being that since transitions in a
+    composition are formed of sets of transitions of the components, we should
+    not be able to fire transitions of the composition that are conflicting as
+    transitions of the components. Further examples, and the mathematical
+    foundations of contention are given
+    in~\cite{Sobocinski2013a}.
+\end{remark}
+
+An example of synchronous composition is illustrated in
+\figref{fig:examplePNBcomposition}. Note that there is no synchronisation
+containing $c$, it has no transition in $\aPNB$ with which to synchronise, and
+that $t$ appears in two synchronisations in $\aPNB \comp \bPNB$: synchronising
+both with $a$ \emph{and} $b$.
+
+The two additional sources of contention relative to Petri nets, mentioned
+earlier in this section can now be stated precisely:
+\begin{enumerate}
+    \item Connecting to the same boundary port leads to contention:
+        \defnref{defn:contentionRelation}\ref{item:contentionItem1}
+        and~\ref{item:contentionItem2}
+    \item Contention is preserved in compositions, by \defnref{defn:synchcontention}
+\end{enumerate}
+
+We now demonstrate synchronous composition of two simple nets, showing why
+explicit contention relations are required, rather than inferring contention
+from PNB structure:
+
+\begin{example}\label{exm:nonCompositionalWithoutContention}
+Consider the two component nets $L$ in \figref{fig:componentL} and $R$ in
+\figref{fig:componentR} and their composition in \figref{fig:composeLR}.  We
+have that $\aTrans \contention_{L} \bTrans$ and $\cTrans
+\contention_{R} \dTrans$.
+
+\newcommand{\sync}[2]{\left(\setof{#1}, \setof{#2}\right)}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node[pnbplace,tokens=1] (p0) [pnblabel=above:$\aPlace_0$] {};
+        \node[pnbplace,tokens=1] (p1) [pnblabel=below:$\aPlace_1$,below=of p0] {};
+        \drawBoundaries{0}{1}
+
+        \labelledpnbarr{p0.out}{r1}{left:$\aTrans$}{o0i180}{}
+        \labelledpnbarr{p1.out}{r1}{left:$\bTrans$}{o0i180}{}
+    \end{tikzpicture}
+    \caption{Component $L$.}
+    \label{fig:componentL}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node[pnbplace] (p2) [pnblabel=above:$\aPlace_2$]{};
+        \node[pnbplace] (p3) [pnblabel=below:$\aPlace_3$,below=of p0] {};
+
+        \drawBoundaries{1}{0}
+        \rBAlignedWith{p2}{1}
+        \rBAlignedWith{p3}{2}
+
+        \labelledpnbarr{l1}{p2.in}{right:$\cTrans$}{o0i180}{}
+        \labelledpnbarr{l1}{p3.in}{right:$\dTrans$}{o0i180}{}
+        \labelledpnbarr{p2.out}{r1}{above:$\eTrans$}{o0i180}{}
+        \labelledpnbarr{p3.out}{r2}{below:$\fTrans$}{o0i180}{}
+    \end{tikzpicture}
+    \caption{Component $R$.}
+    \label{fig:componentR}
+\end{subfigure}
+\\
+\begin{subfigure}{\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb, node distance=3cm]
+        \node[pnbplace,tokens=1] (p0) [pnblabel=above:$\inl{\aPlace_0}$]{};
+        \node[pnbplace,tokens=1] (p1) [pnblabel=below:$\inl{\aPlace_1}$,below=of p0]{};
+        \node[pnbplace] (p2) [pnblabel=above:$\inr{\aPlace_2}$, node distance=4cm,right=of p0] {};
+        \node[pnbplace] (p3) [pnblabel=below:$\inr{\aPlace_3}$, below=of p2] {};
+
+        \drawBoundaries[1.5]{0}{0}
+        \rBAlignedWith{p2}{1}
+        \rBAlignedWith{p3}{2}
+
+        \labelledpnbarr{p0.out}{p2.in}{{[scale=0.7]above:$(\setof{\aTrans}, \setof{\cTrans})$}}{}{}
+        \labelledpnbarr{p0.out}{p3.in}{{[pos=0.7,scale=0.7]above right:$(\setof{\aTrans}, \setof{\dTrans})$}}{o-20i160}{pos=0.8}
+        \labelledpnbarr{p1.out}{p2.in}{{[pos=0.3, scale=0.7]above left:$(\setof{\bTrans}, \setof{\cTrans})$}}{o20i-160,pnbarrstyle1}{pos=0.2}
+        \labelledpnbarr{p1.out}{p3.in}{{[scale=0.7]below:$(\setof{\bTrans}, \setof{\dTrans})$}}{}{}
+        \labelledpnbarr{p2.out}{r1}{{[scale=0.7]above:$(\emptyset, \setof{\eTrans})$}}{}{}
+        \labelledpnbarr{p3.out}{r2}{{[scale=0.7]above:$(\emptyset, \setof{\fTrans})$}}{}{}
+    \end{tikzpicture}
+    \caption{$L \comp R$.}
+    \label{fig:composeLR}
+\end{subfigure}
+\hfill
+\caption{Example component nets and their synchronous composition}
+\label{fig:exampleComposition}
+\end{figure}
+
+Consider the pair of transitions $(\setof{\aTrans}, \setof{\cTrans})$ and
+$(\setof{\bTrans}, \setof{\dTrans})$ in the composition. If contention was not
+remembered, these two transitions would not be in contention in the composite
+net (they share no common place/boundary ports), and could therefore be fired
+concurrently. However, the underlying sets of transitions in the components
+\emph{are} in contention (i.e.  $\setof{\aTrans,\bTrans}$ and
+$\setof{\cTrans,\dTrans}$), since the transitions connect to the same boundary
+port and thus they cannot fire concurrently. Fortunately, in the examples we
+consider in this thesis, complications due to contention rarely play a
+prominent role.
+\end{example}
+
+Graphically, synchronous composition can be intuitively understood as fusing the
+transitions that are connected to the shared boundary ports in the components,
+duplicating transitions when there is a choice in the other component. For
+example, in \figref{fig:componentL}, $\aTrans$ is connected to the first shared
+boundary port; in \figref{fig:componentR} there are two transitions connected
+to the first boundary port ($\cTrans$ and $\dTrans$), thus in the composition,
+shown in \figref{fig:composeLR}, there are two transitions formed from
+$\aTrans$.
+
+\subsection{Parallel composition of PNBs}
+
+Whereas synchronous composition requires compatible component boundaries,
+intuitively to allow the right boundary of one component to be connected to
+the left boundary of the other, parallel composition has no such restriction,
+simply stacking the components on top of each other.
+
+\begin{definition}[Parallel composition]\label{defn:tensorCompositionPNB}
+
+The parallel, or tensor, composition of PNBs $\aTypedPNB$ and $\bTypedPNBFree$,
+is written\\ $\abPNBTensor \withNetType{\aN + \cN}{\bN + \dN}$, and has the
+following structure:
+\begin{itemize}
+    \item $\places{\abPNBTensor} \defeq \places{\aPNB} \disjointUnion
+        \places{\bPNB}$
+    \item $\trans{\abPNBTensor} \defeq \trans{\aPNB} \disjointUnion
+        \trans{\bPNB}$
+    \item $\pre{\parens{\inl{\aTrans}}} \defeq \setBuilder{\inl{\aPlace}}{\aPlace
+            \in \pre{\aTrans}}$ and $\pre{\parens{\inr{\aTrans}}} \defeq
+            \setBuilder{\inr{\aPlace}}{\aPlace \in \pre{\aTrans}}$
+    \item $\post{\parens{\inl{\aTrans}}} \defeq \setBuilder{\inl{\aPlace}}{\aPlace
+            \in \post{\aTrans}}$ and $\post{\parens{\inr{\aTrans}}} \defeq
+            \setBuilder{\inr{\aPlace}}{\aPlace \in \post{\aTrans}}$
+    \item $\source{\parens{\inl{\aTrans}}} \defeq \source{\aTrans}$ and
+            $\source{\parens{\inr{\aTrans}}} \defeq \setBuilder{\aPNBBPort +
+        \aN}{\aPNBBPort \in \source{\aTrans}}$
+    \item $\target{\parens{\inl{\aTrans}}} \defeq \target{\aTrans}$ and
+        $\target{\parens{\inr{\aTrans}}} \defeq
+        \setBuilder{\aPNBBPort + \bN}{\aPNBBPort \in \target{\aTrans}}$
+    \item $\mathord{\contention} \defeq
+        \setBuilder{\pairof{\inl{\aTrans}}{\inl{\bTrans}}}{\pairof{\aTrans}{\bTrans}
+        \in \mathord{\contention_\aPNB}} \union
+        \setBuilder{\pairof{\inr{\aTrans}}{\inr{\bTrans}}}{\pairof{\aTrans}{\bTrans}
+        \in \mathord{\contention_\bPNB}}$
+\end{itemize}
+\end{definition}
+
+Unlike synchronous composition, transitions in a tensor composition are only in
+contention if they are in contention in one of the components. An example
+tensor composition is illustrated in \figref{fig:exampleTensorComposition}.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node[pnbplace, tokens=1] (p0) [pnblabel=above:$\aPlace_0$] {};
+
+        \drawBoundaries[1]{1}{1}
+
+        \labelledpnbarr{l1}{p0.in}{above:$\aTrans$}{o0i180}{}
+        \labelledpnbarr{p0.out}{r1}{above:$\bTrans$}{o0i180}{}
+    \end{tikzpicture}
+    \caption{Component $T$.}
+    \label{fig:componentT}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node[pnbplace] (p1) [pnblabel=above:$\aPlace_1$]{};
+        \node[pnbplace] (p2) [pnblabel=below:$\aPlace_2$,below=of p1]{};
+
+        \drawBoundaries[1]{0}{1}
+        \lBAlignedWith{p1}{1}
+        \lBAlignedWith{p2}{2}
+
+
+        \coordinate (join) at ([xshift=-0.5cm]r1);
+
+
+        \labelledpnbarr{join}{r1}{above:$\dTrans$}{o0i180}{pos=0.01}
+        \draw (p1.out) edge[pnbarr,o0i180] (join);
+        \draw (p2.out) edge[pnbarr,o0i180] (join);
+
+        \labelledpnbarr{l1}{l2}{right:$\cTrans$}{bend left=90}{}
+    \end{tikzpicture}
+    \caption{Component $B$.}
+    \label{fig:componentB}
+\end{subfigure}
+\\
+\begin{subfigure}{\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node[pnbplace,tokens=1] (p0) [pnblabel={[overlay=false]above:$\inl{\aPlace_0}$}]{};
+        \node[pnbplace] (p1) [pnblabel={[overlay=false]above:$\inr{\aPlace_1}$}, below=of p0]{};
+        \node[pnbplace] (p2) [pnblabel={[overlay=false]below:$\inr{\aPlace_2}$}, below=of p1] {};
+
+        \drawBoundaries[1.2]{0}{0}
+
+        \lBAlignedWith{p0}{1}
+        \lBAlignedWith{p1}{2}
+        \lBAlignedWith{p2}{3}
+        \rBAlignedWith{p0}{1}
+        \rBAlignedWith{$(p1)!.5!(p2)$}{2}
+
+        \labelledpnbarr{l1}{p0.in}{above:$\inl{\aTrans}$}{o0i180}{}
+        \labelledpnbarr{p0.out}{r1}{above:$\inl{\bTrans}$}{o0i180}{}
+
+        \coordinate (join) at ([xshift=-0.5cm]r2);
+
+        \labelledpnbarr{join}{r2}{{[yshift=0.2cm]above:$\inr{\dTrans}$}}{o0i180}{pos=0.01}
+        \draw (p1.out) edge[pnbarr,o0i180] (join);
+        \draw (p2.out) edge[pnbarr,o0i180] (join);
+
+        \labelledpnbarr{l2}{l3}{right:$\inr{\cTrans}$}{bend left=90}{}
+    \end{tikzpicture}
+    \caption{$T \tensor B$.}
+    \label{fig:composeTB}
+\end{subfigure}
+\hfill
+\caption{Example component nets and their parallel composition.}
+\label{fig:exampleTensorComposition}
+\end{figure}
+
+For convenience, and when there can be no confusion (e.g. when the places of
+the components are disjoint), we label places of a composite PNB as $\aPlace$
+instead of $\inl{\aPlace}$ or $\inr{\aPlace}$ and similarly for transitions.
+
+\subsection{Connectedness, Purity and Simplicity}
+
+We briefly explore several standard Petri net properties that PNBs \emph{do
+not} satisfy; specifically, connectedness, purity and simplicity (described
+in~\cite{Bernardinello1992}). These properties, assuming they have been stated
+in the naive way for PNBs, are \emph{not} preserved by synchronous composition
+and thus they are in-fact ill-defined for arbitrary PNBs.
+
+When introducing ENs, we mentioned that in the literature, an EN should have no
+isolated places or transitions---the net is \emph{connected}. However, we lift
+this restriction for the ENs underlying PNBs: we may have places that are
+unconnected to transitions and transitions unconnected to any places.
+
+To see that connectedness is not preserved by composition, consider the
+component nets in \figref{fig:connectedComponents}. Assuming the naive
+extension of the definition from Petri nets, both $L$ and $R$ are connected
+($R$ vacuously so), yet their synchronous composition is not connected: there is
+no transition in $R$ for $\aTrans$ to synchronise with, therefore $\aTrans$ is
+not present in any synchronisation, leaving $\aPlace$ unconnected in $L \comp
+R$.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.33\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbplace, pnblabel=above:$\aPlace$] {};
+        \drawBoundaries{0}{1}
+
+        \labelledpnbarr{p0.out}{r1}{$\aTrans$}{}{}
+    \end{tikzpicture}
+    \caption{Component $L$}
+    \end{subfigure}%
+    \begin{subfigure}{0.33\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbhidden] {};
+        \drawBoundaries{1}{0}
+    \end{tikzpicture}
+    \caption{Component $R$}
+    \end{subfigure}
+    \begin{subfigure}{0.33\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbplace, pnblabel=above:$\aPlace$] {};
+        \drawBoundaries{0}{0}
+    \end{tikzpicture}
+    \caption{Composition $L \comp R$}
+    \end{subfigure}
+    \caption{Connectedness is not preserved by composition}
+    \label{fig:connectedComponents}
+\end{figure}
+
+Whereas the EN definition of connectedness only concerns places and
+transitions, since PNB transitions can also connect to boundary ports, we might
+additionally require that boundary ports are connected (i.e. each boundary port
+has at least one transition connected to it). However, this is an unreasonable
+restriction: recall that each boundary port allows the \emph{possibility} of
+partially specifying those transitions that connect to it; it is therefore
+entirely reasonable to allow no transition to be partially specified through a
+particular boundary port.
+
+Purity is the property of Petri nets that there are no self loops: a single
+transition cannot be connected to both the out-port and the in-port of a single
+place. Consider the components shown in \figref{fig:pureComponents}; each is
+pure (again by the naive extension of the definition to PNBs), yet their
+composition is impure, since there is a single transition connecting the
+out-port of $\aPlace$ to its in-port.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.65\textwidth}
+        \begin{subfigure}{0.33\textwidth}
+        \centering
+        \begin{tikzpicture}[pnb]
+            \node (p0) [pnbhidden] {};
+            \drawBoundaries{0}{2}
+
+            \labelledpnbarr{r1}{r2}{}{bend right=90, looseness=5}{}
+        \end{tikzpicture}
+        \caption{Component $L$}
+        \end{subfigure}%
+        \begin{subfigure}{0.33\textwidth}
+            \centering
+            \begin{subfigure}{\textwidth}
+            \centering
+            \begin{tikzpicture}[pnb]
+                \node (p0) [pnbplace, pnblabel=above:$\aPlace$] {};
+                \drawBoundaries{1}{1}
+
+                \pnbarr{l1}{p0.in}
+                \pnbarr{p0.out}{r1}
+            \end{tikzpicture}
+            \caption{Component $T$}
+            \end{subfigure}%
+            \\
+            \begin{subfigure}{\textwidth}
+            \centering
+            \begin{tikzpicture}[pnb]
+                \node (p0) [pnbhidden] {};
+                \drawBoundaries{1}{1}
+
+                \pnbarr{l1}{r1}
+            \end{tikzpicture}
+            \caption{Component $B$}
+            \end{subfigure}
+        \end{subfigure}%
+        \begin{subfigure}{0.33\textwidth}
+        \centering
+        \begin{tikzpicture}[pnb]
+            \node (p0) [pnbhidden] {};
+            \drawBoundaries{2}{0}
+
+            \labelledpnbarr{l1}{l2}{}{bend left=90, looseness=5}{}
+        \end{tikzpicture}
+        \caption{Component $R$}
+        \end{subfigure}%
+    \end{subfigure}%
+    \begin{subfigure}{0.35\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbplace, pnblabel=above:$\aPlace$] {};
+        \drawBoundaries{0}{0}
+
+        \coordinate  (via) at ([yshift=-0.75cm]p0);
+
+        \draw (p0.out) edge[pnbarr, o0i0, mark inside=1] (via);
+        \draw (via) edge[pnbarr, o180i180] (p0.in);
+    \end{tikzpicture}
+    \caption{Composition\\$L \comp (T \tensor B) \comp R$}
+    \end{subfigure}
+    \caption{Purity is not preserved by composition}
+    \label{fig:pureComponents}
+\end{figure}
+
+Finally, simplicity is the property that the set of places that a transition
+connects to uniquely identifies it. Again, assuming the naive extension to PNBs
+(i.e. also considering the boundary ports in the unique \emph{footprint}),
+consider the components shown in \figref{fig:simpleComponents}. Each component
+is simple, yet their composition is not: both transitions connect the out-port
+of $\aPlace_1$ to the in-port of $\aPlace_2$, yet they are different
+transitions, one is $(\setof{\aTrans}, \emptyset)$ and the other is
+$(\setof{\bTrans}, \setof{\cTrans})$.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.33\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node [pnbplace] (p0) {};
+
+        \drawBoundaries[1]{1}{1}
+
+        \labelledpnbarr{l1}{p0.in}{$\aTrans$}{bend left=45}{}
+        \labelledpnbarr[l1p0]{l1}{p0.in}{below left:$\bTrans$}{bend right=45}{}
+        \draw (l1p0) edge[pnbarr, out=-45,in=-170, looseness=1.4] (r1);
+    \end{tikzpicture}
+    \caption{Component $L$}
+    \end{subfigure}%
+    \begin{subfigure}{0.33\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (px) {};
+
+        \drawBoundaries{1}{0}
+
+        \labelledpnbarr{l1}{[xshift=0.5cm]l1}{$\cTrans$}{}{}
+    \end{tikzpicture}
+    \caption{Component $R$}
+    \end{subfigure}
+    \begin{subfigure}{0.33\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbplace] {};
+
+        \drawBoundaries[1]{1}{0}
+
+        \labelledpnbarr{l1}{p0.in}{$\aTrans$}{bend left=45}{}
+
+        \labelledpnbarr{l1}{p0.in}{{[xshift=0.4cm]below:$(\setof{\bTrans}, \setof{\cTrans})$}}{bend right=45}{}
+    \end{tikzpicture}
+    \caption{Composition $L \comp R$}
+    \end{subfigure}
+    \caption{Simplicity is not preserved by composition}
+    \label{fig:simpleComponents}
+\end{figure}
+
+Thus, despite the fact that any PNB, $\aPNB \withNetType{0}{0}$, is
+\emph{isomorphic} to a Petri net, there can be no guarantee that the Petri net
+will necessarily be pure, connected or simple.
+
+We now proceed to defining an LTS-based semantics for PNBs, in a similar
+fashion to that of Petri nets.
+
+\subsection{\TLTS{} Semantics of PNBs} \label{sec:ltsPNB}
+
+Recall that the LTS semantics for Petri nets defined
+in~\secref{sec:PNLTSSemantics} labels the LTS transition between two states
+(markings) being the set of Petri net transitions that were fired to transform
+between the markings.
+
+For PNBs, we could use the same definition. However, as we will show later in this
+thesis---with a category theoretic proof \secref{sec:functorPNBTLTS} and an
+LTS-based proof~\secref{sec:compCheckingProof}---it is sufficient to forget the
+identities of the fired transitions, and instead only record their
+\emph{effect} of their interactions on the boundaries. Furthermore, since PNBs
+have two boundaries, we use a \TLTS{} semantics, with one label per boundary
+side.
+
+As a first step towards defining the \TLTS{} semantics of PNBs, we show how to
+map sets of boundary ports into binary strings: indeed, we use pairs of binary
+strings to record the interactions of fired PNB transitions on the boundaries:
+\begin{align*}
+\ordinalSetToBinary{-} &: \powerset{\ordinal{\aN}} \to \B^\aN \\
+\ordinalSetToBinary{O}_\bN &\defeq \begin{cases}1 \text{ if } \bN \in O \\
+    0 \text { otherwise,} \end{cases} \text{ for } (0 \le \bN < \aN)\\
+\end{align*}
+that is, the $\bN^{\text{th}}$ character of the string is $1$ if the
+$\bN^{\text{th}}$ boundary port is in the set of boundary ports, and $0$
+otherwise. Now, we can define the \TLTS{} semantics of PNBs:
+
+\begin{definition}[\TLTS{} semantics of a PNB]\label{defn:PNBlts}
+    For a PNB $\aTypedPNB$, its \TLTS{} semantics is written as
+    $\TLTSsemantics{\aPNB}$ and is a \LTSB{\aN}{\bN}:
+    \[
+        (\powerset{\places{\aPNB}}, \B^\aN \times \B^\bN, \aLTSTransitionRel)
+    \]
+    with $\aPNBMarking \LabelledTrans{\lbl{\aLbl}{\bLbl}} \bPNBMarking$ iff
+    there is a set of PNB transitions, $\aPNBTransSet$, such that
+    \[
+        \aPNB_\aPNBMarking \to_\aPNBTransSet \aPNB_\bPNBMarking
+        \text{ with } \ordinalSetToBinary{\source{\aPNBTransSet}} = \aLbl
+        \text{ and } \ordinalSetToBinary{\target{\aPNBTransSet}} = \bLbl
+    \]
+\end{definition}
+
+\begin{example}\label{ex:LTScomponentB}
+    The \TLTS{} semantics for the simple PNB in \figref{fig:componentB} is
+    given in \figref{fig:componentBLTS}.
+\end{example}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[nfa]
+\node[state] (00)  {$\emptyset$};
+\node[state] (10) [below=of 00] {$\setof{\aPlace_2}$};
+\node[state] (01) [right=of 00] {$\setof{\aPlace_1}$};
+\node[state] (11) [below=of 01] {$\setof{\aPlace_1,\aPlace_2}$};
+\path (11) edge node {$\setof{\lbl{00}{1}, \lbl{11}{1}}$} (00)
+           edge [loop below] node {$\setof{\lbl{00}{0}, \lbl{11}{0}}$} (11)
+      (00) edge [loop above] node {$\setof{\lbl{00}{0}, \lbl{11}{0}}$} (00)
+      (01) edge [loop above] node {$\setof{\lbl{00}{0}, \lbl{11}{0}}$} (01)
+      (10) edge [loop below] node {$\setof{\lbl{00}{0}, \lbl{11}{0}}$} (10) ;
+\end{tikzpicture}
+\caption{\LTSB{2}{1} semantics of the PNB in \figref{fig:componentB}. }
+\label{fig:componentBLTS}
+\end{figure}
+
+Note that the \TLTS{} semantics of any net $\aTypedPNB$ is always
+\emph{reflexive}, that is, there exists a transition: $s
+\LabelledTrans{\lbl{0^\aN}{0^\bN}} s$ for every state, $s$, since the empty set
+of transitions is enabled, vacuously and is contention-free at every marking.
+
+\subsection{Marked PNBs}\label{sec:markedPNB}
+
+For a given PNB and pair of initial and final markings, we can
+consider its \TLTS{} semantics as an (specially-labelled) NFA, as we did
+for Petri nets (\defnref{defn:PnNFA}), by taking the
+states corresponding to the appropriate markings as initial/accepting states of
+the NFA. To do so, we first make precise the definition of a PNB with
+initial/target markings:
+
+\begin{definition}[Marked PNB]
+    A marked PNB is a triple, $(\aPNB, \aPNBMarking, \bPNBMarking)$ consisting
+    of a PNB, $\aPNB$, together with a particular initial ($\aPNBMarking$) and
+    target ($\bPNBMarking$) marking.
+\end{definition}
+
+We can now define the \TNFA{} semantics of a \emph{marked} PNB as follows:
+
+\begin{definition}[\TNFA{} semantics of a marked PNB]\label{defn:PNBTNFA}
+    Given a marked PNB, $\amPNB$, the \TNFA{} semantics extends the \TLTS{}
+    semantics: the initial state is the state corresponding to $\aPNBMarking$
+    and the accepting states are the singleton set containing the state
+    corresponding to $\bPNBMarking$. We write $\PNBToTNFA{\amPNB}$ for the
+    \TNFA{} semantics of a marked PNB, $\aPNB$.
+\end{definition}
+
+\begin{example}
+    Consider the marked PNB $(B, \setof{\aPlace_1, \aPlace_2}, \emptyset)$,
+    where $B$ is taken from \figref{fig:componentB}. We construct
+    $\PNBToTNFA{B}$ by taking the \TLTS{} shown in~\figref{fig:componentBLTS},
+    and making the state corresponding to the empty marking as accepting, and
+    that corresponding to the state marking both places as initial.
+\end{example}
+
+\subsection{Isomorphism of PNBs}
+
+Suppose that $\aPNB,\bPNB \withNetType{\aN}{\bN}$ are PNBs. We say that a
+mapping $f : \aPNB \to \bPNB$, comprised of two components: $f_P :
+\places{\aPNB} \to \places{\bPNB}$ and $f_T : \trans{\aPNB} \to \trans{\bPNB}$,
+is a homomorphism if the following hold, for all $\aTrans, \bTrans \in
+\trans{\aPNB}$:
+\begin{enumerate}
+    \item $\pre{f_T(\aTrans)} =  \setBuilder{f_P(\aPlace)}{\aPlace \in
+        \pre{\aTrans}}$,
+    \item $\post{f_T(\aTrans)} = \setBuilder{f_P(\aPlace)}{\aPlace \in
+        \post{\aTrans}}$,
+    \item $\source{f_T(\aTrans)} = \source{\aTrans}$,
+    \item $\target{f_T(\aTrans)} = \target{\aTrans}$,
+    \item $f_T(\aTrans) \contention_N f_T(\bTrans) \iff \aTrans
+        \contention_M \bTrans$.
+\end{enumerate}
+
+We say that a homomorphism $f$ is an isomorphism iff both components are
+bijections, writing $\aPNB \PNBIso \bPNB$ when an isomorphism exists
+between $\aPNB$ and $\bPNB$.
+
+Isomorphic nets clearly have isomorphic markings (and thus \TLTS{} semantics):
+\begin{lemma}
+If $\aPNB$ and $\bPNB$ are nets, and $\aPNB \PNBIso \bPNB$, then
+$\TLTSsemantics{\aPNB} \NFAIso \TLTSsemantics{\bPNB}$.
+\end{lemma}
+\begin{proof}
+    Immediate: the state component of the LTS-isomorphism is the place
+    component of the PNB-isomorphism; the PNB transition structure is
+    preserved, the label component of the LTS-isomorphism is the identity
+    function.
+\end{proof}
+
+\subsection{Read Arcs}\label{sec:PNBReadArcs}
+
+In this thesis we introduce a slight modification of PNBs, adding a new arc
+type (connection between transitions and places), called a read arc, as found
+in contextual nets~\cite{Christensen1993}.
+
+Read arcs allow for (concurrent) \emph{non-destructive} reads of a token at a
+particular place. In standard PNBs, it is possible for a transition to check
+for the presence of a token at a particular place: the transition can remove
+the token from the place under consideration, placing it at a temporary
+place, before another transition fires, placing the token back in the original
+place. However, only one such remove/replace loop can be concurrently fired for
+any single target place (each removal transition is in contention with every
+other). We say that remove/replace loops are \emph{destructive reads} of a
+token. An example of a net using remove/replace loops is illustrated in
+\figref{fig:removeReplaceLoops}; its intuitive behaviour is that $\aPlace_1$ is
+filled by $\bTrans$, emptied by $\cTrans$ and the presence of its token
+can be checked by $\aTrans$ and $\dTrans$. Indeed, $\aTrans$ and $\dTrans$ both
+attempt to remove $\aPlace_1$'s token, which cannot happen concurrently, hence
+the presence of a token at $\aPlace_1$ cannot be signalled on the left and
+right at once. Indeed, using remove/replace loops (and the extra required
+places) in this manner leads to (undesired) additional behaviour, as can be
+witnessed in the \TLTS{} semantics shown in \figref{fig:removeReplaceLTS}.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+\node[pnbplace] (p0) [pnblabel=above:$\aPlace_1$, rotate=90] {};
+\node[pnbplace] (p1) [pnblabel=below:$\aPlace_0$, rotate=-90, left=of p0] {};
+\node[pnbplace] (p2) [pnblabel=below:$\aPlace_2$, rotate=-90, right=of p0] {};
+
+\labelledpnbarr[p0p1]{p0.out}{p1.in}{above:$\aTrans$}{bend right=90}{pos=0.7}
+\labelledpnbarr{p1.out}{p0.in}{}{bend right=90}{pos=0.5}
+
+\labelledpnbarr[p0p2]{p0.out}{p2.in}{above:$\dTrans$}{bend left=90}{pos=0.7}
+\labelledpnbarr{p2.out}{p0.in}{}{bend left=90}{pos=0.5}
+
+\drawBoundaries{2}{2}
+
+\draw (l1) edge[pnbarr,o0i150] (p0p1);
+
+\labelledpnbarr{l2}{p0.in}{below:$\bTrans$}{o-30i-90, looseness=1.5}{}
+\labelledpnbarr{r1}{p0.out}{above:$\cTrans$}{o150i90, looseness=1.5}{}
+
+\draw (r2) edge[pnbarr,o150i30] (p0p2);
+
+\end{tikzpicture}
+\caption{PNB with remove/replace loops}
+\label{fig:removeReplaceLoops}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \scalebox{0.8}{
+    \begin{tikzpicture}[nfa]
+        \node[state] (3)  {$010$};
+        \node[state] (7) [above=of 3] {$000$};
+
+        \node[state] (6) [below left=of 3] {$001$};
+        \node[state] (2) [below=of 6] {$011$};
+
+        \node[state] (5) [below right=of 3] {$100$};
+        \node[state] (1) [below=of 5] {$110$};
+
+        \node[state] (4) [below right=of 2] {$101$};
+        \node[state] (0) [below=of 4] {$111$};
+
+        \path (0) edge [loop right] node {$\lbl{00}{00}$} (0);
+        \path (1) edge [loop right] node {$\lbl{00}{00}$} (1);
+        \path (2) edge [loop left] node {$\lbl{00}{00}$} (2);
+        \path (3) edge [loop right] node {$\lbl{00}{00}$} (3);
+        \path (4) edge [loop right] node {$\lbl{00}{00}$} (4);
+        \path (5) edge [loop right] node {$\lbl{00}{00}$} (5);
+        \path (6) edge [loop left] node {$\lbl{00}{00}$} (6);
+        \path (7) edge [loop right] node {$\lbl{00}{00}$} (7);
+
+        \path (0) edge [bend left] node {$\lbl{00}{10}$} (4);
+        \path (1) edge [bend left] node {$\lbl{00}{01}$} (4);
+        \path (1) edge [bend left] node {$\lbl{00}{10}$} (5);
+        \path (2) edge [bend left, pos=0.2] node {$\lbl{10}{00}$} (4);
+        \path (2) edge [bend left] node {$\lbl{00}{10}$} (6);
+        \path (3) edge [bend left] node {$\lbl{10}{00}$} (5);
+        \path (3) edge [bend left, pos=0.8] node {$\lbl{00}{01}$} (6);
+        \path (3) edge [bend left] node {$\lbl{00}{10}$} (7);
+        \path (4) edge [bend left] node {$\lbl{01}{00}$} (0);
+        \path (4) edge [bend left, pos=0.8] node {$\lbl{00}{00}$} (1);
+        \path (4) edge [bend left] node {$\lbl{00}{00}$} (2);
+        \path (5) edge [bend left] node {$\lbl{01}{00}$} (1);
+        \path (5) edge [bend left, pos=0.2] node {$\lbl{00}{00}$} (3);
+        \path (6) edge [bend left] node {$\lbl{01}{00}$} (2);
+        \path (6) edge [bend left] node {$\lbl{00}{00}$} (3);
+        \path (7) edge [bend left] node {$\lbl{01}{00}$} (3);
+    \end{tikzpicture}
+}
+    \newcommand{\capt}{\TLTS{} semantics of the PNB with remove/replace loops shown in
+    \figref{fig:removeReplaceLoops}.}
+    \caption[\capt]{\capt{} For compact representation, markings are
+    identified with binary strings: there is a $1$ at position $i$ iff place
+    $\aPlace_i$ is marked.}
+\label{fig:removeReplaceLTS}
+\end{figure}
+
+Adding read arcs to the definition of PNBs requires making simple modifications
+to the definitions of contending/enabled transitions:
+
+\begin{definition}[PNB with read arcs]
+    A PNB with read arcs is a 10-tuple:
+    $(\aPNBAllPlaces, \aPNBAllTrans, \pre{-}, \post{-}, l, r, \source{-},
+    \target{-}, \readArc{-}, \contention)$, where:
+    \begin{itemize}
+        \item $(\aPNBAllPlaces, \aPNBAllTrans, \pre{-}, \post{-}, l, r,
+            \source{-}, \target{-}, \contention)$, is a PNB,
+        \item $\readArc{-} : \aPNBAllTrans \to \powerset{\aPNBAllPlaces}$
+            connects a transition to places via read arcs,
+        \item $\contention$ is a read-arc aware contention relation: a
+            symmetric relation such that for $(\aTrans, \bTrans) \in
+            \aPNBAllTrans \times \aPNBAllTrans$, $\aTrans \neq \bTrans$, for
+            which any of the conditions of \defnref{defn:contentionRelation} or
+            the following condition holds:
+            \[
+                \readArc{\aTrans} \intersection \prepost{\bTrans} \neq \emptyset
+            \]
+            then $\aTrans \contention \bTrans$.
+    \end{itemize}
+\end{definition}
+
+\begin{remark}
+    Observe that two transitions, $\aTrans, \bTrans$ may have
+    $\readArc{\aTrans} \intersection \readArc{\bTrans} \neq \emptyset$,
+    but $\aTrans \not\contention \bTrans$.  Indeed, this is what allows
+    concurrent non-destructive reads.
+\end{remark}
+
+The graphical representation of a read arc is an undirected edge connecting to
+the side of a place.  The example shown in \figref{fig:removeReplaceLoops} can
+be encoded using read arcs as shown in \figref{fig:readArcs}. Now, $\aTrans$
+and $\bTrans$ are not in contention, and are both enabled by the current
+marking. Thus, the set $\setof{\aTrans, \bTrans}$ \emph{can} be fired
+(preserving the net's marking).
+
+\begin{figure}[ht]
+    \centering
+\begin{tikzpicture}[pnb]
+\node[pnbplace] (p0) [pnblabel={[xshift=0.25cm]$\aPlace_1$}] {};
+
+\drawBoundaries{2}{2}
+
+\labelledpnbarr{l1}{p0.north}{below:$\aTrans$}{o0i90}{pos=0.3}
+\labelledpnbarr{l2}{p0.in}{below:$\bTrans$}{o0i180}{}
+
+\labelledpnbarr{p0.out}{r1}{below:$\cTrans$}{o0i180}{}
+\labelledpnbarr{r2}{p0.south}{below:$\dTrans$}{o180i-90}{pos=0.3}
+
+\end{tikzpicture}
+\caption{PNB with read arcs}
+\label{fig:readArcs}
+\end{figure}
+
+We tweak the definition of enabled transitions from that of
+\defnref{defn:pnEnabledTrans}, to require that each place being read has a
+token, and that a transition does not produce/consume a token at the same place
+as it reads:
+
+\begin{definition}[Enabled Transitions for PNBs with Read Arcs]
+    \label{defn:enabledTransPNBReadArcs}
+    For a PNB with read arcs, $\aPNB$, a transition $\aTrans \in \trans{\aPNB}$
+    is enabled for a marking, $\aPNBMarking$, written
+    $\enabledTrans{\aTrans}{\aPNBMarking}$, if:
+    \begin{multicols}{2}
+    \begin{enumerate}
+        \item $\forall \aPlace \in \pre{\aTrans}$,
+            $\markedAt{\aPNBMarking}{\aPlace} = 1$
+        \item $\forall \bPlace \in \readArc{\aTrans}$,
+            $\markedAt{\aPNBMarking}{\bPlace} = 1$
+        \item $\forall \cPlace \in \post{\aTrans}$,
+            $\markedAt{\aPNBMarking}{\cPlace} = 0$
+        \item $\prepost{\aTrans} \intersection \readArc{\aTrans} = \emptyset$
+    \end{enumerate}
+\end{multicols}
+\end{definition}
+
+\begin{remark}
+To see why these modifications are necessary, observe that PNBs \emph{without}
+read arcs may contain \emph{self-conflicting} transitions: a transition can
+share a place between its pre and post sets. However, sets containing a
+self-conflicting transition \emph{are} contention-free by
+\defnref{defn:pnContentionFreeSet}, but, they cannot be fired, since they are
+not enabled. Indeed, to be enabled, a transition's pre-set must be marked and
+the post set unmarked; a self-conflicting PNB transition would require a place
+to be both marked and unmarked and therefore is never enabled.
+
+On the other hand, PNBs with read arcs may contain a transition, $\aTrans$,
+which attempts to consume the token from a place and also read the token, i.e.
+there is some $\aPlace \in \pre{\aTrans}$ such that $\aPlace \in
+\readArc{\aTrans}$. Such a transition is similarly \emph{never} enabled, by
+\defnref{defn:enabledTransPNBReadArcs}. Intuitively, it does not make sense to
+non-destructively read a token \emph{and} destructively remove a token from the
+same place.
+\end{remark}
+
+We are now able to construct LTS semantics of PNBs with read arcs, by amending
+the firing semantics of \defnref{defn:firePNBTransitions} to use the modified
+definition of enabled transition sets (\defnref{defn:enabledTransPNBReadArcs}).
+The \TLTS{} semantics of the PNB with read arcs shown in \figref{fig:readArcs}
+is shown in \figref{fig:readArcsLTS}; it is clear that the undesirable
+\emph{additional} behaviour due to using remove/replace loops is no longer
+present.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+    \node[state] (0)  {$\emptyset$};
+    \node[state] (1) [below=of 0] {$\setof{\aPlace_1}$};
+    \path (0) edge [bend left] node {$\lbl{01}{00}$} (1)
+              edge [loop right] node {$\lbl{00}{00}$} (0)
+          (1) edge [bend left] node {$\lbl{00}{10}$} (0)
+              edge [loop right] node {$\lbl{*0}{0*}$} (1)
+          ;
+    \end{tikzpicture}
+    \caption{\TLTS{} semantics of the PNB with read arcs shown in
+    \figref{fig:readArcs}.}
+    \label{fig:readArcsLTS}
+\end{figure}

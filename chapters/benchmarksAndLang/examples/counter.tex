@@ -1,0 +1,136 @@
+\mkC{onebit}
+\mkC{zerobit}
+\mkC{tester}
+The \counterSys{\aN} system models a ``counter'' system that counts from $0-n$
+allowing increment/decrement. Intuitively, a $\aN$-bit counter is
+formed by synchronously composing $\aN$ of the single-bit counter components
+from \figref{fig:onebitC}, and terminating with a \zerobitC{} component, shown
+in \figref{fig:zerobitC}, which always reports as being full and can't be
+incremented or decremented. The intuitive description of a $1$-bit component is
+that it is either ``empty'' or ``full''. A full component may be directly
+decremented, or may pass its token to the next component, in either case it
+becomes empty. Passing tokens along a chain of components allows the chain to
+become full --- a $\aN$-bit counter is not full if any component has a token in
+the empty place; it is full if all places have tokens in the full place.
+
+\begin{figure}[ht]%
+\centering
+\begin{subfigure}{0.7\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+\node[pnbplace] (zero)  [tokens=1, rotate=180] {};
+\node[pnbplace] (one)  [below of=zero] {};
+
+\drawBoundaries[2][1.25]{4}{4}
+
+\lBoundaryLabel{1}{linc}
+\lBoundaryLabel{2}{ldec}
+\lBoundaryLabel{3}{lnotfull}
+\lBoundaryLabel{4}{lfull}
+\rBoundaryLabel{1}{rinc}
+\rBoundaryLabel{2}{rdec}
+\rBoundaryLabel{3}{rnotfull}
+\rBoundaryLabel{4}{rfull}
+
+\labelledpnbarr[zeroone]{zero.out}{one.in}{}{o180i180}{pos=0.2}
+\draw (l1) edge[barr, pnbarr,out=0,in=180] (zeroone);
+
+\labelledpnbarr[onezero1]{one.out}{zero.in}{}{pnbarrstyle1, bend right=70}{pos=0.6}
+
+\useasboundingbox (current bounding box.north west) rectangle (current bounding box.south east);
+
+\labelledpnbarr[onezero2]{one.out}{zero.in}{}{bend right=90, looseness=1.5}{pos=0.8}
+\draw (onezero2) edge[barr, o0i180] (r1);
+\draw (l2) edge[barr, pnbarrstyle1, out=0, in=150] (onezero1);
+\labelledpnbarr{l2}{r2}{}{barr, pnbarrstyle1, bend left=45}{}
+\labelledpnbarr{l3}{r3}{}{barr, pnbarrstyle1, bend right=35}{pos=0.7}
+\labelledpnbarr{l3}{zero.north}{}{barr, pnbarrstyle2, o0i-90}{pos=0.3}
+\labelledpnbarr[l4r4]{l4}{r4}{}{barr, bend right=20}{pos=0.4}
+
+\draw (l4r4) edge[barr,out=0,in=-90] (one.south);
+
+\end{tikzpicture}%
+\caption{\onebitC{} \withNetType{4}{4}}
+\label{fig:onebitC}
+\end{subfigure}%
+\begin{subfigure}{0.3\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbhidden] (zero) [] {};
+    \node[pnbhidden] (one)  [below of=zero] {};
+
+    \drawBoundaries[0.75][1.25]{4}{0}
+
+    \lBoundaryLabel{4}{full}
+
+    \node[coordinate] (full) [right of=l4]{};
+
+    \labelledpnbarr{l4}{full}{}{barr}{}
+\end{tikzpicture}
+\caption{\zerobitC{} \withNetType{4}{0}}
+\label{fig:zerobitC}
+\end{subfigure}%
+\caption{$\aN$-bit Counter component nets}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node[pnbplace] (0)  [tokens=1, rotate=-90] {};
+        \node[pnbplace] (1)  [right of=0, rotate=90] {};
+        \node[pnbplace] (2)  [below of=0, rotate=-90] {};
+
+        \drawBoundaries{0}{4}
+
+        \labelledpnbarr[01]{0.out}{1.in}{}{bend right}{}
+        \labelledpnbarr[10]{1.out}{0.in}{}{bend right}{}
+        \labelledpnbarr[02]{0.out}{2.in}{}{relative}{}
+
+        \draw (10) edge[barr, o30i180] (r1);
+        \draw (01) edge[barr, o-10i180] (r3);
+        \draw (02) edge[barr, o-60i180] (r4);
+    \end{tikzpicture}
+    \caption{\testerC{} component net}
+    \label{fig:testerC}
+\end{figure}
+
+The specification of \counterSys{\aN} is simple:
+
+\[
+    \counterSys{\aN} \defeq
+        \compExpr{\testerC}{\compExpr{\sequenceExpr{\aN}{\onebitC}}{\zerobitC}}
+\]
+
+Clients of \counterSys{\aN} interact with the 4 boundary ports on its left
+boundary: they may increment, decrement and test for not-full/full ( if the
+counter is full to capacity, transitions connected to $\mathit{lfull}$ may fire
+and otherwise not). Indeed, while the counter sequence ``reports'' that it is
+not full, the tester component repeatedly fires the sequence's $\mathit{inc}$
+transition and then tests that the sequence ``reports'' as being full. The
+schematic for \counterSys{3} is shown in \figref{fig:counterschematic}.
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[schematic]
+    \node[schematicnode] (0)              {\testerC};
+    \node[schematicnode] (1) [right=of 0] {\onebitC};
+    \node[schematicnode] (2) [right=of 1] {\onebitC};
+    \node[schematicnode] (3) [right=of 2] {\onebitC};
+    \node[schematicnode] (4) [right=of 3] {\zerobitC};
+
+    \foreach \name in {0,...,3}{%
+        \drawBoundaryPortsOn{\name}{4}{4}
+    }
+    \drawBoundaryPortsOn{4}{4}{0}
+
+    \foreach \x in {0,...,3} {%
+       \pgfmathtruncatemacro{\next}{\x + 1}
+
+        \foreach \port in {1,...,4} {%
+           \draw(\x-r\port) -- (\next-l\port);
+        }
+    }
+\end{tikzpicture}
+\caption{Schematic of \counterSys{3}}
+\label{fig:counterschematic}
+\end{figure}

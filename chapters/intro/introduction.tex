@@ -1,0 +1,160 @@
+\emph{Model checking} is the systematic process of determining whether a
+\emph{model} of some system conforms to its expected behaviour or
+specification. For example, a system designer may wish to ensure that their
+system is \emph{not} able to reach a problematic configuration: a lift system
+should not be able to be in the configuration where the doors are open
+\emph{and} the lift is moving.
+
+Due to their complex and often non-intuitive behaviour, concurrent systems are
+frequently scrutinised using automated model checking. Indeed, the vast number
+of possible interleavings of component behaviour, even for simple systems,
+makes it difficult to \emph{manually} reason about the (lack of a certain)
+behaviour of the global system.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb, node distance=3cm]
+    \node[pnbplace] (p00) [pnblabel=Ready$_1$,tokens=1] {};
+
+    \node[pnbplace] (tok) [tokens=1, below right=of p00, rotate=-90] {};
+
+    \node[pnbplace] (p01) [pnblabel=Working$_1$, below left=of tok, rotate=180] {};
+    \node[pnbplace] (p10) [pnblabel=below:Ready$_2$,above right=of tok, tokens=1, rotate=180] {};
+    \node[pnbplace] (p11) [pnblabel=below:Working$_2$, below right=of tok] {};
+
+    \labelledpnbarr[p00p01]{p00.out}{p01.in}{}{red, bend left=45}{pos=0.8}
+    \labelledpnbarr[p01p00]{p01.out}{p00.in}{}{ao, bend left=45}{pos=0.5}
+    \labelledpnbarr[p10p11]{p10.out}{p11.in}{}{blue, bend right=45}{pos=0.8}
+    \labelledpnbarr[p11p10]{p11.out}{p10.in}{}{bend right=45}{pos=0.5}
+
+    \draw (tok.out) edge[pnbarr, red, o-90i45] (p00p01);
+    \draw (p01p00) edge[pnbarr, ao, o60i90] (tok.in);
+    \draw (tok.out) edge[pnbarr, blue, o-90i135] (p10p11);
+    \draw (p11p10) edge[pnbarr, o120i90] (tok.in);
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{Example mutual exclusion system modelled as a Petri net}
+\label{fig:mutexNet}
+\end{figure}
+
+A prevalent modelling tool for concurrent or distributed systems is \emph{Petri
+nets}. With an intuitive graphical presentation, yet rigorous underlying
+mathematical definition, Petri nets are powerful, yet accessible. As an
+example, the net illustrated in~\figref{fig:mutexNet} models a \emph{mutual
+exclusion} system, where two workers compete to obtain the token required to
+let them work. Either the first worker (red transition) or second (blue
+transition) can start first, but they cannot start at the same time. Once
+either worker has started, the other cannot. Once the worker has
+finished, it replaces the token, with the green or black transitions, allowing
+either worker to restart. An obvious property to check of this model is that
+both workers cannot be started at the same time.
+
+For small system models, it is often sufficient to give the system
+specification in a monolithic manner: the global structure can be
+specified in one. However, for anything other than the most basic of systems,
+this approach is infeasible --- instead, a \emph{compositional}, or
+component-wise approach is often used. In a component-wise approach, a
+system is designed as a collection of logical \emph{components}, which are
+composed to form the global system. By building systems in this way,
+designers need only reason about local behaviour of components and the
+interactions between components --- the system is structured as a
+collection of maximally independent, decoupled entities.
+
+The very reason to use automated model checking is to avoid having to explore
+large statespaces or check properties by hand. However, model checking is not
+immune to statespace explosion, and indeed, naively applying a compositional
+approach to system specification does not help alleviate the problem. For
+loosely coupled components, the numerous possible \emph{interleavings} of their
+behaviour leads to large statespaces being generated and explored.  While
+existing model checking techniques may allow the specification of nets in terms
+of components, the techniques used for checking properties of the system all
+consider the composed, \emph{global} net---their approach is \emph{monolithic}.
+
+\newcommand{\drawComp}[2]{%
+    \pgfmathtruncatemacro{\prev}{#1 - 1}
+    \node (p#1-2) [anchor=north, right=of p\prev-2] {\rotatebox{90}{$\cdots$}};
+    \node[pnbplace] (p#1-1) [rotate=-90, above=of p#1-2, pnblabel=$\aPlace_{1,#2}$] {};
+    \node[pnbplace] (p#1-0) [rotate=-90, above=of p#1-1, tokens=1, pnblabel=$\aPlace_{0,#2}$] {};
+    \node[draw=blue, pnbplace, pnblabel=$\aPlace_{\bN,#2}$] (p#1-3) [rotate=-90, below=of p#1-2] {};
+
+    \labelledpnbarr{p#1-0.out}{p#1-1.in}{}{relative}{}
+    \labelledpnbarr{p#1-1.out}{p#1-2}{}{relative}{}
+    \labelledpnbarr{p#1-2}{p#1-3.in}{}{relative}{}
+}%
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+    \coordinate (p-1-2);
+    \drawComp{0}{0}
+    \drawComp{1}{1}
+    \node (p2-2) [right=of p1-2] {};
+    \path let \p1 = (p2-2), \p2=($(p0-0)!.5!(p0-3)$) in node (hdots) at (\x1, \y2) {$\cdots$};
+    \drawComp{3}{\aN}
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{System of components with no interaction}
+\label{fig:componentSystem}
+\end{figure}
+
+As an extreme example of the statespace explosion problem, consider a system
+formed of $\aN$ components, each of which is able to reach $\bN$ local states
+and \emph{does not} interact with the other components; such a system has a
+reachable statespace with $\bN^\aN$ states. An example of this system is
+illustrated in~\figref{fig:componentSystem}. Now consider checking reachability
+of the global configuration that places a single token in each of the blue
+highlighted places; intuitively, to reach this global state, we must have fired
+\emph{all} the transitions in the net, in some order that respects the
+individual components' dependency ordering. Due to interleaving, there are a
+large number of possible ways to reach the target state: if a reachability
+checker uses a breadth-first search strategy, or generates the entire
+statespace, a large majority of these interleavings will be needlessly
+explored.
+
+An alternative approach is to take a \emph{localised} view: the \emph{global}
+target state can be considered as a \emph{local} target state for \emph{each
+component} --- to reach the global target state, each component must reach its
+local target state, whilst correctly interacting with the other components.
+Indeed, from the knowledge of the interactions each component must make to
+reach its local target marking, we can check the compatibility of these
+component interactions, and determine if the global marking is reachable. For
+the example system we are considering, there are no interactions between
+components, so we simply check that each component can reach its local target
+state. By this change of view, we avoid exploring all possible interleavings,
+instead checking reachability of the components \emph{in isolation}.
+Furthermore, since the components and target markings are repeated, we can
+check reachability in \emph{a single component} and deduce that the global
+system \emph{can} reach its target marking: a single component is able to reach
+its target marking without interacting with its neighbours, and all $\aN$
+components are the same.
+
+However, in order to use a localised, component-based approach for Petri nets,
+we must be able to specify the \emph{components} of a global net system. To do
+so, we use an \emph{algebra of Petri nets}: we specify complex systems in terms
+of compositions of (small) component nets. By using an algebra that allows
+\emph{partial specification} of transitions by connecting to \emph{boundary
+ports}, the full structure of composite nets can be built up through
+composition. As components are composed, the transitions connected to their
+boundary ports are fused to form fully-specified transitions.  By giving a
+semantics that represents component reachability, while recording the
+corresponding boundary interactions, we can capture the reachability of the
+entire system, \emph{without} first generating the composite net. Furthermore,
+we can \emph{reduce} the representation of a component's behaviour, while
+\emph{preserving} the representation of the interactions necessary to reach the
+target marking; when we compose the (reduced) component semantics, we
+\emph{represent} global reachability, \emph{without} generating the full
+statespace.
+
+In other words, by taking advantage of information about the structure of the
+components, and how they are connected, we can check reachability vastly more
+efficiently.
+
+Traditional approaches to model checking such systems instead take a global
+view, operating on the composite structure, and essentially ignoring any
+information about \emph{how the system was formed}.
+
+In this thesis, we investigate and advocate compositional system specification
+and an alternative approach to reachability checking that \emph{does} use the
+structural compositional information to its advantage, in order to vastly
+improve efficiency in many examples.

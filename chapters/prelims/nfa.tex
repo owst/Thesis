@@ -1,0 +1,210 @@
+\section{Non-deterministic Finite Automata}
+
+In this thesis, we will use NFAs to give the semantics of \emph{marked} Petri
+Nets, those nets with certain initial and target markings. The initial marking
+will be the initial state of the NFA and the target marking will be the one
+accepting state of the NFA.
+
+\begin{definition}[NFA]
+    A non-deterministic finite automaton is 5-tuple:
+    \(
+        ( \aNFAAllStates
+        , \aNFAAllLabels
+        , \aNFATransitionRel
+        , \aNFAInitState
+        , \aNFAAcceptStates
+        )
+    \)
+    where $(\aNFAAllStates, \aNFAAllLabels, \aNFATransitionRel)$ is an LTS,
+    $\aNFAInitState \in \aNFAAllStates$ and $\aNFAAcceptStates \subseteq
+    \aNFAAllStates$.
+\end{definition}
+
+Graphically, initial states have a small, unlabelled arrow pointing into them,
+and accepting states are drawn as double circles.
+
+The \emph{language} of an NFA is the traces of its runs that begin with the
+initial state, and end with an accepting state. We refer to individual traces
+in the language as \emph{words}:
+
+\begin{definition}
+    Given an NFA, $\aNFA$, its language, written $\langOf{\aNFA}$, is the set
+    of all traces (i.e. $\sequenceof{\aNFALabel_0, \aNFALabel_1,\dots,
+    \aNFALabel_{n - 1}}$, written as $\word{\aNFALabel}$) corresponding to runs
+    of the underlying LTS:
+    \[ \sequenceof{
+        \aNFAState_0 \LabelledTrans{\aNFALabel_0} \bNFAState_0,\,
+        \aNFAState_1 \LabelledTrans{\aNFALabel_1} \bNFAState_1,\,
+        \dots,\,
+        \aNFAState_{n-1} \LabelledTrans{\aNFALabel_{n-1}} \bNFAState_{n-1}
+        }
+    \] such that $\aNFAState_0 = \aNFAInitState$ and $\bNFAState_{n-1} \in
+    \aNFAAcceptStates$. By \defnref{defn:ltsRun}, we must have $\aLTSState_i =
+    \bLTSState_{i-1}$, for all $1 \le i < n$.
+\end{definition}
+
+\begin{example}
+    An example NFA is illustrated in \figref{fig:exampleNFA}. Its language is the
+    (infinite) set:
+    \[
+        \setBuilder{tmw}{w \in \setof{s}^\ast}
+        \union
+        \setBuilder{cmw}{w \in \setof{s}^\ast}
+    \]
+\end{example}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, initial=left, initial text=] {$0$};
+        \node (1) [state, above right=of 0]      {$1$};
+        \node (2) [state, below right=of 0]      {$2$};
+        \node (3) [state, accepting, right=of 1] {$3$};
+        \node (4) [state, accepting, right=of 2] {$4$};
+
+        \draw (0) edge node {$t$} (1);
+        \draw (0) edge node {$c$} (2);
+        \draw (1) edge node {$m$} (3);
+        \draw (2) edge node {$m$} (4);
+        \draw (3) edge [loop right] node {$s$} (3);
+        \draw (4) edge [loop right] node {$s$} (4);
+    \end{tikzpicture}
+    \caption{An example NFA}
+    \label{fig:exampleNFA}
+\end{figure}
+
+
+NFAs may have different structure, yet recognise the same language; we say that
+such NFAs are \emph{language-equivalent}:
+\begin{definition}
+    $\aNFA$ and $\bNFA$ are language-equivalent, written $\aNFA \langEquiv
+    \bNFA$, if $\langOf{\aNFA} = \langOf{\bNFA}$.
+\end{definition}
+
+\begin{example}
+    We have that $\aNFA \langEquiv \bNFA$, where $\aNFA$ is illustrated in
+    \figref{fig:exampleNFA}, and $\bNFA$ in \figref{fig:EquivalentNFA}.
+\end{example}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, initial=left, initial text=] {$0$};
+        \node (1) [state, right=of 0]            {$1$};
+        \node (2) [state, accepting, right=of 1] {$2$};
+
+        \draw (0) edge node {$\setof{t,c}$} (1);
+        \draw (1) edge node {$m$} (2);
+        \draw (2) edge [loop right] node {$s$} (2);
+    \end{tikzpicture}
+    \caption{A NFA that is language equivalent to that of
+        \figref{fig:exampleNFA}}
+    \label{fig:EquivalentNFA}
+\end{figure}
+
+\subsection{Isomorphism of NFAs}
+
+A homomorphism between two NFAs, $\aNFA_1$ and $\aNFA_2$, is a homomorphism on
+the underlying LTSs that additionally preserves the initial and accepting
+states.
+
+\begin{definition}
+    Given two NFAs, $\aNFA_1$:
+    \(
+        ( \aNFAAllStates_1
+        , \aNFAAllLabels_1
+        , \aNFATransitionRel_1
+        , \aNFAInitState_1
+        , \aNFAAcceptStates_1
+        )
+    \) and $\aNFA_2$:
+    \(
+        ( \aNFAAllStates_2
+        , \aNFAAllLabels_2
+        , \aNFATransitionRel_2
+        , \aNFAInitState_2
+        , \aNFAAcceptStates_2
+        )
+        \), a homomorphism, $f$ (comprised of components
+        $\sbij : \aNFAAllStates_1 \to \aNFAAllStates_2$ and $\lbij :
+        \aNFAAllLabels_1 \to \aNFAAllLabels_2$ ) on the underlying LTSs $(
+        \aNFAAllStates_1, \aNFAAllLabels_1, \aNFATransitionRel_1)$ and
+        $(\aNFAAllStates_2, \aNFAAllLabels_2, \aNFATransitionRel_2)$, is a NFA
+        homomorphism if the following additional conditions are satisfied:
+    \begin{enumerate}[(i)]
+        \item $\sbij(\aNFAInitState_1) = \aNFAInitState_2$
+        \item $\setBuilder{\sbij(x)}{x \in \aNFAAcceptStates_1} =
+            \aNFAAcceptStates_2$
+    \end{enumerate}
+\end{definition}
+
+Clearly, if an NFA-homomorphism is an LTS-isomorphism, it is also a
+NFA-isomorphism.
+
+\subsection{\TNFA{}s} \label{sec:TNFA}
+
+If the underlying LTS of an NFA $\aNFA$ is a $\LTSB{\aN}{\bN}$ we say that
+$\aNFA$ is a $\NFAB{\aN}{\bN}$, or, if the particular $\aN, \bN$ are
+unimportant, a \TNFA{}.
+
+We define composition operations on \TNFA{}s in a similar manner to how we
+defined them on \TLTS{}s: the underlying operation is performed on the \TLTS,
+and the initial/accepting states are suitably modified.
+
+\begin{definition}[Synchronous composition of \TNFA{}s]
+\label{defn:sequentialCompositionTNFA}
+    Given a $\NFAB{\aN}{\bN}$, $\aNFA$:
+    $( \aNFAAllStates_1
+     , \aNFAAllLabels_1
+     , \aNFATransitionRel_1
+     , \aNFAInitState_1
+     , \aNFAAcceptStates_1
+     )$ and a $\NFAB{\bN}{\cN}$, $\bNFA$:
+    $( \aNFAAllStates_2
+     , \aNFAAllLabels_2
+     , \aNFATransitionRel_2
+     , \aNFAInitState_2
+     , \aNFAAcceptStates_2
+     )$ their synchronous composition is a $\NFAB{\aN}{\cN}$:
+    \[( \aNFAAllStates
+     , \aNFAAllLabels
+     , \aNFATransitionRel
+     , \pairof{\aNFAInitState_1}{\aNFAInitState_2}
+     , \aNFAAcceptStates_1 \times \aNFAAcceptStates_2
+ )\] where
+    $( \aNFAAllStates
+     , \aNFAAllLabels
+     , \aNFATransitionRel)$ is the synchronous composition of the underlying
+     \TLTS{}s (\defnref{defn:sequentialCompositionTLTS}).
+\end{definition}
+
+\begin{definition}[Tensor composition of \TNFA{}s]
+\label{defn:tensorCompositionTNFA}
+    Given a $\NFAB{\aN}{\bN}$, $\aNFA$:
+    $( \aNFAAllStates_1
+     , \aNFAAllLabels_1
+     , \aNFATransitionRel_1
+     , \aNFAInitState_1
+     , \aNFAAcceptStates_1
+     )$ and a $\NFAB{\cN}{\dN}$, $\bNFA$:
+    $( \aNFAAllStates_2
+     , \aNFAAllLabels_2
+     , \aNFATransitionRel_2
+     , \aNFAInitState_2
+     , \aNFAAcceptStates_2
+     )$ their tensor composition is a $\NFAB{\aN + \cN}{\bN + \dN}$:
+    \[
+        ( \aNFAAllStates
+        , \aNFAAllLabels
+        , \aNFATransitionRel
+        , \pairof{\aNFAInitState_1}{\aNFAInitState_2}
+        , \aNFAAcceptStates_1 \times \aNFAAcceptStates_2
+        )
+ \] where
+    $( \aNFAAllStates
+     , \aNFAAllLabels
+     , \aNFATransitionRel)$ is the tensor composition of the underlying
+     \TLTS{}s (\defnref{defn:tensorCompositionTLTS}).
+\end{definition}
+
+Now, we turn to Petri nets, the semantics of which we give using LTSs/NFAs.

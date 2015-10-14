@@ -1,0 +1,95 @@
+\begin{table}[ht]
+\centering
+\newcommand{\mycaption}{Checking reachability of markings in
+\figref{fig:slowmarkings}, on examples of \secref{sec:tweaks}, using
+\algref{alg:thealgorithm}}
+\caption[\mycaption]{\mycaption. Key: T = Time (s), M = Maximum Resident Memory
+(MB), \emph{TO} = Time Out (300s)}
+\label{tab:fasttimings}
+\makebox[\textwidth][c]{
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c | c | }
+\hline
+Sys & T & M \\ \hline
+\overtakeSys{2}	&	0.017	&	21.02 \\
+\overtakeSys{8}	&	0.017	&	21.02 \\
+\overtakeSys{32}	&	0.017	&	21.02 \\
+\overtakeSys{512}	&	0.017	&	21.06 \\
+\overtakeSys{4096}	&	0.017	&	21.10 \\
+\overtakeSys{32768}	&	0.019	&	22.65 \\
+\DACSys{2}	&	0.001	&	15.18 \\
+\DACSys{8}	&	0.001	&	15.26 \\
+\DACSys{32}	&	0.001	&	15.20 \\
+\DACSys{512}	&	0.001	&	15.23 \\
+\DACSys{4096}	&	0.002	&	15.81 \\
+\DACSys{32768}	&	0.003	&	22.18 \\
+\diningphilosophersSys{2}	&	0.008	&	20.02 \\
+\diningphilosophersSys{8}	&	0.011	&	20.64 \\
+\diningphilosophersSys{32}	&	0.011	&	20.64 \\
+\diningphilosophersSys{512}	&	0.011	&	20.64 \\
+\diningphilosophersSys{4096}	&	0.011	&	19.25 \\
+\diningphilosophersSys{32768}	&	0.012	&	22.61 \\
+\bufferSys{2}	&	0.001	&	14.19 \\
+\bufferSys{8}	&	0.001	&	14.24 \\
+\bufferSys{32}	&	0.002	&	14.22 \\
+\bufferSys{512}	&	0.001	&	14.38 \\
+\bufferSys{4096}	&	0.002	&	14.90 \\
+\bufferSys{32768}	&	0.007	&	21.30 \\
+\replicatorsSys{2}	&	0.002	&	15.22 \\
+\replicatorsSys{8}	&	0.001	&	15.23 \\
+\replicatorsSys{32}	&	0.001	&	15.22 \\
+\replicatorsSys{512}	&	0.001	&	15.31 \\
+\replicatorsSys{4096}	&	0.002	&	15.81 \\
+\replicatorsSys{32768}	&	0.004	&	22.31 \\
+\iteratedchoiceSys{2}	&	0.002	&	15.23 \\
+\iteratedchoiceSys{8}	&	0.002	&	15.25 \\
+\iteratedchoiceSys{32}	&	0.002	&	15.24 \\
+\iteratedchoiceSys{512}	&	0.002	&	15.30 \\
+\iteratedchoiceSys{4096}	&	0.002	&	15.86 \\
+\iteratedchoiceSys{32768}	&	0.004	&	22.32 \\
+\hline
+\end{tabular}
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c | c | }
+\hline
+Sys & T & M \\ \hline
+\contree{2}{2}	&	0.001	&	15.22 \\
+\contree{8}{8}	&	0.001	&	15.25 \\
+\contree{32}{32}	&	0.002	&	15.23 \\
+\contree{128}{128}	&	0.002	&	15.26 \\
+\contree{512}{512}	&	0.011	&	15.33 \\
+\contree{2048}{2048}	&	1.069	&	20.62 \\
+\hartstoneSys{2}	&	0.013	&	19.33 \\
+\hartstoneSys{4}	&	0.039	&	19.61 \\
+\hartstoneSys{8}	&	2.013	&	21.41 \\
+\hartstoneSys{10}	&	4.016	&	20.62 \\
+\hartstoneSys{13}	&	10.445	&	25.74 \\
+\hartstoneSys{16}	&	25.252	&	28.65 \\
+\tokenringSys{2}	&	0.008	&	17.99 \\
+\tokenringSys{4}	&	0.035	&	19.79 \\
+\tokenringSys{8}	&	2.043	&	21.33 \\
+\tokenringSys{10}	&	4.072	&	21.11 \\
+\tokenringSys{13}	&	10.026	&	25.22 \\
+\tokenringSys{16}	&	19.247	&	28.65 \\
+\cyclicschedulerSys{2}	&	0.005	&	16.81 \\
+\cyclicschedulerSys{4}	&	0.017	&	19.52 \\
+\cyclicschedulerSys{8}	&	0.094	&	20.57 \\
+\cyclicschedulerSys{10}	&	1.077	&	20.59 \\
+\cyclicschedulerSys{13}	&	3.075	&	22.24 \\
+\cyclicschedulerSys{16}	&	6.091	&	24.60 \\
+\counterSys{2}	&	0.004	&	16.09 \\
+\counterSys{4}	&	0.011	&	20.56 \\
+\counterSys{8}	&	0.087	&	21.36 \\
+\counterSys{10}	&	1.075	&	22.75 \\
+\counterSys{13}	&	4.035	&	28.59 \\
+\counterSys{16}	&	8.649	&	28.60 \\
+\distree{1}{1}	&	0.002	&	15.60 \\
+\distree{2}{2}	&	0.004	&	15.63 \\
+\distree{3}{3}	&	12.455	&	32.45 \\
+\distree{4}{4}	&	\emph{TO}	&	\emph{TO} \\
+\distree{5}{5}	&	\emph{TO}	&	\emph{TO} \\
+\distree{6}{6}	&	\emph{TO}	&	\emph{TO} \\
+\hline
+\end{tabular}
+}
+\end{table}

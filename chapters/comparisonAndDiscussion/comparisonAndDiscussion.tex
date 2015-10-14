@@ -1,0 +1,31 @@
+\chapter{Implementation and Comparison}\label{chp:comparisonAndDiscussion}
+
+In Chapters~\ref{chp:compChecking} and~\ref{chp:improveEfficiency}, we
+introduced a \emph{compositional} approach to checking reachability in systems
+specified using \DSL. Exploiting \emph{weak language equivalence}, we
+demonstrated effective statespace reductions, whilst preserving nets'
+\emph{boundary protocol}. In this chapter we discuss the implementation of our
+tool, \penrose{}\footnote{\penrose{}: Petri Net Reachability Ose. According to
+Wikipedia, an \emph{Ose} is a demon that gives true answers to secret things.},
+which uses this approach. We go on to compare and contrast its performance with
+existing state-of-the-art tools, giving empirical demonstration of its
+favourable performance in a variety of example systems.
+
+\section{Implementation}
+\subimport{}{implementation}
+
+\section{Comparison with Related Tools}
+\subimport{}{comparison}
+
+\section{Summary}
+
+In this chapter, we have shown that in addition to being a theoretical nicety,
+compositionality also leads to impressive reachability checking performance of
+our tool, \penrose, for many example systems. However, while in many cases
+fixed-points of behaviour exist, and lead to exponential increases in
+performance, there are examples where the statespace explosion problem still
+presents itself, hampering our compositional approach. Future work will
+investigate integrating existing approaches to avoiding statespace explosion
+with our compositional approach, but we think that the initial results
+presented show that compositionality, and the component-wise approach, is a
+promising \emph{orthogonal} method of attacking statespace explosion.

@@ -1,0 +1,97 @@
+
+%\begin{figure}[ht]
+%    \centering
+%    \begin{tikzpicture}[pnb]
+%    \node (top) [pnbplace, tokens=1, rotate=90] {};
+%
+%    \node (topL) [pnbplace, left=of top, rotate=90, tokens=1] {};
+%    \node (botL) [pnbplace, left=of topL, rotate=-90] {};
+%
+%    \node (topR) [pnbplace, right=of top, tokens=1, rotate=90] {};
+%    \node (botR) [pnbplace, right=of topR, rotate=-90] {};
+%
+%    \labelledpnbarr[l]{topL.out}{botL.in}{}{o90i90}{}
+%    \labelledpnbarr[r]{topR.out}{botR.in}{}{o90i90}{}
+%    \labelledpnbarr[l2]{botL.out}{topL.in}{}{o-90i-90}{}
+%    \labelledpnbarr[r2]{botR.out}{topR.in}{}{o-90i-90}{}
+%
+%    \draw (top.out) edge[pnbarr, o90i30] (l);
+%    \draw (top.out) edge[pnbarr, o90i150] (r);
+%
+%    \draw (l2) edge[pnbarr, o-30i-90] (top.in);
+%    \draw (r2) edge[pnbarr, o-150i-90] (top.in);
+%
+%    \drawBoundaries{0}{0}
+%
+%\end{tikzpicture}
+%\caption{Example PNB}
+%\end{figure}
+%
+%\makesavebox{\leftone}{%
+%\begin{tikzpicture}[pnb]
+%    \node (place) [pnbplace, rotate=-90, pnblabel=$\aPlace_0$] {};
+%    \drawBoundaries{0}{2}
+%
+%    \labelledpnbarr{place.out}{r2}{below:$\aTrans_1$}{o-90i180}{}
+%    \labelledpnbarr{place.in}{r1}{$\aTrans_0$}{o90i180}{}
+%\end{tikzpicture}%
+%}
+%\makesavebox{\midone}{%
+%\begin{tikzpicture}[pnb]
+%\node (top) [pnbplace, tokens=1, rotate=90, pnblabel=$\aPlace_0$] {};
+%\node (topL) [pnbplace, left=of top, rotate=90, tokens=1, pnblabel=below:$\aPlace_1$] {};
+%\node (topR) [pnbplace, right=of top, tokens=1, rotate=90, pnblabel=$\aPlace_2$] {};
+%
+%\drawBoundaries{2}{2}
+%
+%\coordinate (l1t) at ([yshift=0.1cm, xshift=0.5cm]l1);
+%\coordinate (l2t) at ([yshift=-0.1cm, xshift=0.5cm]l2);
+%\coordinate (r1t) at ([yshift=0.1cm, xshift=-0.5cm]r1);
+%\coordinate (r2t) at ([yshift=-0.1cm, xshift=-0.5cm]r2);
+%
+%\labelledpnbarr{l1}{l1t}{$\aTrans_0$}{relative}{pos=1}
+%\labelledpnbarr{l2}{l2t}{$\aTrans_1$}{relative}{pos=1}
+%\labelledpnbarr{r1}{r1t}{$\aTrans_2$}{relative}{pos=1}
+%\labelledpnbarr{r2}{r2t}{$\aTrans_3$}{relative}{pos=1}
+%
+%\draw (topL.out) edge[pnbarr,o90i0] (l1t);
+%\draw (topR.out) edge[pnbarr,o90i180] (r1t);
+%\draw (topL.in) edge[pnbarr,o-90i0] (l2t);
+%\draw (topR.in) edge[pnbarr,o-90i180] (r2t);
+%
+%\draw (top.out) edge[pnbarr, o90i30] (l1t);
+%\draw (top.out) edge[pnbarr, o90i150] (r1t);
+%
+%\draw (l2t) edge[pnbarr, o-30i-90] (top.in);
+%\draw (r2t) edge[pnbarr, o-150i-90] (top.in);
+%\end{tikzpicture}%
+%}
+%\makesavebox{\rightone}{%
+%\begin{tikzpicture}[pnb]
+%    \node (place) [pnbplace, rotate=-90, pnblabel=$\aPlace_0$] {};
+%    \drawBoundaries{2}{0}
+%
+%    \labelledpnbarr{place.out}{l2}{below:$\aTrans_1$}{o-90i0}{}
+%    \labelledpnbarr{place.in}{l1}{$\aTrans_0$}{o90i0}{}
+%\end{tikzpicture}%
+%}
+%
+%\begin{figure}[ht]
+%    \centering
+%    \begin{tikzpicture}
+%        \node (x) {\usebox\leftone};
+%        \node (y) [right=of x] {\usebox\midone};
+%        \node (z) [right=of y] {\usebox\rightone};
+%    \end{tikzpicture}
+%\caption{Example PNB as components}
+%\end{figure}
+%
+%\begin{tikzpicture}[pnb]
+%    \node (a) [pnbplace, rotate=-90] {};
+%    \node (b) [pnbplace, below=of a, rotate=-90] {};
+%    \node (c) [pnbplace, below=of b, rotate=-90] {};
+%    \drawBoundaries{0}{2}
+%
+%    \labelledpnbarr{a.in}{r1}{}{o90i180}{}
+%    \labelledpnbarr{a.out}{b.in}{}{relative}{}
+%\end{tikzpicture}%

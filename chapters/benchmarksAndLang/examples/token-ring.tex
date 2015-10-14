@@ -1,0 +1,144 @@
+Consider a model of a simple token ring network, taken from~\cite{Abdulla2004}.
+Such a network consists of $\aN$ worker processes sharing a single token; a
+worker may only work if it holds the token. As an example, $\tokenringSys{3}$
+is illustrated in~\figref{fig:tokenring}. All workers are initially ``able to
+work''; a token is ``injected'' into the system --- upon receiving the token, a
+worker may choose to do work, or pass the token onto the next worker.
+
+\newcommand{\drawTokComponent}[1]{%
+    \def\x{#1}
+
+    \node[pnbplace] (sync\x) {};
+    \node[pnbplace] (working\x) [above of=sync\x, rotate=180] {};
+    \node[pnbplace] (want\x) [tokens=1,yshift=0.5 * \nodedist,above right of=working\x] {};
+    \node[pnbplace] (given\x) [yshift=0.5 * \nodedist,above left of=working\x, rotate=0] {};
+
+    \pnbarr{given\x.out}{want\x.in}
+
+    \labelledpnbarr[wantworking\x]{want\x.out}{working\x.in}{}{out=0,in=0}{pos=0.7}
+    \labelledpnbarr{sync\x.out}{wantworking\x}{}{out=0, in=45}{}
+    \labelledpnbarr[workinggiven\x]{working\x.out}{given\x.in}{}{out=180,in=180}{pos=0.3}
+    \labelledpnbarr{workinggiven\x}{sync\x.in}{}{out=150, in=180}{}
+}
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb, node distance=1.3cm]
+    \foreach \i in {0,1,2}{%
+        \begin{scope}[shift={(\i*3*\nodedist, 0cm)}]
+            \drawTokComponent{\i}
+        \end{scope}
+    }
+
+    \node (inject) [pnbplace, tokens=1, left=of sync0, xshift=-1 * \nodedist, yshift=0.5 * \nodedist] {};
+
+    \pnbarr{inject.out}{sync0.in}
+
+    \draw (sync0.out) edge[pnbarr, mark inside=0.5] (sync1.in);
+    \draw (sync1.out) edge[pnbarr, mark inside=0.5] (sync2.in);
+
+    \node (left) [pnbhidden, below=of sync0] {};
+    \draw (left.in) edge[pnbarr, bend left=90] (sync0.in);
+
+    \node[pnbhidden] (right) [below of=sync2] {};
+    \draw (right.out) edge[pnbarr, bend right=90] (sync2.out);
+    \draw (left.in) edge[pnbarr, mark inside=0.5] (right.out);
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{\tokenringSys{3}\label{fig:tokenring}}
+\end{figure}
+
+Again, a token ring system is naturally described in a compositional manner:
+each worker is a single component, as illustrated in \figref{fig:workerC}, that
+may interact (via transitions connected to its left/right boundary ports) with
+the workers on its left and right, in order to receive/send the token. The
+injector component, shown in \figref{fig:injectorC}, simply holds a token that
+can be injected, before acting as \idC{}. The last worker is connected to the
+first, completing the ring. The schematic of \tokenringSys{3} is illustrated in
+\figref{fig:tokenringschematic}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[pnb]
+            \node (hidden) [pnbhidden] {};
+            \node (tok) [pnbplace, tokens=1, above=of hidden] {};
+
+            \drawBoundaries[0.8][0.6]{1}{1}
+
+            \labelledpnbarr{tok.out}{r1}{}{barr}{}
+
+            \labelledpnbarr{l1}{r1}{}{barr}{}
+        \end{tikzpicture}
+        \caption{\injectorC{} \withNetType{1}{1}}
+        \label{fig:injectorC}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+    \begin{tikzpicture}[pnb, node distance=1.3cm]
+        \drawTokComponent{0}
+
+        \drawBoundaries{0}{0}
+
+        \lBAlignedWith{sync0}{1}
+        \rBAlignedWith{sync0}{1}
+
+        \labelledpnbarr{l1}{sync0.in}{}{barr}{}
+        \labelledpnbarr{sync0.out}{r1}{}{barr}{}
+    \end{tikzpicture}
+    \caption{\workerC{} \withNetType{1}{1}}
+    \label{fig:workerC}
+    \end{subfigure}
+    \caption{\tokenringSys{\aN} components}
+\end{figure}
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[node distance=0.3cm, schematic]
+    \def\upperSizeRatio{5/8}
+    \def\lowerSizeRatio{2/8}
+
+    \tikzset{main/.append style={minimum height=\mainsize}}
+    \tikzset{int21t/.append style={minimum height=\upperSizeRatio * \mainsize}}
+    \tikzset{int21b/.append style={minimum height=\lowerSizeRatio * \mainsize}}
+
+    \node [schematicnode] (eta) [main] {\etaC{}};
+    \node [schematicnode] (injector) [int21t, aligntop=eta] {\injectorC};
+    \node [schematicnode] (worker1) [int21t, aligntop=injector] {\workerC};
+    \node [schematicnode] (worker2) [int21t, aligntop=worker1] {\workerC};
+    \node [schematicnode] (worker3) [int21t, aligntop=worker2] {\workerC};
+
+    \node [schematicnode] (idbot) [int21b, alignbot=eta, samewidthas={injector and worker3}]   {\idC{}};
+    \node [schematicnode] (epsilon) [main, aligntop=worker3] {\epsilonC{}};
+
+    \drawBoundaryPortsOn{idbot}{1}{1}
+    \drawBoundaryPortsOn{injector}{0}{0}
+
+
+    \foreach \i in {1,2,3}{
+        \drawBoundaryPortsOn{worker\i}{1}{1}
+    }
+
+    \foreach \from/\to in {injector/worker1, worker1/worker2, worker2/worker3}{
+        \draw (\from) -- (\to);
+    }
+
+    \foreach \which in {injector, idbot}{
+        \drawBoundaryPortsOn{\which}{1}{1}
+    }
+
+    \connectedBetweenL{eta}{injector-l1}{1}
+    \connectedBetweenL{eta}{idbot-l1}{2}
+
+    \connectedBetweenR{epsilon}{worker3-r1}{1}
+    \connectedBetweenR{epsilon}{idbot-r1}{2}
+\end{tikzpicture}
+\caption{Schematic of \tokenringSys{3}}
+\label{fig:tokenringschematic}
+\end{figure}
+
+{\tokenringSys{\aN}} is defined:
+\[
+    \tokenringSys{\aN} \defeq \etaC{} \comp \parens{\parens{\injectorC \comp \workerC^\aN} \tensor \idC{}} \comp \epsilonC{}
+\]

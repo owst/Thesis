@@ -1,0 +1,108 @@
+The \iteratedchoiceSys{\aN} system models a simple sequence of components that
+each have a choice between two transitions to fire; the choice they make is
+recorded in the resulting marking. Such a system has a simple component-wise
+specification as a sequence of suitable ``choice'' components.
+
+A single choice component is illustrated in \figref{fig:iter-choiceComponent};
+the choice of transition is between those consuming tokens from $\aPlace_1$:
+either $\aTrans_1$ or $\aTrans_2$. When $\aTrans_2$ is chosen, the choice is
+recorded by a token being present in $\aPlace_2$. A single token is injected
+into a sequence of single choice components by the \addtokC{} component, as
+shown in \figref{fig:addtokC}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (tok) [pnbplace, tokens=1] {};
+
+        \drawBoundaries{0}{1}
+
+        \labelledpnbarr{tok.out}{r1}{}{barr}{}
+    \end{tikzpicture}
+    \caption{\addtokC \withNetType{0}{1}}
+    \label{fig:addtokC}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (init) [pnbplace, pnblabel=$\aPlace_1$] {};
+        \node (chosen) [pnbplace, pnblabel=$\aPlace_2$, below right=of init, rotate=-90] {};
+
+        \drawBoundaries{0}{0}
+        \lBAlignedWith{init}{1}
+        \rBAlignedWith{init}{1}
+
+        \labelledpnbarr{init.out}{r1}{$\aTrans_1$}{barr, out=20, in=160}{}
+
+        \labelledpnbarr[half]{init.out}{chosen.in}{$\aTrans_2$}{bend left=45}{}
+
+        \draw (half) edge[barr, out=-20, in=180] (r1);
+
+        \labelledpnbarr{l1}{init.in}{}{barr}{}
+    \end{tikzpicture}
+    \caption{\choiceC \withNetType{1}{1}}
+    \label{fig:iter-choiceComponent}
+    \end{subfigure}%
+\end{figure}
+
+The component-wise specification of a sequence of choice components is then:
+\[
+    \iteratedchoiceSys{\aN} \defeq
+    \compExpr{\addtokC}{\compExpr{\sequenceExpr{\aN}{\choiceC}}{\rendC{}}}
+\]
+the schematic of such a system is almost trivial, e.g.  the schematic of
+\iteratedchoiceSys{2} is illustrated in \figref{fig:iterchoiceschematic}, with
+the corresponding composite net shown in \figref{fig:iterchoicecomposed}.
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[schematic]
+    \node[schematicnode] (lend) []              {\addtokC};
+    \node[schematicnode] (choice1) [right=of lend] {\choiceC};
+    \node[schematicnode] (choice2) [right=of choice1] {\choiceC};
+    \node[schematicnode] (rend) [right=of choice2] {\rendC{}};
+
+    \newcommand{\offset}{0.5}
+
+    \rightBPort{lend}{\offset}{1}
+    \foreach \i in {1,2} {
+        \leftBPort{choice\i}{\offset}{1}
+        \rightBPort{choice\i}{\offset}{1}
+    }
+    \leftBPort{rend}{\offset}{1}
+
+    \draw (choice1-r1) -- (choice2-l1);
+
+    \draw (lend-r1) -- (choice1-l1);
+    \draw (choice2-r1) -- (rend-l1);
+\end{tikzpicture}
+\caption{Schematic of \iteratedchoiceSys{2}} \label{fig:iterchoiceschematic}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb]
+    \node (init0) [pnbplace, tokens=1] {};
+    \node (init1) [pnbplace, right=of init0] {};
+    \node (chosen1) [pnbplace, below right=of init1, rotate=-90] {};
+    \node (init2) [pnbplace, above right=of chosen1] {};
+    \node (chosen2) [pnbplace, below right=of init2, rotate=-90] {};
+
+    \pnbarr{init0.out}{init1.in}
+
+    \labelledpnbarr{init1.out}{init2.in}{}{bend left=30}{pos=0.8}
+    \labelledpnbarr[c1]{init1.out}{init2.in}{}{bend right=30}{pos=0.2}
+    \draw (c1) edge[pnbarr, out=-20, in=90] (chosen1.in);
+
+    \coordinate (urk) at ([xshift=0.5cm, yshift=0.5cm]init2.out);
+
+    \labelledpnbarr{init2.out}{urk}{}{out=0, in=180}{}
+    \labelledpnbarr{init2.out}{chosen2.in}{}{out=0, in=90}{pos=0.3}
+
+    \drawBoundaries{0}{0}
+    \end{tikzpicture}
+\caption{\iteratedchoiceSys{2}}
+\label{fig:iterchoicecomposed}
+\end{figure}

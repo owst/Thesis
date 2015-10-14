@@ -1,0 +1,368 @@
+Recall that the \TLTS{} semantics of a PNB $\aPNB \withNetType{\aN}{\bN}$, has
+labels of the form $\lbl{\aLbl}{\bLbl}$, syntactic sugar for $\parens{\aLbl,
+\bLbl} \in \B^\aN \times \B^\bN$. Via concatenation, these labels can be
+written as a single binary string of length $\aN+\bN$. Therefore, to represent
+the transitions of the \TLTS{} we require a data structure representing
+$\aLTSAllStates \times \B^{\aN+\bN} \times \aLTSAllStates$, where
+$\aLTSAllStates$ is the set of states of the \TLTS{}. The nature of the
+transition relation means it can be encoded as a function: $\aLTSAllStates \to
+\B^{\aN+\bN} \to \powerset{\aLTSAllStates}$, i.e. for each source state,
+$\aNFAState \in \aLTSAllStates$, we have a function $\B^{\aN+\bN} \to
+\powerset{\aLTSAllStates}$ encoding the set of states reachable from
+$\aNFAState$, via transitions with labels in $\B^{\aN+\bN}$.
+
+A well-known, efficient representation of functions $\B^\aN \to \B$ (i.e.\
+$\aN$ binary valued-variables that determine a binary value) are Reduced
+Ordered Binary Decision Diagrams (simply, BDDs)~\cite{Bryant1986}. However,
+to use BDDs directly, the \TLTS{} transition function co-domain must be
+suitably encoded as a binary string, to extend the binary label, giving a
+target of a single binary bit. A more natural representation uses
+Multi-Terminal BDDs~\cite{Clarke1993}, a generalisation of BDDs that represent
+functions with a co-domain other than the booleans.
+
+MTBDDs encode functions that take an assignment of boolean variables to a
+\emph{set} of values. Specifically, a MTBDD is a ROBDD, where the two-element
+Boolean algebra of $\B$ has been replaced with the Boolean algebra of subsets
+of some non-empty set, $S$.
+
+For our purposes, $S$ is the set of LTS states. The MTBDD's variables are
+\emph{boundary positions}: $\setBuilder{\varL{i}}{0 \le i < \aN} \union
+\setBuilder{\varR{j}}{0 \le j < \bN}$, where, e.g. $\varL{0}$ is the 0th left
+boundary port, $\varR{1}$ the first right boundary port and so on. MTBDDs, like
+BDDs, require that the variables have a fixed ordering, which we take to be the
+simple ordering top-down, left-before-right, i.e. the lexicographic
+order (where $L < R$):
+\[
+    \pairof{lr_1}{\aN} < \pairof{lr_2}{\bN} \implies lr_1 < lr_2
+    \,\disjunction\, (lr_1 = lr_2 \,\conjunction\, \aN < \bN)
+\]
+\begin{example}
+    Consider the \TNFA{} semantics of a single \bufferC{} component, as
+    illustrated in \figref{fig:bufferCNFA}.
+
+    The MTBDD representations of the transitions from states $0$ and $1$
+    are shown in \figref{fig:MTBDDsbufferCNFA}, where we use the convention
+    that the false branch is a dashed line and the true branch is solid. State
+    $0$'s MTBDD efficiently encodes that there are no transitions from state
+    $0$ with a $\lbl{1}{-}$ label.
+\end{example}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init]                  {$0$};
+        \node (1) [state, accepting, below=of 0] {$1$};
+        \path (0) edge [bend left]  node {$\lbl{0}{1}$} (1);
+        \path (0) edge [loop right] node {$\lbl{0}{0}$} (0);
+        \path (1) edge [bend left]  node {$\lbl{1}{0}$} (0);
+        \path (1) edge [loop right] node {$\lbl{0}{0}$} (1);
+    \end{tikzpicture}
+    \caption{\TNFA{} semantics of \bufferC{}}
+    \label{fig:bufferCNFA}
+\end{figure}
+
+\begin{figure}[ht]
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[bdd]
+            \node[var]                    (0) {\varL{0}};
+            \node[var, below right of=0]  (1) {\varR{0}};
+            \node[leaf, below left of=1]  (3) {$\setof{0}$};
+            \node[leaf, below right of=1] (4) {$\setof{1}$};
+            \node[leaf, left of=3]        (2) {$\emptyset$};
+
+            \falseEdge{0}{1}
+            \trueEdge{0}{2}
+            \falseEdge{1}{3}
+            \trueEdge{1}{4}
+        \end{tikzpicture}
+        \caption{$0 \rightarrow$}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[bdd]
+            \node[var] (0L)                   {\varL{0}};
+            \node[var, below left of=0L]  (1) {\varR{0}};
+            \node[var, below right of=0L] (2) {\varR{0}};
+            \node[leaf, below left of=1]  (3) {$\setof{1}$};
+            \node[leaf, below right of=2] (5) {$\setof{0}$};
+            \node[leaf] (4) at \bn{3}{.5}{5}  {$\emptyset$};
+
+            \falseEdge{0}{1}
+            \trueEdge{0}{2}
+            \falseEdge{1}{3}
+            \trueEdge{1}{4}
+            \trueEdge{2}{4}
+            \falseEdge{2}{5}
+        \end{tikzpicture}
+        \caption{$1 \rightarrow$}
+    \end{subfigure}
+    \caption{MTBDD representations of the transitions for states $0$ and $1$,
+    in \figref{fig:bufferCNFA}.}
+    \label{fig:MTBDDsbufferCNFA}
+\end{figure}
+
+Similarly to BDDs, the particular ordering chosen for the variables can
+drastically affect the representation size of MTBDDs. For example, consider the
+MTBDD illustrated in \figref{fig:MTBDDVarOrdering}, where we get a small size
+decrease when re-ordering variables. In general the effect can be much more
+pronounced. Clearly it would be preferable to chose the ordering that gave the
+most compact MTBDD; unfortunately, the problem of choosing an optimal ordering
+is NP-complete~\cite{Bollig1996}, we therefore use the lexicographic ordering
+since it is simple, and empirical results suggest it performs well.
+
+\begin{figure}[ht]
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[bdd]
+            \node[var]                    (0) {\varL{0}};
+            \node[var, below right of=0]  (1) {\varR{0}};
+            \node[leaf, below left of=1]  (3) {$\setof{0}$};
+            \node[leaf, below right of=1] (4) {$\setof{1}$};
+            \node[leaf, left of=3]        (2) {$\emptyset$};
+
+            \falseEdge{0}{1}
+            \trueEdge{0}{2}
+            \falseEdge{1}{3}
+            \trueEdge{1}{4}
+        \end{tikzpicture}
+        \caption{$\varL{0} < \varR{0}$.}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[bdd]
+            \node[var] (0L)                   {\varR{0}};
+            \node[var, below left of=0L]  (1) {\varL{0}};
+            \node[var, below right of=0L] (2) {\varL{0}};
+            \node[leaf, below left of=1]  (3) {$\setof{0}$};
+            \node[leaf, below right of=2] (5) {$\setof{1}$};
+            \node[leaf] (4) at \bn{3}{.5}{5}  {$\emptyset$};
+
+            \falseEdge{0}{1}
+            \trueEdge{0}{2}
+            \falseEdge{1}{3}
+            \trueEdge{1}{4}
+            \trueEdge{2}{4}
+            \falseEdge{2}{5}
+        \end{tikzpicture}
+        \caption{$\varR{0} < \varL{0}$.}
+    \end{subfigure}
+    \newcommand{\capt}{MTBDD size affected by variable ordering}
+    \caption[\capt]{\capt:
+        MTBDDs representing $0 \rightarrow$ in \figref{fig:bufferCNFA}, with
+        different variable orderings.}
+    \label{fig:MTBDDVarOrdering}
+\end{figure}
+
+\subsection{Synchronising Composition with MTBDDs}
+
+As we have shown, the use of MTBDDs gives efficient representation of
+transitions in \TNFA{} semantics, and furthermore many operations on
+transitions, such as union of transitions, or $\epsilon$-closure have efficient
+implementations. However, not all operations are natural and efficient, for
+example, computing the sequential composition of two states requires computing
+the \emph{synchronisation} of their transition MTBDDs. Intuitively, we want to
+compute the MTBDD cross product since the synchronising composition corresponds
+to taking a transition in each component, before restricting the cross product
+to transitions that agree on the shared boundary. Thus, when composing a
+\NFAB{\aN}{\bN} and a \NFAB{\bN}{\cN}, a simple but naive approach is:
+\begin{enumerate}
+    \item \label{step:n1} Generate each of the $2^\bN$ variable assignments for
+        the common boundary
+    \item \label{step:n2} In turn, instantiate the left and right MTBDDs using
+        each assignment, before performing the cross product on the resulting
+        pair of MTBDDs, generating a \emph{collection} of MTBDDs
+    \item \label{step:n3} Finally, collapse the collection of MTBDDs using a
+        pairwise union.
+\end{enumerate}
+Step~\ref{step:n2}, involves generating a collection of MTBDDs that record the
+effect on the non-shared boundaries (i.e. the \emph{outer} boundaries, the left
+boundary of the first component and the right boundary of the second) when the
+two \TNFA{}s synchronise in each of the $2^\bN$ ways. Taking the union of these
+MTBDDs in step~\ref{step:n3} is intuitively ignoring \emph{which} particular
+synchronisation occurred. This approach is inefficient: it involves explicitly
+generating a large collection of variable instantiations, even for common
+variables that do not take part in the synchronisation (and thus do not appear
+in the MTBDDs), thus we may unnecessarily perform substantial work.
+
+A more efficient approach, that we explore now, is as follows:
+\begin{enumerate}
+    \item \label{step:b1} \emph{Pre-process} the two MTBDDs, renaming variables
+        to tag \emph{synchronisation} variables (those on the common
+        boundaries),
+    \item \label{step:b2} Perform the cross product on these MTBDDs,
+    \item \label{step:b3} \emph{Remove} any invalid sub-graphs of the MTBDD. We
+        consider a sub-graph to be invalid if it assumes conflicting
+        assignments to a particular boundary variable.
+    \item \label{step:b4} Remove the remaining common variables, by taking the
+        union of their sub-graphs.
+\end{enumerate}
+
+The pre-processing of \stepref{step:b1} renames the first component's variable
+identifiers from $L/R$ to $L/S_R$, and the second component's from $L/R$ to
+$S_L/R$, i.e. \emph{tagging} synchronisation variables to identify which
+component they originated from. Importantly, the order on the resulting pairs
+is changed, to form the ordering that places all Left variables before the
+\emph{interleaving} of the Synchronisation variables before all Right
+variables. For example, this ordering has the following:
+\[
+    \varL{1} < \commonL{0} < \commonR{0} < \commonR{1} < \commonL{2} < \varR{0}
+\]
+This ordering means that in a synchronised MTBDD, synchronisation variables
+appear in subsequent nodes in the MTBDD, and can easily be checked for
+conformance.
+
+As an example, we will consider synchronously composing the \TNFA{}s of two \bufferC{}
+components, with the left component's \TNFA{} in state 0, and
+the right's in state 1. Thus we must compose the MTBDDs shown in
+\figref{fig:MTBDDsbufferCNFA}. First, in \stepref{step:b1}, the MTBDDs are
+pre-processed, leading to the MTBDDs illustrated in
+\figref{fig:MTBDDsbufferCNFAPrepro}. Next, \stepref{step:b2} performs the cross
+product of these two MTBDDs, leading to the MTBDD shown in
+\figref{fig:fullCrossProduct}. This MTBDD contains \emph{semantically invalid}
+sub-graphs, those highlighted red, which are reached by following a path where
+the synchronisation variables have taken different values. Therefore, in
+\stepref{step:b3}, we remove all such sub-graphs, as shown in
+\figref{fig:strippedCrossProduct}. Finally, the synchronisations are removed in
+\stepref{step:b4} by taking the union of the sub-graphs, giving the final
+result illustrated in \figref{fig:syncsRemoved}, which encodes that the only
+transitions possible from state $\pairof{0}{1}$ are $\tau$ transitions, either
+staying in the same state or reaching $\pairof{1}{0}$.
+
+\begin{figure}[ht]
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[bdd]
+            \node[var]                    (0) {\varL{0}};
+            \node[var, below right of=0]  (1) {\commonR{0}};
+            \node[leaf, below left of=1]  (3) {$\setof{0}$};
+            \node[leaf, below right of=1] (4) {$\setof{1}$};
+            \node[leaf, left of=3]        (2) {$\emptyset$};
+
+            \falseEdge{0}{1}
+            \trueEdge{0}{2}
+            \falseEdge{1}{3}
+            \trueEdge{1}{4}
+        \end{tikzpicture}
+        \caption{$0 \rightarrow$.}
+        \label{fig:processedMTBDD1}
+    \end{subfigure}
+    \begin{subfigure}[b]{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[bdd]
+            \node[var] (0L) {\commonL{0}};
+            \node[var, below left of=0L]  (1) {\varR{0}};
+            \node[var, below right of=0L] (2) {\varR{0}};
+            \node[leaf, below left of=1]  (3) {$\setof{1}$};
+            \node[leaf, below right of=2] (5) {$\setof{0}$};
+            \node[leaf] (4) at \bn{3}{.5}{5}  {$\emptyset$};
+
+            \falseEdge{0}{1}
+            \trueEdge{0}{2}
+            \falseEdge{1}{3}
+            \trueEdge{1}{4}
+            \trueEdge{2}{4}
+            \falseEdge{2}{5}
+        \end{tikzpicture}
+        \caption{$1 \rightarrow$.}
+        \label{fig:processedMTBDD2}
+    \end{subfigure}
+    \caption{``Pre-processed'' MTBDDs of \figref{fig:MTBDDsbufferCNFA}}
+    \label{fig:MTBDDsbufferCNFAPrepro}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[bdd, node distance=1.5cm]
+        \node (6) [red, leaf]             {$\setof{\pairof{0}{0}}$};
+        \node (8) [leaf, right=of 6]      {$\setof{\pairof{1}{0}}$};
+        \node (1) [leaf, right=of 8]      {$\emptyset$};
+        \node (0) [leaf, right=of 1]      {$\setof{\pairof{0}{1}}$};
+        \node (3) [red, leaf, right=of 0] {$\setof{\pairof{1}{1}}$};
+
+        \node (7)  [red, var, yshift=1.3*\nodedist] at \bn{6}{1/5}{3} {\varR{0}};
+        \node (9)  [var, yshift=1.3*\nodedist] at \bn{6}{2/5}{3} {\varR{0}};
+        \node (2)  [var, yshift=1.3*\nodedist] at \bn{6}{3/5}{3} {\varR{0}};
+        \node (4)  [red, var, yshift=1.3*\nodedist] at \bn{6}{4/5}{3} {\varR{0}};
+
+        \node (10) [var, yshift=1.3*\nodedist] at \bn{7}{1/3}{4} {\commonR{0}};
+        \node (5)  [var, yshift=1.3*\nodedist] at \bn{7}{2/3}{4} {\commonR{0}};
+        \node (11) [var, yshift=1.3*\nodedist] at \bn{10}{.5}{5} {\commonL{0}};
+        \node (12) [var, above right=of 11, xshift=-1cm] {\varL{0}};
+
+        \falseEdge{2}{0}
+        \trueEdge{2}{1}
+        \falseEdge[red]{4}{3}
+        \trueEdge[red]{4}{1}
+        \falseEdge{5}{2}
+        \trueEdge{5}{4}
+        \falseEdge[red]{7}{6}
+        \trueEdge[red]{7}{1}
+        \falseEdge{9}{8}
+        \trueEdge{9}{1}
+        \falseEdge{10}{7}
+        \trueEdge{10}{9}
+        \falseEdge{11}{5}
+        \trueEdge{11}{10}
+        \falseEdge{12}{11}
+        \trueEdge{12}{1}
+    \end{tikzpicture}
+    \caption{MTBDD constructed using the cartesian product of those in
+        \figref{fig:processedMTBDD1} and \figref{fig:processedMTBDD2}, with
+        invalid sub-graphs highlighted}
+    \label{fig:fullCrossProduct}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[bdd, node distance=1.5cm]
+        \node (8) [leaf]             {$\setof{\pairof{1}{0}}$};
+        \node (1) [leaf, right=of 8] {$\emptyset$};
+        \node (0) [leaf, right=of 1] {$\setof{\pairof{0}{1}}$};
+
+        \node (9)  [var, yshift=1.3*\nodedist] at \bn{8}{.5}{1} {\varR{0}};
+        \node (2)  [var, yshift=1.3*\nodedist] at \bn{1}{.5}{0} {\varR{0}};
+
+        \node (10) [var, above=of 9] {\commonR{0}};
+        \node (5)  [var, above=of 2] {\commonR{0}};
+
+        \node (11) [var, yshift=1.3*\nodedist] at \bn{10}{.5}{5} {\commonL{0}};
+        \node (12) [var, above right=of 11, xshift=-0.9cm] {\varL{0}};
+
+        \falseEdge{2}{0}
+        \trueEdge{2}{1}
+        \falseEdge{5}{2}
+        \falseEdge{9}{8}
+        \trueEdge{9}{1}
+        \trueEdge{10}{9}
+        \falseEdge{11}{5}
+        \trueEdge{11}{10}
+        \falseEdge{12}{11}
+        \trueEdge{12}{1}
+    \end{tikzpicture}
+    \caption{MTBDD of \figref{fig:fullCrossProduct}, with invalid sub-graphs
+        removed}
+    \label{fig:strippedCrossProduct}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[bdd, node distance=1.5cm]
+        \node (12) [var]                    {$\pairof{L}{0}$};
+        \node (9)  [var, below left=of 12]  {$\pairof{R}{0}$};
+        \node (8)  [leaf, below left=of 9]  {$\setof{\pairof{0}{1}, \pairof{1}{0}}$};
+        \node (1)  [leaf, below right=of 9] {$\emptyset$};
+
+        \falseEdge{12}{9}
+        \trueEdge{12}{1}
+        \falseEdge{9}{8}
+        \trueEdge{9}{1}
+    \end{tikzpicture}
+    \caption{MTBDD of \figref{fig:strippedCrossProduct}, with synchronisations
+        removed}
+    \label{fig:syncsRemoved}
+\end{figure}
+
+Having discussed the three key implementation details for the efficiency of our
+implementation, we now move onto empirically comparing the resulting
+performance with existing state-of-the-art tools.

@@ -1,0 +1,57 @@
+We survey and summarise the most-closely related techniques for avoiding
+statespace explosion, in particular when checking reachability in Petri nets,
+directing the reader to detailed surveys and discussions where they exist.
+
+Before we do so, we briefly introduce each technique and give the structure of
+this chapter: in~\secref{sec:reachabilityChecking}, we briefly discuss Petri
+nets and the
+complexity of their reachability checking.
+In~\secref{sec:partialOrderApproaches}, we discuss \emph{partial-order
+approaches}, which attempt to generate only part of the statespace, while
+ensuring that the to-be-checked properties are preserved. In a similar vein,
+the \emph{symmetry reduction}~\secref{sec:symmetryReduction} technique attempts
+to generate a reduced statespace, by recognising symmetric states, which do not
+contribute new (up to symmetry) states to explore, i.e.  the statespace is
+quotiented by symmetry. We then move onto discussing other compositional (i.e.
+divide and conquer) approaches in~\secref{sec:compositionalApproaches}, before
+taking a detour from statespace minimisation techniques to discuss
+\emph{algebras} of nets related to that which we use in this thesis. We briefly
+discuss explicit structural reductions of nets that aim to reduce input nets
+in~\secref{sec:structuralReductions}. In~\secref{sec:unfoldings}, we explore
+the use of \emph{unfoldings} as a compact representation of a net's behaviour,
+and similarly the use of \emph{decision diagrams} as a compact representation
+of a net's structure~\secref{sec:decisionDiagrams}.  Finally, we explore
+\emph{linear programming} (LP) and \emph{SAT solving} in~\secref{sec:LPAndSAT},
+which encode Petri net problems into alternate domains possessing efficient
+algorithms.
+
+The techniques to avoid statespace explosion that we explore can be
+summarised as taking one of the following approaches:
+\begin{enumerate}
+    \item Generating partial statespaces (partial order reductions, symmetry
+        reduction)
+    \item Handling a reduced input net (structural net reductions)
+    \item Using compact representations of the net (unfoldings, decision
+        diagrams)
+    \item Translating to an alternative domain to exploit existing algorithms
+        (SAT, LP)
+\end{enumerate}
+
+\section{Petri nets and Reachability Checking}\label{sec:reachabilityChecking}
+\input{reachability}
+\section{Partial order reductions}\label{sec:partialOrderApproaches}
+\input{partial-order-reduction}
+\section{Symmetry reduction}\label{sec:symmetryReduction}
+\input{symmetry}
+\section{Compositional approaches}\label{sec:compositionalApproaches}
+\input{compositional}
+\section{Algebras of nets}\label{sec:algebras}
+\input{algebras}
+\section{Structural reductions}\label{sec:structuralReductions}
+\input{reductions}
+\section{Unfoldings}\label{sec:unfoldings}
+\input{unfolding}\input{merged-processes}
+\section{Decision diagrams}\label{sec:decisionDiagrams}
+\input{decision-diagrams}
+\section{Linear programming \& SAT solving}\label{sec:LPAndSAT}
+\input{sat}

@@ -1,0 +1,1612 @@
+\chapter{Categorical Structure}\label{chp:catStructure}
+
+In this chapter we show that both PNBs and \TLTS{}s have a natural categorical structure. We
+consider the categories of PNBs, \PNBCat, and \TLTS{}s, \TLTSCat. Our aim is to show that these
+categories are in fact Product and Permutation Categories, known as PROPs, and that there is a
+semantic functor $\PNBToTLTS{-} : \text{\PNBCat} \to \text{\TLTSCat}$ taking a \PNB{} to its
+\TLTS{} statespace, preserving the PROP structure. By elucidating the PROP structure we show that
+the two types of composition for PNBs/\TLTS{}s enjoy desirable properties (associativity,
+identities), while functoriality ensures that the compositions are preserved when taking the
+semantics of components, in a precise sense. Indeed, we demonstrate that the property of
+\emph{compositionality}---that the semantics of a composite PNB is determined by the semantics of
+the components---is simply an instance of functoriality.
+
+\section{Preliminaries}
+
+We briefly recall the requisite definitions of strict symmetric monoidal
+categories and functors. For an in-depth introduction to symmetric monoidal
+categories, and their intuitive graphical presentation,
+see~\cite{Selinger2009}.
+
+\begin{definition}[Category]
+    A (locally small) category, $\aCat$, is comprised of:
+    \begin{itemize}
+        \item A collection of objects, $\obj{\aCat}$,
+        \item A collection of morphisms; for each pair of objects, $\oA,
+            \oB$ we have a set of morphisms between those objects, called
+            their hom-set, written: $\arr{\aCat}{\oA}{\oB}$,
+        \item For every object, $\oA$, we have the identity morphism:
+            $\idArr{\oA} \in \arr{\aCat}{\oA}{\oA}$,
+        \item For each $\aA \in \arr{\aCat}{\oA}{\oB}$ and
+            $\aB \in \arr{\aCat}{\oB}{\oC}$, there is a
+            composite morphism: $\aA \comp \aB \in
+            \arr{\aCat}{\oA}{\oC}$.
+    \end{itemize}
+
+    Subject to the following:
+    \begin{align*}
+        \aA \comp \idArr{\oB} &= \aA = \idArr{\oA} \comp
+        \aA \\
+        \aA \comp \parens{\aB \comp \aC} &=
+        \parens{\aA \comp \aB} \comp \aC
+    \end{align*}
+    for any $\oA, \oB, \oC, \oD \in \obj{\aCat}$, and
+    $\aA \in \arr{\aCat}{\oA}{\oB}$, $\aB \in
+    \arr{\aCat}{\oB}{\oC}$ and $\aC \in
+    \arr{\aCat}{\oC}{\oD}$.
+\end{definition}
+
+\begin{definition}[Isomorphisms]
+    A morphism $\aA \in \arr{\aCat}{\oA}{\oB}$ is an isomorphism
+    if there exists $\aA^{-1} \in \arr{\aCat}{\oB}{\oA}$ subject
+    to the conditions:
+    \begin{align*}
+        \aA \comp \aA^{-1} &= \idArr{\oA}\\
+        \aA^{-1} \comp \aA &= \idArr{\oB}
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Product Category]
+    For categories $\aCat$ and $\bCat$, we can lift their operations pointwise
+    to form the product category, $\prodCat$, which has the following
+    structure:
+    \begin{align*}
+        \obj{\prodCat} &= \obj\aCat \times \obj\bCat\\
+        \arr{\prodCat}{\pairof{\oA}{\oB}}{\pairof{\oC}{\oD}}
+        &= \arr\aCat\oA\oC \times \arr\bCat\oB\oD\\
+        \idArr{\pairof{\oA}{\oB}} &=
+        \pairof{\idArr{\oA}}{\idArr{\oB}} \\
+        \pairof{\aA}{\aB} \comp \pairof{\aC}{\aD} &=
+        \pairof{\aA \comp \aC}{\aB \comp \aD}
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Functor]
+    A functor is a mapping between categories, $\aFunctor : \aCat \to \bCat$,
+    subject to the conditions:
+    \begin{align*}
+        \aFunctor\parens{\idArr{\oA}} &=
+        \idArr{\aFunctor\parens{\oA}}\\
+        \aFunctor(\aA \comp \aB) &= \aFunctor\parens{\aA} \comp
+        \aFunctor\parens{\aB}
+    \end{align*}
+\end{definition}
+
+\begin{definition}[Bifunctor]
+    A bifunctor is a functor whose domain category is a product category.
+\end{definition}
+
+\begin{definition}[Natural Transformation]
+A natural transformation is a mapping between functors, $\natTrans : \aFunctor \to \bFunctor$,
+comprised of a morphism, called a component, $\natTrans\parens{\oA} : \aFunctor\parens{\oA} \to
+\bFunctor\parens{\oA} $, for each $\oA \in \obj{\aCat}$, such that for any $\aA \in
+\arr{\aCat}{\oA}{\oB}$, the diagram in~\figref{fig:natTrans} commutes.
+\end{definition}
+
+\begin{figure}[ht]
+    \centering
+\begin{tikzpicture}[node distance=6cm]
+\node[regular polygon, regular polygon sides=4, minimum size=6cm] (A) {};
+\node at (A.corner 2) {$\aFunctor\parens{\oA}$};
+\node at (A.corner 1) {$\aFunctor\parens{\oB}$};
+\node at (A.corner 3) {$\bFunctor\parens{\oA}$};
+\node at (A.corner 4) {$\bFunctor\parens{\oB}$};
+
+\draw (A.corner 2) edge [commarr] node [label=left:$\natTrans\parens{\oA}$] {} (A.corner 3);
+\draw (A.corner 1) edge [commarr] node [label=right:$\natTrans\parens{\oB}$] {} (A.corner 4);
+\draw (A.corner 2) edge [commarr] node [label=above:$\aFunctor\parens{\aA}$] {} (A.corner 1);
+\draw (A.corner 3) edge [commarr] node [label=below:$\bFunctor\parens{\aA}$] {} (A.corner 4);
+\end{tikzpicture}
+\caption{Natural transformation commuting diagram}
+\label{fig:natTrans}
+\end{figure}
+
+\begin{definition}[Natural Isomorphism]
+    A natural transformation, $\natTrans$, is a natural isomorphism if every
+    component is an isomorphism.
+\end{definition}
+
+\begin{definition}[Monoidal Category]\label{defn:monCat}
+    A monoidal category is a 6-tuple, $(\aCat, \tensor, \tensorUnit,
+    \tensorAssoc, \tensorLeftID, \tensorRightID)$, where:
+    \begin{itemize}
+        \item $\aCat$ is a category,
+        \item $\tensor : \aCat \times \aCat \to \aCat$ is a bifunctor, called
+            tensor,
+        \item $\tensorUnit \in \obj{\aCat}$ is the tensor unit,
+        \item $\tensorAssocArgs{\oA}{\oB}{\oC} : (\oA \tensor \oB) \tensor \oC \to \oA \tensor (\oB
+            \tensor \oC)$ is the associativity natural isomorphism,
+        \item $\tensorLeftIDArg{\oA} : \tensorUnit \tensor \oA \to \oA$
+            ($\tensorRightIDArg{\oA} : \oA \tensor \tensorUnit \to \oA $) are the
+            left (right) identity natural isomorphisms.
+    \end{itemize}
+    Subject to the pentagon and triangle conditions, illustrated in~\figref{fig:pentagon}
+    and~\figref{fig:triangle}.
+\end{definition}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\node[regular polygon, regular polygon sides=5, minimum size=6cm, xscale=1.5] (A) {};
+\node at (A.corner 2) {$((\oA \tensor \oB) \tensor \oC) \tensor \oD$};
+\node at (A.corner 1) {$(\oA \tensor \oB) \tensor (\oC \tensor \oD)$};
+\node at (A.corner 3) {$(\oA \tensor (\oB \tensor \oC)) \tensor \oD$};
+\node at (A.corner 4) {$\oA \tensor ((\oB \tensor \oC)) \tensor \oD)$};
+\node at (A.corner 5) {$\oA \tensor (\oB \tensor (\oC \tensor \oD))$};
+\draw (A.corner 2) edge [commarr] node [label=left:$\tensorAssocArgs{\oA}{\oB}{\oC} \tensor \idArr{\oD}$] {} (A.corner 3);
+\draw ($(A.corner 3)+(1.25,0)$) edge [commarr] node [label=below:$\tensorAssocArgs{\oA}{\parens{\oB
+\tensor \oC}}{\oD}$] {} ($(A.corner 4)+(-1.25,0)$);
+\draw (A.corner 4) edge [commarr] node [label=right:$\idArr{\oA} \tensor \tensorAssocArgs{\oB}{\oC}{\oD}$] {} (A.corner 5);
+\draw (A.corner 2) edge [commarr] node [label=above left:$\tensorAssocArgs{\parens{\oA \tensor \oB}}{\oC}{\oD}$] {} (A.corner 1);
+\draw (A.corner 1) edge [commarr] node [label=above right:$\tensorAssocArgs{\oA}{\oB}{\parens{\oC \tensor \oD}}$] {} (A.corner 5);
+\end{tikzpicture}
+\caption{Pentagon coherence condition}
+\label{fig:pentagon}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\node[regular polygon, regular polygon sides=3, minimum size=4cm] (A) {};
+\node at (A.corner 2) {$\parens{\oA \tensor \tensorUnit} \tensor \oB$};
+\node at (A.corner 1) {$\oA \tensor \parens{\tensorUnit \tensor \oB}$};
+\node at (A.corner 3) {$\oA \tensor \oB$};
+\draw (A.corner 2) edge [commarr] node [label=above left:$\tensorAssocArgs{\oA}{\tensorUnit}{\oB}$] {} (A.corner 1);
+\draw (A.corner 1) edge [commarr] node [label=above right:$\idArr{\oA} \tensor \tensorLeftIDArg{\oB}$] {} (A.corner 3);
+\draw ($(A.corner 2)+(0.5,0)$) edge [commarr] node [label=below:$\tensorRightIDArg{\oA} \tensor
+\idArr{\oB}$] {} ($(A.corner 3)+(-0.25,0)$);
+\end{tikzpicture}
+\caption{Triangle coherence condition}
+\label{fig:triangle}
+\end{figure}
+
+\begin{definition}[Strict Monoidal Category]
+    A strict monoidal category, $(\aCat, \tensor, \tensorUnit, \tensorAssoc,
+    \tensorLeftID, \tensorRightID)$, is a monoidal category where
+    $\tensorAssoc, \tensorLeftID$ and $\tensorRightID$ are all identity mappings.
+\end{definition}
+
+\begin{definition}[Symmetric Monoidal Category]\label{defn:symMonCat}
+    A symmetric monoidal category is a monoidal category with a braiding,
+    $\braiding$, which is a natural isomorphism witnessing the commutativity
+    of the tensor product:
+    \[
+        \braidingArgs{\oA}{\oB} : \oA \tensor \oB \to \oB \tensor \oA
+    \]
+    such that the symmetry is self-inverse (i.e.~\figref{fig:symmetryInverse} commutes) and the
+    hexagon diagram commutes (\figref{fig:hexagon}).
+\end{definition}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\node[regular polygon, regular polygon sides=3, minimum size=4cm] (A) {};
+\node at (A.corner 2) {$\oA \tensor \oB$};
+\node at (A.corner 1) {$\oB \tensor \oA$};
+\node at (A.corner 3) {$\oA \tensor \oB$};
+\draw (A.corner 2) edge [commarr] node [label=above left:$\braidingArgs{\oA}{\oB}$] {} (A.corner 1);
+\draw (A.corner 1) edge [commarr] node [label=above right:$\braidingArgs{\oB}{\oA}$] {} (A.corner 3);
+\draw ($(A.corner 2)+(0.5,0)$) edge [commarr] node [label=below:$\idArr{\oA \tensor \oB}$] {} ($(A.corner 3)+(-0.25,0)$);
+\end{tikzpicture}
+\caption{Symmetry is self-inverse}
+\label{fig:symmetryInverse}
+\end{figure}
+
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}
+\node[regular polygon, regular polygon sides=6, minimum size=5cm, xscale=2] (A) {};
+\node at (A.corner 3) {$\parens{\oA \tensor \oB} \tensor \oC$};
+\node at (A.corner 2) {$\parens{\oB \tensor \oA} \tensor \oC$};
+\node at (A.corner 1) {$\oB \tensor \parens{\oA \tensor \oC}$};
+\node at (A.corner 4) {$\oA \tensor \parens{\oB \tensor \oC}$};
+\node at (A.corner 5) {$\parens{\oB \tensor \oC}\tensor \oA$};
+\node at (A.corner 6) {$\oB \tensor \parens{\oC \tensor \oA}$};
+\draw (A.corner 3) edge [commarr] node [label=above left:$\braidingArgs{\oA}{\oB} \tensor \idArr{\oC}$] {} (A.corner 2);
+\draw ($(A.corner 2)+(0.75,0)$) edge [commarr] node [label=above:$\tensorAssocArgs{\oB}{\oA}{\oC}$]
+{} ($(A.corner 1)+(-0.75,0)$);
+\draw (A.corner 1) edge [commarr] node [label=above right:$\idArr{\oB} \tensor \braidingArgs{\oA}{\oC}$] {} (A.corner 6);
+\draw (A.corner 3) edge [commarr] node [label=below left:$\tensorAssocArgs{\oA}{\oB}{\oC}$] {} (A.corner 4);
+\draw ($(A.corner 4)+(0.75,0)$) edge [commarr] node [label=below:$\braidingArgs{\oA}{\oB \tensor \oC}$]
+{} ($(A.corner 5)+(-0.75,0)$);
+\draw (A.corner 5) edge [commarr] node [label=below right:$\tensorAssocArgs{\oB}{\oC}{\oA}$] {} (A.corner 6);
+\end{tikzpicture}
+\caption{Hexagon coherence condition}
+\label{fig:hexagon}
+\end{figure}
+
+
+Symmetric monoidal categories with objects the natural numbers and tensor being
+addition are known as PROPs~\cite{Lack2004}:
+
+\begin{definition}[PROP]
+    A PROP (Products and Permutations) is a strict monoidal category that has
+    $\N$ as its objects, and $\tensor$ being addition on objects.
+\end{definition}
+
+Monoidal functors map between monoidal categories, whilst preserving the
+monoidal structure:
+
+\newcommand{\monFunctorCoherenceUnit}{\theta^1}
+\newcommand{\monFunctorCoherenceTensor}{\theta^2}
+\newcommand{\monFunctorCoherenceTensorArgs}[2]{\theta^2_{\parens{#1,#2}}}
+
+\newcommand{\inA}[1]{\color{red}{#1}}
+\newcommand{\inB}[1]{\color{green!50!black}{#1}}
+\newcommand{\tensA}{\mathbin{\inA\tensor}}
+\newcommand{\tensB}{\mathbin{\inB\tensor}}
+
+\begin{definition}[Monoidal Functor]
+    A monoidal functor is a functor between monoidal categories, $\inA\aCat$ and
+    $\inB\bCat$, formed of three components,
+    $\parens{\aFunctor,\monFunctorCoherenceUnit, \monFunctorCoherenceTensor}$
+    where:
+    \begin{itemize}
+        \item $\aFunctor : {\inA\aCat} \to {\inB\bCat}$ is a functor,
+        \item $\monFunctorCoherenceUnit : {\inB\tensorUnit} \to
+            \aFunctor\parens{{\inA\tensorUnit}}$ is a morphism in $\inB\bCat$,
+        \item $\monFunctorCoherenceTensorArgs{\oA}{\oB} :
+            \fA \tensB \fB \to \aFunctor\parens{\oA \tensA \oB}$ is a
+            natural transformation.
+    \end{itemize}
+    subject to the conditions
+    illustrated in~\figref{fig:functorCoherence1} and~\figref{fig:functorCoherence2}.
+\end{definition}
+
+\begin{definition}[Strict Monoidal Functor]
+    A monoidal functor, $\parens{\aFunctor,\monFunctorCoherenceUnit, \monFunctorCoherenceTensor}$,
+    is strict iff $\monFunctorCoherenceUnit$ and $\monFunctorCoherenceTensor$ are identity
+    mappings.
+\end{definition}
+
+\newcommand{\fAB}{\aFunctor\parens{\oA \tensA \oB}}
+\newcommand{\fBC}{\aFunctor\parens{\oB \tensA \oC}}
+\newcommand{\fABCL}{\aFunctor\parens{\parens{\oA \tensA \oB} \tensA \oC}}
+\newcommand{\fABCR}{\aFunctor\parens{\oA \tensA \parens{\oB \tensA \oC}}}
+
+\begin{figure}[ht]
+\centering
+\makebox[\textwidth][c]{
+    \scalebox{0.95}{
+\begin{tikzpicture}
+\node[regular polygon, regular polygon sides=6, minimum size=5.5cm, xscale=2.5] (A) {};
+\node at (A.corner 3) {$\parens{\fA \tensB \fB} \tensB \fC$};
+\node at (A.corner 2) {$\fA \tensB \parens{\fB \tensB \fC}$};
+\node at (A.corner 1) {$\fA \tensB \fBC$};
+\node at (A.corner 6) {$\fABCR$};
+\node at (A.corner 4) {$\fAB \tensB \fC$};
+\node at (A.corner 5) {$\fABCL$};
+\draw (A.corner 3) edge [commarr] node [label=above left:$\tensorAssocArgs{\fA}{\fB}{\fC}$] {} (A.corner 2);
+\draw ($(A.corner 2)+(1.75,0)$) edge [commarr] node [label=above:$\idArr{\fA} \tensB \monFunctorCoherenceTensorArgs{\oB}{\oC}$]
+{} ($(A.corner 1)+(-1.25,0)$);
+\draw (A.corner 1) edge [commarr] node [label=above right:$\monFunctorCoherenceTensorArgs{\oA}{\parens{\oB \tensA \oC}}$] {} (A.corner 6);
+\draw (A.corner 3) edge [commarr] node [label=below left:$\monFunctorCoherenceTensorArgs{\oA}{\oB}
+\tensB \idArr{\oC}$] {} (A.corner 4);
+\draw ($(A.corner 4)+(1.3,0)$) edge [commarr] node [label=below:$\monFunctorCoherenceTensorArgs{\parens{\oA \tensA \oB}}{\oC}$]
+{} ($(A.corner 5)+(-1.25,0)$);
+\draw (A.corner 5) edge [commarr] node [label=below right:$\aFunctor\parens{\tensorAssocArgs{\oA}{\oB}{\oC}}$] {} (A.corner 6);
+\end{tikzpicture}
+}
+}
+\caption{Monoidal functor coherence 1}
+\label{fig:functorCoherence1}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+\makebox[1.075\textwidth][c]{%
+    \begin{subfigure}{0.5\textwidth}%
+    \centering
+\begin{tikzpicture}[node distance=6cm]
+\node[regular polygon, regular polygon sides=4, minimum size=6cm] (A) {};
+\node at (A.corner 2) {$\fA \tensB {\inB\tensorUnit{}}$};
+\node at (A.corner 1) {$\fA$};
+\node at (A.corner 3) {$\fA \tensB \aFunctor{\parens{\inA\tensorUnit{}}}$};
+\node at (A.corner 4) {$\aFunctor\parens{\oA \tensA {\inA\tensorUnit}}$};
+
+\draw (A.corner 2) edge [commarr, shorten <=1cm] node [label=above:$\tensorRightIDArg{\fA}$] {} (A.corner 1);
+\draw (A.corner 4) edge [commarr] node [label=right:$\aFunctor\parens{\tensorRightIDArg{\oA}}$] {} (A.corner 1);
+\draw (A.corner 2) edge [commarr] node [label=left:$\idArr{\fA} \tensB \monFunctorCoherenceUnit$] {} (A.corner 3);
+\draw (A.corner 3) edge [commarr, shorten >=1cm, shorten <=1.25cm] node [label=below:$\monFunctorCoherenceTensorArgs{\oA}{{\inA\tensorUnit}}$] {} (A.corner 4);
+\end{tikzpicture}
+\end{subfigure}%
+\hspace{0.075\textwidth}%
+\begin{subfigure}{0.5\textwidth}%
+    \centering
+\begin{tikzpicture}[node distance=6cm]
+\node[regular polygon, regular polygon sides=4, minimum size=6cm] (A) {};
+\node at (A.corner 2) {${\inB\tensorUnit{}} \tensB \fA$};
+\node at (A.corner 1) {$\fA$};
+\node at (A.corner 3) {$\aFunctor{\parens{\inA\tensorUnit{}}} \tensB \fA$};
+\node at (A.corner 4) {$\aFunctor\parens{{\inA\tensorUnit}\tensA \oA}$};
+
+\draw (A.corner 2) edge [commarr, shorten <=1cm] node [label=above:$\tensorLeftIDArg{\fA}$] {} (A.corner 1);
+\draw (A.corner 4) edge [commarr] node [label=right:$\aFunctor\parens{\tensorLeftIDArg{\oA}}$] {} (A.corner 1);
+\draw (A.corner 2) edge [commarr] node [label=left:$\monFunctorCoherenceUnit \tensB \idArr{\fA}$] {} (A.corner 3);
+\draw (A.corner 3) edge [commarr, shorten >=1cm, shorten <=1.25cm] node [label=below:$\monFunctorCoherenceTensorArgs{{\inA\tensorUnit}}{\oA}$] {} (A.corner 4);
+\end{tikzpicture}
+\end{subfigure}
+}
+\caption{Monoidal functor coherence 2}
+\label{fig:functorCoherence2}
+\end{figure}
+
+A symmetric monoidal functor is then a monoidal functor that preserves the
+braided structure:
+
+\newcommand{\braidingArgsA}[2]{{\inA\braiding}_{\parens{#1,#2}}}
+\newcommand{\braidingArgsB}[2]{{\inB\braiding}_{\parens{#1,#2}}}
+
+\begin{definition}[Symmetric Monoidal Functor]
+    A monoidal functor, $\aFunctor$ between symmetric monoidal categories
+    $\inA\aCat$ and $\inB\bCat$ is symmetric if the diagram in~\figref{fig:braidingCoherence}
+    commutes.
+\end{definition}
+
+\begin{figure}[ht]
+    \[
+    \]
+    \centering
+\begin{tikzpicture}[node distance=6cm]
+\node[regular polygon, regular polygon sides=4, minimum size=6cm] (A) {};
+\node at (A.corner 2) {$\fA \tensB \fB$};
+\node at (A.corner 1) {$\fB \tensB \fA$};
+\node at (A.corner 3) {$\aFunctor{\parens{\oA \tensA \oB}}$};
+\node at (A.corner 4) {$\aFunctor{\parens{\oB \tensA \oA}}$};
+
+\draw (A.corner 2) edge [commarr, shorten <=1.5cm, shorten >=1.5cm] node [label=above:$\braidingArgsB{\fA}{\fB}$] {} (A.corner 1);
+\draw (A.corner 1) edge [commarr] node [label=right:$\monFunctorCoherenceTensorArgs{\oB}{\oA}$] {} (A.corner 4);
+\draw (A.corner 2) edge [commarr] node [label=left:$\monFunctorCoherenceTensorArgs{\oA}{\oB}$] {} (A.corner 3);
+\draw (A.corner 3) edge [commarr, shorten >=1cm, shorten <=1.25cm] node [label=below:$\aFunctor\parens{\braidingArgsA{\oA}{\oB}}$] {} (A.corner 4);
+\end{tikzpicture}
+\caption{Symmetric monoidal functor coherence}
+\label{fig:braidingCoherence}
+\end{figure}
+
+\section{The category of PNBs} \label{sec:pnbCat}
+
+As shown by {Bruni et al.}~\cite[Proposition 5.1]{Bruni2013}, PNBs form a
+category. Before we give the structure of this category, we must describe
+isomorphism classes of PNBs:
+
+\begin{definition}[PNB Isomorphism Class]
+    For a PNB, $\aPNB \withNetType{\aN}{\bN}$, its PNB isomorphism class,
+    written $\isoClass{\aPNB} \withNetType{\aN}{\bN}$ is the set
+    $\setBuilder{\bPNB}{\aPNB \PNBIso \bPNB}$.
+\end{definition}
+
+Now, \PNBCat{}, the category of \PNB{}s has the following structure:
+\begin{itemize}
+\item Objects are the natural numbers, \N,
+\item Arrows from $\aN$ to $\bN$ are the \PNB{} isomorphism classes:
+    $\isoClass{\aPNB} \withNetType{\aN}{\bN}$,
+\item The identity morphism for $\aN \in \N$, is the net $\PNBid{\aN}
+    \withNetType{\aN}{\aN}$,
+    illustrated in \figref{fig:netIdn}. $\PNBid{\aN}$ has no places, $\aN$
+    boundaries on the left and right, and transitions connecting the $i^{th}$
+    left boundary to the $i^{th}$ right boundary,
+\item The composition of morphisms $\aPNB \withNetType{\aN}{\bN}$ and $\bPNB
+    \withNetType{\bN}{\cN}$, is $\aPNB \arrComp \bPNB \withNetType{\aN}{\cN}$,
+    obtained using PNB composition, defined in
+    \defnref{defn:sequentialCompositionPNB}.
+\end{itemize}
+
+To show that such a structure is well-defined, {Bruni et al.}~\cite[Proposition
+5.1]{Bruni2013} proved:
+\begin{enumerate}
+    \item PNB composition is compatible with isomorphism classes:
+        $\aPNB \comp \bPNB' \PNBIso \aPNB' \comp \bPNB$ with $\aPNB \PNBIso
+        \aPNB'$ and $\bPNB \PNBIso \bPNB'$,
+    \item PNB composition is associative up-to isomorphism: $\aPNB \comp
+        \parens{\bPNB \comp \cPNB} \PNBIso \parens{\aPNB \comp \bPNB} \comp
+        \cPNB$,
+\item PNB composition has a unit up-to isomorphism: $\aPNB \comp \PNBid{}
+    \PNBIso \aPNB \PNBIso \PNBid{} \comp \aPNB$.
+\end{enumerate}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb]
+        \drawBoundaries[2][4]{4}{4}
+
+        \path node [dotsBPort] at (l3) {};
+        \path node [dotsBPort] at (r3) {};
+
+        \foreach \i in {1,2,4}{
+            \draw (l\i) edge[pnbarr, mark inside=0.5] (r\i) {};
+        }
+\end{tikzpicture}
+\caption{Net $\PNBid{\aN} \withNetType{\aN}{\aN}$}
+\label{fig:netIdn}
+\end{figure}
+
+Furthermore, there is a (strict) monoidal structure on \PNBCat:
+
+\begin{itemize}
+    \item The tensor product is addition on objects and $\tensor$-composition
+        (\defnref{defn:tensorCompositionPNB}) on morphisms,
+    \item The unit is $0$,
+    \item $\tensorAssoc, \tensorLeftID$ and $\tensorRightID$ are identities.
+\end{itemize}
+
+{Bruni et al.}~\cite{Bruni2013}[Proposition 5.2] assures us that tensor is
+well-defined for equivalence classes of \PNB{}s, and is a bifunctor. Indeed,
+addition is strictly associative with 0 being its strict identity, thus it
+follows that \PNBCat{} is strict monoidal:
+
+\begin{proposition}\label{prop:PNBMonCat}
+    \PNBCat{} is a strict monoidal category.
+\end{proposition}
+
+We now show that there is a \emph{symmetric} monoidal structure on \PNBCat{}.
+For any $\aN, \bN \in \N$, there is a \PNB{}, $\PNBbr{\aN}{\bN} \withNetType{\aN +
+\bN}{\bN + \aN}$, illustrated in \figref{fig:netBr}. $\PNBbr{\aN}{\bN}$ has no
+places, and $\aN + \bN$ of each of transitions, left boundaries and right boundaries. The
+$\aN + \bN$ transitions are connected to boundary ports as follows: for $0 \le
+x < \aN$, $\source{\aTrans_{x}}=x$ and $\target{\aTrans_{x}}=\bN + x$ and
+for $0 \le y < \bN$, $\source{\aTrans_{\aN + y}}=\aN + y$ and
+$\target{\aTrans_{\aN + y}}=y$.
+
+\makeatletter
+\NewDocumentCommand{\drawBraid}{oooo}{%
+    \begin{tikzpicture}[pnb, boundaryPort-l5/.style={boundaryPortHidden},
+                             boundaryPort-r5/.style={boundaryPortHidden},
+                             boundaryPort-l6/.style={boundaryPortHidden},
+                             boundaryPort-r6/.style={boundaryPortHidden}]
+
+    \drawBoundaries[3][6]{10}{10}
+
+    \foreach \i in {3,9}{
+        \path node [dotsBPort] at (l\i) {};
+        \path node [dotsBPort] at (r\i) {};
+    }
+
+    \IfValueT{#1}{%
+        \@ifnotmtarg{#1}{%
+            \draw[mirrorbrace] (l1.west) -- node [left] {$#1$} (l4.west);
+        }}%
+    \IfValueT{#2}{\@ifnotmtarg{#2}{\draw[mirrorbrace] (l7.west) -- node [left]
+        {$#2$} (l10.west);}}
+    \IfValueT{#3}{\@ifnotmtarg{#3}{\draw[brace] (r1.east) -- node [right]
+        {$#3$} (r4.east);}}
+    \IfValueT{#4}{\@ifnotmtarg{#4}{\draw[brace] (r7.east) -- node [right]
+        {$#4$} (r10.east);}}
+
+    \foreach \l/\r in {1/8,2/9,4/10}{
+        \labelledpnbarr{l\l}{r\r}{}{out=-15, in=175}{pos=0.1}
+        \labelledpnbarr{l\r}{r\l}{}{pnbarrstyle1, out=-15, in=175}{pos=0.1}
+    }
+\end{tikzpicture}
+}
+\makeatother
+
+\begin{figure}[ht]
+    \centering
+    \drawBraid[\aN][\bN][\bN][\aN]
+\caption{Net $\PNBbr{\aN}{\bN} \withNetType{\aN + \bN}{\bN + \aN}$}
+\label{fig:netBr}
+\end{figure}
+
+$\PNBbr{\aN}{\bN}$ is an example of a PNB whose transitions are 1-1 with its
+boundary ports; we refer to such PNBs as \emph{permutation} PNBs:
+
+\begin{definition}[Permutation PNB]
+    A \PNB, $\exPermPNB \withNetType{\aN}{\aN}$, is a Permutation PNB iff
+    $\perm$ is a permutation on $\ordinal{\aN}$, $\places{\exPermPNB} =
+    \emptyset$, and the following hold, with $\aTrans,\bTrans$
+    ranging over $\trans{\exPermPNB}$:
+    \begin{multicols}{2}
+    \begin{itemize}
+        \item $\cardinalityof{\source{\aTrans}} = 1$,
+        \item if $\aTrans \neq \bTrans$ then $\source{\aTrans} \intersect
+            \source{\bTrans} = \emptyset$,
+        \item $\forall \aPNBBPort \in \ordinal{\aN}$, $\exists
+            \cTrans \in \trans{\aPNB} \text{ s.t. }
+            \source{\cTrans} = \setof{\aPNBBPort}$.
+        \item $\cardinalityof{\target{\aTrans}} = 1$,
+        \item if $\aTrans \neq \bTrans$ then $\target{\aTrans}
+            \intersect \target{\bTrans} = \emptyset$,
+        \item $\forall \aPNBBPort \in \ordinal{\bN}$, $\exists
+            \cTrans \in \trans{\aPNB} \text{ s.t. }
+            \target{\cTrans} = \setof{\aPNBBPort}$.
+    \end{itemize}
+    \end{multicols}
+    That is, each transition is connected to exactly one left (right) boundary
+    port, distinct transitions do not share left (right) boundary ports and for
+    every left (right) boundary port, there is a transition that connects to
+    that boundary port. The boundary connections of the transitions are
+    determined by $\perm$: given $\aTrans \in \trans{\exPermPNB}$,
+    $\target{\aTrans} = \setBuilder{\perm(\aPNBBPort)}{\source{\aTrans} =
+    \setof{\aPNBBPort}}$.
+\end{definition}
+
+Permutation \PNB{}s embed permutations on $\ordinal{\aN}$; we refer to such
+permutations as $\aN$-permutations. Indeed, we can compose permutations, both
+sequentially and in parallel:
+
+\begin{definition}[Synchronous composition of permutations]
+    Given two $\aN$-permutations, $\aPerm$ and $\bPerm$, their synchronous
+    composition is a $\aN$-permutation, written $\aPerm \comp \bPerm$, and
+    simply composes the underlying bijections: $(\aPerm \comp \bPerm)(x) \defeq
+    \bPerm(\aPerm(x))$.
+\end{definition}
+
+\begin{definition}[Parallel composition of permutations]
+    \newcommand{\aVar}{x}
+    Given a $\aN$-permutation, $\aPerm$, and $\bN$-permutation, $\bPerm$,
+    their tensor composition is a $\parens{\aN + \bN}$-permutation, written $\aPerm
+    \tensor \bPerm$, and defined:
+    \[
+    (\aPerm \tensor \bPerm)(\aVar)
+    \defeq
+    \begin{cases}
+        \aPerm(\aVar) \text{ if } 0 \le \aVar < \aN\\
+        \bPerm(\aVar - \aN) + \aN \text{ if } \aN \le \aVar < \aN + \bN
+    \end{cases}
+    \]
+    that is, we directly apply $\aPerm$ if $\aVar$ is in its domain, else we
+    apply a shift to $\aVar$, such that it is in the domain of $\bPerm$, before
+    applying $\bPerm$ and the inverse shift.
+\end{definition}
+
+We later make use of two particular permutations, $\idPerm{\aN}$ and
+$\swPerm{\bN}{\cN}$ (identity and ``swap'', or \emph{braid} permutations,
+respectively):
+\begin{example}
+    $\idPerm{\aN}$ is a $\aN$-permutation, with: $\idPerm{\aN}(x) \defeq x$.
+\end{example}
+\begin{example}
+    $\swPerm{\bN}{\cN}$ is a $\bN+\cN$-permutation, with:
+    \[
+    \swPerm{\bN}{\cN}(x) \defeq
+    \begin{cases}
+        x + \cN \text{ if } 0 \le x < \bN\\
+        x - \bN \text{ otherwise.}
+    \end{cases}
+    \]
+\end{example}
+
+A simple lemma confirms that permutation PNBs are closed (up-to isomorphism) under synchronous and
+tensor composition.
+
+\begin{lemma}
+    If $\aPermPNB \withNetType{\aN}{\aN}$, $\bPermPNB \withNetType{\aN}{\aN}$ and
+    $\cPermPNB \withNetType{\bN}{\bN}$ are permutation PNBs, then:
+    \begin{enumerate}
+        \item \label{enum:PermClosedSeq}
+            We have $\aPermPNB \comp \bPermPNB \withNetType{\aN}{\aN}$, with $\aPermPNB \comp
+            \bPermPNB \PNBIso \PermPNB{\aPerm \comp \bPerm}$,
+        \item \label{enum:PermClosedTen}
+            We have $\aPermPNB \tensor \cPermPNB \withNetType{\aN+\bN}{\aN + \bN}$, with
+            $\aPermPNB \tensor \cPermPNB \PNBIso \PermPNB{\aPerm \tensor \cPerm}$.
+    \end{enumerate}
+    \label{lem:permutationPNBClosedComposition}
+\end{lemma}
+\begin{proof}
+    \newcommand{\abMinSync}{(\aPNBTransSing, \bPNBTransSing)}
+    For part \ref{enum:PermClosedSeq}, we have that each $\aPNBBPort \in
+    \ordinal{\bN}$ determines unique $\aTrans \in \trans\aPNB$ and
+    $\bTrans \in \trans\bPNB$. Thus $\abMinSync$ is a minimal
+    synchronisation, with $\source{\abMinSync}$ and $\target{\abMinSync}$ being
+    unique, in particular, since $\target{\setof{\aTrans}} =
+    \source{\setof{\bTrans}}$, we have: $\target{\bPNBTransSing} =
+    \setBuilder{\bPerm(\aPerm(\aPNBBPort))}{\setof{\aPNBBPort} =
+    \source{\aPNBTransSing}}$. For part \ref{enum:PermClosedTen}, observe that
+    no boundary ports or transitions are created, and existing transitions'
+    connections are preserved with those in $\cPermPNB$ being appropriately
+    shifted.
+\end{proof}
+
+We prove 3 technical lemmas relating to PNB compositions with a permutation
+PNB, $\aPermComp$: the first says that each transition of $\aPNB$ synchronises
+with a uniquely defined set of transitions in $\exPermPNB$. The second says
+that the transitions of $\aPermComp$ (that is, minimal synchronisations)
+consist of single transitions from $\aPNB$. Finally, the third says that
+transitions of $\aPermComp$ are in bijection with those of $\aPNB$.
+
+\begin{lemma} \label{lem:uniqueTransSync}
+    For $\exPermPNB \withNetType{\aN}{\aN}$, each $\aPNBTargetSet \in \powerset{\ordinal{\aN}}$
+    (i.e. $\aPNBTargetSet$ is a set of left boundary ports of $\exPermPNB$) determines a unique
+    $\bPNBTransSet \subseteq \trans{\exPermPNB}$ such that $\aPNBTargetSet =
+    \source{\bPNBTransSet}$.
+    \end{lemma}
+\begin{proof}
+    By induction on $\aPNBTargetSet$: in the base case of $\aPNBTargetSet = \emptyset$, $\emptyset$
+    suffices. In the case of $\aPNBTargetSet = \aPNBTargetSet' \union \setof{\aPNBBPort}$, we apply
+    the \IH{} to $\aPNBTargetSet'$, obtaining the unique $\bPNBTransSet' \subseteq
+    \trans{\exPermPNB}$ such that $\aPNBTargetSet' = \source{\bPNBTransSet'}$. Then, by our
+    assumptions on $\trans{\exPermPNB}$, there is a unique $\bTrans \in \trans{\exPermPNB}$ such
+    that $\source{\bTrans} = \aPNBBPort$; therefore, $\bPNBTransSet' \union \bPNBTransSing$
+    satisfies the requirements.
+\end{proof}
+
+\begin{lemma}\label{lem:singletonSynch}
+    For $\aPNB \withNetType{\aN}{\bN}$ and $\exPermPNB \withNetType{\bN}{\bN}$,
+    each $\aPNBSync \in \trans{\aPermComp}$ has $\cardinalityof{\aPNBTransSet}
+    = 1$.
+\end{lemma}
+\begin{proof}
+    \newcommand{\aPNBTransSetNoaTrans}{\aPNBTransSet \setminus \setof{\aTrans}}
+    \newcommand{\bPNBTransSetNocTransSet}{\bPNBTransSet \setminus
+        \cPNBTransSet}
+    For a contradiction, assume that we have a $\aPNBSync \in
+    \trans{\aPermComp}$ with $\cardinalityof{\aPNBTransSet} > 1$. Take any
+    $\aTrans \in \aPNBTransSet$, and using \lemref{lem:uniqueTransSync}
+    identify the (possibly empty) unique set $\cPNBTransSet \subseteq
+    \trans{\exPermPNB}$ such that $\target{\aTrans} =
+    \source{\cPNBTransSet}$; since $\cPNBTransSet$ is unique in
+    $\trans{\exPermPNB}$, we must have that $\cPNBTransSet \subseteq
+    \bPNBTransSet$.
+
+    Then, since $\aPNBTransSet$ and $\bPNBTransSet$ are contention-free, we
+    have that $\target{(\aPNBTransSetNoaTrans)} = \target{\aPNBTransSet}
+    \setminus \target{\aTrans} = \source{\bPNBTransSet} \setminus
+    \source{\cPNBTransSet} = \source{(\bPNBTransSetNocTransSet)}$, and clearly,
+    $(\aPNBTransSetNoaTrans, \bPNBTransSetNocTransSet) \subseteq \aPNBSync$.
+    In other words, $\aPNBSync$ is not a \emph{minimal} synchronisation,
+    contradicting $\aPNBSync \in \trans{\aPermComp}$.
+\end{proof}
+
+\begin{lemma} \label{lem:singletonInCompWithPerPNB}
+    For $\aPNB \withNetType{\aN}{\bN}$ and $\exPermPNB \withNetType{\bN}{\bN}$,
+    there is a bijection between $\trans{\aPNB}$ and $\trans{\aPermComp}$. In
+    particular, each $\aTrans \in \trans{\aPNB}$ determines a unique
+    $\aPNBSync \in \trans{\aPermComp}$ such that $\aPNBTransSet =
+    \setof{\aTrans}$.
+\end{lemma}
+\begin{proof}
+    We have that $\trans{\aPermComp}$ is the set of all minimal
+    synchronisations between $\aPNB$ and $\exPermPNB$. By
+    \lemref{lem:singletonSynch} every $\aPNBSync \in \trans{\aPermComp}$
+    has $\cardinalityof{\aPNBTransSet} = 1$, i.e. $\aPNBTransSet = \setof{\aTrans}$ for some
+    $\aTrans$, such that,
+    by \lemref{lem:uniqueTransSync}, $\bPNBTransSet$ is uniquely
+    determined by $\target{\aTrans}$. In the other direction, suppose that there is no $\aPNBSync
+    \in \trans{\aPermComp}$ such that $\aPNBTransSet = \setof{\aTrans}$; by
+    \lemref{lem:uniqueTransSync} we have the unique set of transitions $\aPNBTransSet \subseteq
+    \trans{\exPermPNB}$ such that $\target{\aTrans} = \source{\aPNBTransSet}$. Clearly
+    $(\setof{\aTrans}, \aPNBTransSet)$ is a minimal synchronisation and thus must appear in
+    $\trans{\aPermComp}$, a contradiction.
+\end{proof}
+
+Indeed, we can easily obtain the symmetric versions of the previous lemmas, for composition with a
+permutation PNB on the left; the proofs of which follow the same arguments:
+
+\begin{lemma} \label{lem:uniqueTransSyncSym}
+    For $\exPermPNB \withNetType{\aN}{\aN}$, each $\aPNBTargetSet \in \powerset{\ordinal{\aN}}$
+     determines a unique $\aPNBTransSet \subseteq \trans{\exPermPNB}$ such that $\aPNBTargetSet =
+    \target{\aPNBTransSet}$.
+
+    For $\exPermPNB \withNetType{\aN}{\aN}$ and $\bPNB \withNetType{\aN}{\bN}$, each
+    $\aTrans \in \trans{\bPNB}$, determines a unique $\aPNBTransSet
+    \subseteq \trans{\exPermPNB}$ such that $\target{\aPNBTransSet} =
+    \source{\aTrans}$.
+    \qed
+\end{lemma}
+
+\begin{lemma} \label{lem:singletonSynchSym}
+    For $\exPermPNB \withNetType{\aN}{\aN}$ and $\bPNB \withNetType{\aN}{\bN}$, each
+    $\aPNBSync \in \trans{\exPermPNB \comp \bPNB}$ has
+    $\cardinalityof{\bPNBTransSet} = 1$.  \qed
+\end{lemma}
+
+\begin{lemma} \label{lem:singletonInCompWithPerPNBSym}
+    For $\exPermPNB \withNetType{\aN}{\aN}$ and $\bPNB \withNetType{\aN}{\bN}$,
+    there is a bijection between $\trans{\bPNB}$ and $\trans{\exPermPNB \comp
+    \bPNB}$. In particular, each $\aTrans \in \trans{\bPNB}$ determines a
+    unique $\aPNBSync \in \trans{\exPermPNB \comp \bPNB}$ such that
+    $\bPNBTransSet = \setof{\aTrans}$.
+\end{lemma}
+
+We may now prove a proposition relating tensor and the ``swap'' PNB; the
+intuition is provided graphically in \figref{fig:braidingNatural}, where both
+compositions should be isomorphic.
+
+\makeatletter
+\NewDocumentCommand{\singleComponent}{oom}{%
+\begin{tikzpicture}[pnb]
+    \drawBoundaries[1.8][2.725]{4}{4}
+
+    \node (lbl) at (current bounding box.center) {$#3$};
+
+    \foreach \i in {3}{
+        \path node [boundaryPort,fill=white,rotate=90] at (l\i) {$\dots$};
+        \path node [boundaryPort,fill=white,rotate=90] at (r\i) {$\dots$};
+    }
+
+    \IfValueT{#1}{\@ifnotmtarg{#1}{\draw[mirrorbrace] (l1.west) --
+        node [left, overlay] {$#1$} (l4.west);}}
+    \IfValueT{#2}{\@ifnotmtarg{#2}{\draw[brace] (r1.east) --
+        node [right,overlay] {$#2$} (r4.east);}}
+\end{tikzpicture}
+}
+\makeatother
+
+\makesavebox{\nPNBl}{\singleComponent[\aN][\bN]{\aPNB}}
+\makesavebox{\PNBl}{\singleComponent[\cN][\dN]{\bPNB}}
+\makesavebox{\brPNBr}{\drawBraid[][][\dN][\bN]}
+
+\makesavebox{\nPNBr}{\singleComponent[\cN][\dN]{\bPNB}}
+\makesavebox{\PNBr}{\singleComponent[\aN][\bN]{\aPNB}}
+\makesavebox{\brPNBl}{\drawBraid[\aN][\cN][][]}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[node distance=0.5cm]
+        \node (N) [anchor=north] {\usebox{\nPNBl}};
+        \node (br) [right=0.2cm of N.north east, anchor=north west] {\usebox{\brPNBr}};
+        \node (M) [left=0.2cm of br.south west, anchor=south east] {\usebox{\PNBl}};
+    \end{tikzpicture}
+    \caption{Composition $(\abPNBTensor) \comp \PNBbr{\bN}{\dN}$}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+    \begin{tikzpicture}[node distance=0.5cm]
+        \node (M) [anchor=north] {\usebox{\nPNBr}};
+        \node (br) [left=0.2cm of M.north west, anchor=north east] {\usebox{\brPNBl}};
+        \node (N) [right=0.2cm of br.south east, anchor=south west] {\usebox{\PNBr}};
+    \end{tikzpicture}
+    \caption{Composition $\PNBbr{\aN}{\cN} \comp (\bPNB \tensor \aPNB)$}
+    \end{subfigure}
+    \caption{\propref{prop:braidingNatural}, graphically; (a) is isomorphic to
+(b).}
+\label{fig:braidingNatural}
+\end{figure}
+
+\begin{proposition}\label{prop:braidingNatural}
+    For $\aPNB \withNetType{\aN}{\bN}$ and $\bPNB \withNetType{\cN}{\dN}$, the
+    following holds:
+    \[
+        (\abPNBTensor) \comp \PNBbr{\bN}{\dN}
+        \PNBIso
+        \PNBbr{\aN}{\cN} \comp (\bPNB \tensor \aPNB)
+    \]
+\end{proposition}
+\begin{proof}
+    For any $\aN, \bN \in \N$, $\PNBbr{\aN}{\bN}$ has no places, thus we can
+    give an isomorphism on places that simply maps between the tagged
+    places of $\aPNB$ and $\bPNB$, from the top (bottom) left component, to the
+    bottom (top) right component:
+    \begin{align*}
+        \inl{\parens{\inl \aPlace}} &\mapsto \inr{\parens{\inr \aPlace}} \quad \text{for } \aPlace \in \places{\aPNB}\\
+        \inl{\parens{\inr \bPlace}} &\mapsto \inr{\parens{\inl \bPlace}} \quad \text{for } \bPlace \in \places{\bPNB}
+    \end{align*}
+
+    To show the transitions are also isomorphic, consider any $\aPNBSync \in \trans{(\abPNBTensor)
+    \comp \PNBbr{\bN}{\dN}}$; we can apply \lemref{lem:singletonSynch}, obtaining that
+    $\aPNBTransSet = \setof{\inl{\aTrans}}$ or $\aPNBTransSet = \setof{\inr{\aTrans}}$. Indeed, in
+    the former case $\aTrans \in \trans{\aPNB}$ and $\aTrans \in \trans{\bPNB}$ in the latter.
+
+    Assume without loss of generality that $i = 0$.
+    Then, $\source{\inl{\aTrans}} = \source{\aTrans}$, and
+    $\target{\inl{\aTrans}} = \target{\aTrans}$; indeed, since $\aPNBSync$
+    is a synchronisation, we have that $\target{\setof{\inl{\aTrans}}} =
+    \source{\bPNBTransSet}$, thus, by the definition of the permutation
+    underlying $\PNBbr{\bN}{\dN}$, $\target{\bPNBTransSet} =
+    \setBuilder{\aPNBBPort + \dN}{\aPNBBPort \in \target{\aTrans}}$. This
+    gives us $\source{\aPNBSync} = \source{\aTrans}$ and $\target{\aPNBSync}
+    =  \setBuilder{\aPNBBPort + \dN}{\aPNBBPort \in \target{\aTrans}}$.
+
+    Furthermore, by the definition of $\tensor$, and
+    \lemref{lem:singletonInCompWithPerPNBSym}, we also have a $\bPNBSync \in
+    \trans{\PNBbr{\aN}{\cN} \comp (\bPNB \tensor \aPNB}))$, with
+    $\bPNBTransSet' = \setof{\inr{\aTrans}}$. Now, $\source{\inr{\aTrans}}
+    = \setBuilder{\aPNBBPort + \cN}{\aPNBBPort \in \source{\aTrans}}$ and
+    $\target{\inr{\aTrans}} = \setBuilder{\aPNBBPort + \dN}{\aPNBBPort \in
+    \target{\aTrans}}$ Again, since $\bPNBSync$ is a synchronisation, we
+    have that $\target{\aPNBTransSet'} = \source{\setof{\inr{\aTrans}}}$. By
+    the definition of $\PNBbr{\aN}{\cN}$ we have that $\source{\aPNBTransSet'}
+    = \setBuilder{\aPNBBPort - \cN}{\aPNBBPort \in \source{\setof{(\aTrans,
+    1)}}}$, which, by the definition of $\source{\inr{\aTrans}}$, gives
+    $\source{\aPNBTransSet'} = \source{\aTrans}$. Therefore,
+    $\source{\bPNBSync} = \source{\aTrans}$ and $\target{\bPNBSync} =
+    \setBuilder{\aPNBBPort + \dN}{\aPNBBPort \in \target{\aTrans}}$.
+
+    Indeed, we have shown that $\aPNBSync \in (\abPNBTensor) \comp
+    \PNBbr{\bN}{\dN}$ determines $\bPNBSync \in \PNBbr{\aN}{\cN} \comp
+    (\bPNB \tensor \aPNB)$ such that $\source{\aPNBSync} = \source{\bPNBSync}$
+    and $\target{\aPNBSync} = \target{\bPNBSync}$, as required. The opposite
+    direction uses a similar argument.
+\end{proof}
+
+The following isomorphisms assure us that we can equivalently braid $\aN$ past
+$\bN + \cN$ in one step or two individual steps, and similarly for $\aN + \bN$
+past $\cN$:
+
+\begin{proposition}\label{prop:braidingHexagonAxioms}
+    We have the following isomorphisms:
+    \begin{enumerate}[(a)]
+        \item $\PNBbr{\aN}{\bN + \cN} \PNBIso (\PNBbr{\aN}{\bN} \tensor
+            \PNBid{\cN}) \comp (\PNBid{\bN} \tensor \PNBbr{\aN}{\cN})$
+        \item $\PNBbr{\aN + \bN}{\cN} \PNBIso (\PNBid{\aN} \tensor
+            \PNBbr{\bN}{\cN}) \comp ( \PNBbr{\aN}{\cN}\tensor \PNBid{\bN})$
+    \end{enumerate}
+\end{proposition}
+\begin{proof}
+    By definition; observe that we may consider $\PNBid{\aN}$ as a trivial
+    permutation PNB, $\PermPNB{id(\aN)}$. Then, it only remains to verify that
+    the corresponding compositions on permutations are equal:
+
+    \begin{enumerate}[(a)]
+        \item $\swPerm{\aN}{\bN+\cN} = (\swPerm{\aN}{\bN} \tensor \idPerm{\cN})
+            \comp (\idPerm{\bN} \tensor \swPerm{\aN}{\cN})$
+        \item $\swPerm{\aN + \bN}{\cN} = (\idPerm{\aN} \tensor
+            \swPerm{\bN}{\cN}) \comp (\swPerm{\aN}{\cN}\tensor \idPerm{\bN})$
+    \end{enumerate}
+
+    which is immediate by definition.
+\end{proof}
+
+\begin{proposition}\label{prop:braidingSymmetric}
+    We have the following isomorphism: $\PNBbr{\aN}{\bN} \comp \PNBbr{\bN}{\aN}
+    \PNBIso \PNBid{\aN + \bN}$
+\end{proposition}
+\begin{proof}
+    Immediate, relying on the fact that composing $\aPerm$ and $\aPerm^{-1}$ is
+    equal to the identity permutation.
+\end{proof}
+
+We can now show that \PNBCat is a strict \emph{symmetric} monoidal category.
+
+\begin{proposition}\label{prop:PNBSymMonCat}
+    \PNBCat{} is a symmetric monoidal category.
+\end{proposition}
+\begin{proof}
+    \propref{prop:braidingNatural} confirms that the braiding is a natural
+    isomorphism, \propref{prop:braidingHexagonAxioms} assures us that the
+    braiding satisfies the hexagon axioms of \defnref{defn:symMonCat}
+    (simplified since our associators are identities) and
+    \propref{prop:braidingSymmetric} says that the braiding is symmetric.
+\end{proof}
+
+Finally, it follows that \PNBCat{} is a PROP:
+
+\begin{proposition}\label{prop:PNBPROP}
+    \PNBCat{} is a PROP.
+\end{proposition}
+\begin{proof}
+    By \cite[Proposition 5.1]{Bruni2013} and propositions \ref{prop:PNBMonCat}
+    and \ref{prop:PNBSymMonCat}.
+\end{proof}
+
+While it is informative to expose the PROP structure of \PNBCat{} (illustrating that PNBs are an
+instance of a very general structure), it is the underlying monoidal category structure that is
+most "useful" later in this thesis. Indeed, associativity of both composition types ensures that we
+are free to compose from left-to-right, or right-to-left, or any grouping in between, as we do for
+example in~\figref{fig:BufferExprTreeAssocs}, while identity of $\comp$-composition allows us to
+pass \emph{signals} past a (composite) component, for example in~\figref{fig:tokenringschematic}.
+
+\section{The category of \TLTS{}s}
+
+We can show that \TLTS{}s form a category, in a similar fashion to \PNB{}s. In
+the following, we define isomorphism classes of \TLTS{}s, and then show that
+composition is compatible with such classes and furthermore, is
+associative and has identities up-to isomorphism.
+
+\begin{definition}[PNB Isomorphism Class]
+    For a \TLTS{}, $\aTLTS \withNetType{\aN}{\bN}$, its \TLTS{} isomorphism
+    class, written $\isoClass{\aTLTS} \withNetType{\aN}{\bN}$ is the set
+    $\setBuilder{\bTLTS}{\aTLTS \TLTSIso \bTLTS}$.
+\end{definition}
+
+In the following, $\idTLTS{\aN} \withNetType{\aN}{\aN}$, is a \TLTS{},
+illustrated in \figref{fig:idTLTS}, with a single state, and transitions the
+self-loops labelled by $\setBuilder{x}{x \in \B^n}$
+
+\begin{proposition}\label{prop:TLTSCatAxioms}
+    The following isomorphisms hold:
+    \begin{enumerate}[(i)]
+        \item \label{seq-item1} Given \TLTS{}s $\aTLTS, \aTLTS'
+            \withNetType{\aN}{\bN}$, $\bTLTS, \bTLTS' \withNetType{\bN}{\cN}$,
+            with $\aTLTS \NFAIso \aTLTS'$ and $\bTLTS \NFAIso \bTLTS'$, we have
+            that $\aTLTS \comp \bTLTS \NFAIso \aTLTS' \comp \bTLTS'$,
+        \item \label{seq-item2} For \TLTS{}s $\aTLTS \withNetType{\aN}{\bN}$,
+            $\bTLTS \withNetType{\bN}{\cN}$, $\cTLTS \withNetType{\cN}{\dN}$,
+            we have $(\aTLTS \comp \bTLTS) \comp \cTLTS \NFAIso \aTLTS \comp
+            (\bTLTS \comp \cTLTS)$,
+        \item \label{seq-item3} For any \TLTS{} $\aTLTS
+            \withNetType{\aN}{\bN}$, we have $\idTLTS{\aN} \comp \aTLTS \NFAIso
+            \aTLTS \NFAIso \aTLTS \comp \idTLTS{\bN}$.
+    \end{enumerate}
+\end{proposition}
+\begin{proof}
+    For \ref{seq-item1} we have that $\compStates{\aNFAState}{\bNFAState}
+    \LabelledTrans{\lbl{\aLbl}{\bLbl}} \compStates{\aNFAState'}{\bNFAState'}$ is a transition of
+    $\aTLTS \comp \bTLTS$ iff $\aNFAState \LabelledTrans{\lbl{\aLbl}{\cLbl}} \aNFAState'$ and
+    $\bNFAState \LabelledTrans{\lbl{\cLbl}{\bLbl}} \bNFAState'$ are transitions in $\aTLTS$ and
+    $\bTLTS$, respectively, for some $\cLbl \in \B^\bN$. By the definition of \TLTS{} isomorphism,
+    we have corresponding transitions in $\aTLTS'$ and $\bTLTS'$, which, by the definition of
+    \TLTS{} composition gives the required transition in $\aTLTS' \comp \bTLTS'$. The converse
+    argument is similar.
+
+    For \ref{seq-item2} we have that $\compStates{\compStates{\aNFAState}{\bNFAState}}{\cNFAState}
+    \LabelledTrans{\lbl{\aLbl}{\dLbl}}
+    \compStates{\compStates{\aNFAState'}{\bNFAState'}}{\cNFAState'}$ is a transition of
+    $\parens{\aTLTS \comp \bTLTS} \comp \cTLTS$ iff $\compStates{\aNFAState}{\bNFAState}
+    \LabelledTrans{\lbl{\aLbl}{\cLbl}} \compStates{\aNFAState'}{\bNFAState'}$ and $\cNFAState
+    \LabelledTrans{\lbl{\cLbl}{\dLbl}} \cNFAState'$ are transitions in $\aTLTS \comp \bTLTS$ and
+    $\cTLTS$, respectively, for some $\cLbl \in \B^\cN$, and $\aNFAState
+    \LabelledTrans{\lbl{\aLbl}{\bLbl}} \aNFAState'$ and $\bNFAState
+    \LabelledTrans{\lbl{\bLbl}{\cLbl}} \bNFAState'$ are transitions in $\aTLTS$ and $\bTLTS$,
+    respectively, for some $\bLbl \in \B^\bN$.  These transitions give
+    $\compStates{\bNFAState}{\cNFAState} \LabelledTrans{\lbl{\bLbl}{\dLbl}}
+    \compStates{\bNFAState'}{\cNFAState'}$ in $\bTLTS \comp \cTLTS$, and thus
+    $\compStates{\aNFAState}{\compStates{\bNFAState}{\cNFAState}}
+    \LabelledTrans{\lbl{\aLbl}{\dLbl}}
+    \compStates{\aNFAState'}{\compStates{\bNFAState'}{\cNFAState'}}$ in $\aTLTS \comp
+    \parens{\bTLTS \comp \cTLTS}$, as required.
+
+    For \ref{seq-item3}, we have $\compStates{s}{\aNFAState} \LabelledTrans{\lbl{\aLbl}{\bLbl}}
+    \compStates{s}{\aNFAState'}$ in $\idTLTS{\aN} \comp \aTLTS$ (where $s$ is the single state of
+    $\idTLTS{\aN}$) iff we have $s \LabelledTrans{\lbl{\aLbl}{\aLbl}} s$ in $\idTLTS{\aN}$ and
+    $\aNFAState \LabelledTrans{\lbl{\aLbl}{\bLbl}} \aNFAState'$ in $\aTLTS$, giving
+    $\compStates{\aNFAState}{s'} \LabelledTrans{\lbl{\aLbl}{\bLbl}} \compStates{\aNFAState'}{s'}$
+    in $\aTLTS \comp \idTLTS{\bN}$ (assuming $s'$ is the single state of $\idTLTS{\bN}$), as
+    required. Again, the converse follows a similar argument.
+\end{proof}
+
+Now, \TLTSCat{}, the category of \TLTS{}s has the following structure:
+\begin{itemize}
+\item Objects are the natural numbers, \N,
+\item Arrows from $\aN$ to $\bN$ are the \LTSB{\aN}{\bN} isomorphism classes,
+\item The identity morphism for $\aN \in \N$, is $\idTLTS{\aN}$,
+\item The composition of morphisms $\aTLTS \withNetType{\aN}{\bN}$ and $\bTLTS
+    \withNetType{\bN}{\cN}$, is $\aTLTS \arrComp \bTLTS
+    \withNetType{\aN}{\cN}$, obtained using the variant of the product
+    construction on LTSs described in \defnref{defn:sequentialCompositionTLTS}.
+\end{itemize}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node [state] (p0) {};
+        \path (p0) edge[loop right] node {$\setBuilder{b}{b \in \B^n}$} (p0);
+\end{tikzpicture}
+\caption{\TLTS{} $\idTLTS{\aN} \withNetType{\aN}{\aN}$}
+\label{fig:idTLTS}
+\end{figure}
+
+\begin{proposition}\TLTSCat{} is a category.
+    \label{prop:TLTSCategory}
+\end{proposition}
+\begin{proof}
+    \propref{prop:TLTSCatAxioms}\ref{seq-item1} ensures that \TLTS{}
+    composition is well-defined on equivalence classes of \TLTS{}s, whilst
+    \ref{seq-item2} and \ref{seq-item3} ensure that composition is associative
+    and has $\idTLTS{\aN}$ as identity.
+\end{proof}
+
+We have the following (strict) monoidal structure on \TLTSCat{}:
+\begin{itemize}
+    \item Tensor is addition on objects and the modification of the product
+        construction (\defnref{defn:tensorCompositionTLTS}) on morphisms,
+    \item The identity object is $0$,
+    \item The associator and left/right unitors are identity natural
+        isomorphisms.
+\end{itemize}
+
+We must assure ourselves that $\tensor$ is well-defined on equivalence
+classes of \TLTS{}s, and is a bifunctor:
+
+\begin{proposition}\label{prop:TLTSMonCatProps} The following isomorphisms hold:
+    \begin{enumerate}[(i)]
+        \item \label{tensor-item1} Given \TLTS{}s $\aTLTS, \aTLTS'
+            \withNetType{\aN}{\bN}$, $\bTLTS, \bTLTS' \withNetType{\cN}{\dN}$,
+            with $\aTLTS \NFAIso \aTLTS'$ and $\bTLTS \NFAIso \bTLTS'$, we have
+            that $\aTLTS \tensor \bTLTS \NFAIso \aTLTS' \tensor \bTLTS'$,
+        \item \label{tensor-item2} For any objects $\aN$, $\bN$, we have that
+            $\idTLTS{(\aN + \bN)} \NFAIso \idTLTS{\aN} \tensor
+            \idTLTS{\bN}$
+        \item \label{tensor-item3} For \TLTS{}s $\aTLTS
+            \withNetType{\aN}{\bN}$, $\bTLTS \withNetType{\bN}{\cN}$, $\cTLTS
+            \withNetType{\dN}{\eN}$, $\dTLTS \withNetType{\eN}{\fN}$, we have\\
+            $(\aTLTS \comp \bTLTS) \tensor (\cTLTS \comp \dTLTS) \NFAIso
+            (\aTLTS \tensor \cTLTS) \comp (\bTLTS \tensor \dTLTS)$
+    \end{enumerate}
+\end{proposition}
+\begin{proof}
+    For \ref{tensor-item1}, the argument follows that of
+    \propref{prop:TLTSCatAxioms}\ref{seq-item1}. For \ref{tensor-item2} we use
+    that $\B^{(\aN + \bN)} = \setBuilder{xy}{x \in \B^\aN, y \in \B^\bN}$ and
+    the obvious isomorphism between $x$ and $(x,x)$.  Finally, for
+    \ref{tensor-item3}, we have a transition
+    \(
+    \tensorStates{\compStates{\aNFAState_1}{\bNFAState_1}}{\compStates{\aNFAState_2}{\bNFAState_2}}
+    \LabelledTrans{\lbl{\aLbl\bLbl}{\cLbl\dLbl}}
+    \tensorStates{\compStates{\aNFAState_1'}{\bNFAState_1'}}{\compStates{\aNFAState_2'}{\bNFAState_2'}}
+    \) in $(\aTLTS \comp \bTLTS \tensor \cTLTS \comp \dTLTS)$ iff we have
+    transitions \(
+    \compStates{\aNFAState_1}{\bNFAState_1}
+    \LabelledTrans{\lbl{\aLbl}{\cLbl}}
+    \compStates{\aNFAState_1'}{\bNFAState_1'}
+    \) in $\aTLTS \comp \bTLTS$ and
+    \(
+    \compStates{\aNFAState_2}{\bNFAState_2}
+    \LabelledTrans{\lbl{\bLbl}{\dLbl}}
+    \compStates{\aNFAState_2'}{\bNFAState_2'}
+    \) in $(\cTLTS \comp \dTLTS)$, iff there exists $\eLbl \in \B^\bN$ and
+    $\fLbl \in \B^\eN$ such that we have
+    \(
+    \aNFAState_1 \LabelledTrans{\lbl{\aLbl}{\eLbl}} \aNFAState_1'
+    \) in $\aTLTS$,
+    \(
+    \bNFAState_1 \LabelledTrans{\lbl{\eLbl}{\cLbl}} \bNFAState_1'
+    \) in $\bTLTS$,
+    \(
+    \aNFAState_2 \LabelledTrans{\lbl{\bLbl}{\fLbl}} \aNFAState_2'
+    \) in $\cTLTS$,
+    \(
+    \bNFAState_2 \LabelledTrans{\lbl{\fLbl}{\dLbl}} \bNFAState_2'
+    \) in $\dTLTS$. Then, we have
+    \(
+    \tensorStates{\aNFAState_1}{\aNFAState_2}
+    \LabelledTrans{\lbl{\aLbl\bLbl}{\eLbl\fLbl}}
+    \tensorStates{\aNFAState_1'}{\aNFAState_2'}
+    \) in $\aTLTS \tensor \cTLTS$, and
+    \(
+    \tensorStates{\bNFAState_1}{\bNFAState_2}
+    \LabelledTrans{\lbl{\eLbl\fLbl}{\cLbl\dLbl}}
+    \tensorStates{\bNFAState_1'}{\bNFAState_2'}
+    \) in $\bTLTS \tensor \dTLTS$, giving
+    \(
+    \compStates{\tensorStates{\aNFAState_1}{\aNFAState_2}}{\tensorStates{\aNFAState_1'}{\aNFAState_2'}}
+    \LabelledTrans{\lbl{\aLbl\bLbl}{\cLbl\dLbl}}
+    \compStates{\tensorStates{\bNFAState_1}{\bNFAState_2}}{\tensorStates{\bNFAState_1'}{\bNFAState_2'}}
+    \) in $(\aTLTS \tensor \cTLTS) \comp (\bTLTS \tensor \dTLTS)$,
+    as required.
+\end{proof}
+
+This is enough to prove that \TLTSCat{} is (strict) monoidal:
+
+\begin{proposition}\label{prop:TLTSMonCat}
+    \TLTSCat{} is a strict monoidal category.
+\end{proposition}
+\begin{proof}
+    The tensor product is addition on objects, which is strictly associative,
+    and has 0 as identity. The required coherence conditions of
+    \defnref{defn:monCat} are then identities. Finally, by
+    \propref{prop:TLTSMonCatProps}, we have the required proof of
+    bifunctoriality.
+\end{proof}
+
+As we did for \PNB{}s, we may also embed $\aN$-permutations into a \TLTS{}:
+
+\begin{definition}[Permutation \TLTS{}]
+    A \TLTS, $\exPermTLTS \withNetType{\aN}{\aN}$, is a Permutation \TLTS{} iff
+    $\perm$ is a $\aN$-permutation, it has a single state, $\aLTSState$, and
+    transitions:
+    \[
+    \setBuilder{\aLTSState \LabelledTrans{\aLbl} \aLTSState}{\aLbl \in
+        \setBuilder{\lbl{\ordinalSetToBinary{\aOrdinal}}{\ordinalSetToBinary{\perm(\aOrdinal)}}}{\aOrdinal
+        \in \powerset{\ordinal{\aN}}}
+    }
+    \]
+    $\exPermTLTS$ is illustrated in \figref{fig:exPermTLTS}.
+\end{definition}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node [state] (p0) {};
+        \path (p0) edge[loop right] node
+            {$\setBuilder{\lbl{\ordinalSetToBinary{\aOrdinal}}{\ordinalSetToBinary{\perm(\aOrdinal)}}}{\aOrdinal
+                \in \powerset{\ordinal{\aN}}}$}
+        (p0);
+\end{tikzpicture}
+\caption{\TLTS{} $\exPermTLTS \withNetType{\aN}{\aN}$}
+\label{fig:exPermTLTS}
+\end{figure}
+
+A specific permutation \TLTS{} is that which embeds the $\swPerm{\aN}{\bN}$
+permutation: for $\aN, \bN \in \N$, there is a \TLTS{}, $\TLTSbr{\aN}{\bN}
+\withNetType{\aN + \bN}{\bN + \aN}$, illustrated in \figref{fig:TLTSbr}.
+$\TLTSbr{\aN}{\bN}$ has a single state, and has self-loops labelled with
+$\setBuilder{\lbl{\aLbl\bLbl}{\bLbl\aLbl}}{\aLbl \in \B^\aN, \bLbl \in
+\B^\bN}$.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node [state] (p0) {};
+        \path (p0) edge[loop right] node
+        {$\setBuilder{\lbl{\aLbl\bLbl}{\bLbl\aLbl}}{\aLbl \in \B^\aN, \bLbl \in
+        \B^\bN}$} (p0);
+\end{tikzpicture}
+\caption{\TLTS{} $\TLTSbr{\aN}{\bN} \withNetType{\aN+\bN}{\bN+\aN}$}
+\label{fig:TLTSbr}
+\end{figure}
+
+\begin{proposition}\label{prop:TLTSbraidingNatural}
+    For $\aTLTS \withNetType{\aN}{\bN}$ and $\bTLTS \withNetType{\cN}{\dN}$, the
+    following holds:
+    \[
+        (\abTLTSTensor) \comp \TLTSbr{\bN}{\dN}
+        \NFAIso
+        \TLTSbr{\aN}{\cN} \comp (\bTLTS \tensor \aTLTS)
+    \]
+\end{proposition}
+\begin{proof}
+    Immediate from the definitions of \TLTS{ } composition and $\TLTSbr{-}{-}$.
+    Letting $\cNFAState$ be the single state of $\TLTSbr{\bN}{\dN}$ and
+    $\dNFAState$ be that of $\TLTSbr{\aN}{\cN}$, we have:
+    \begin{flalign*}
+        &&\compStates{\tensorStates{\aNFAState}{\bNFAState}}{\cNFAState}
+        \LabelledTrans{\lbl{\aLbl\cLbl}{\dLbl\bLbl}}
+        \compStates{\tensorStates{\aNFAState'}{\bNFAState'}}{\cNFAState}
+        &\in \abTLTSTensor \comp \TLTSbr{\bN}{\dN}\\
+        \iff
+        &&\tensorStates{\aNFAState}{\bNFAState}
+        \LabelledTrans{\lbl{\aLbl\cLbl}{\bLbl\dLbl}}
+        \tensorStates{\aNFAState'}{\bNFAState'}
+        &\in \abTLTSTensor \\
+        \iff
+        &&\aNFAState
+        \LabelledTrans{\lbl{\aLbl}{\bLbl}}
+        \aNFAState'
+        &\in \aTLTS \text{, and }\\
+        &&
+              \bNFAState
+              \LabelledTrans{\lbl{\cLbl}{\dLbl}}
+              \bNFAState'
+              &\in \bTLTS\\
+        \iff
+        &&\tensorStates{\bNFAState}{\aNFAState}
+        \LabelledTrans{\lbl{\cLbl\aLbl}{\dLbl\bLbl}}
+        \tensorStates{\bNFAState'}{\aNFAState'}
+        &\in \bTLTS \tensor \aTLTS\\
+        \iff
+        &&\compStates{\tensorStates{\dNFAState}{\bNFAState}}{\aNFAState}
+        \LabelledTrans{\lbl{\aLbl\cLbl}{\dLbl\bLbl}}
+        \compStates{\tensorStates{\dNFAState}{\bNFAState'}}{\aNFAState'}
+        &\in \TLTSbr{\aN}{\cN} \comp \bTLTS \tensor \aTLTS
+    \end{flalign*}
+\end{proof}
+
+\begin{proposition}\label{prop:TLTSbraidingHexagonAxioms}
+    The following are isomorphisms:
+    \begin{enumerate}[(a)]
+        \item $\TLTSbr{\aN}{\bN + \cN} \NFAIso (\TLTSbr{\aN}{\bN} \tensor
+            \idTLTS{\cN}) \comp (\idTLTS{\bN} \tensor \TLTSbr{\aN}{\cN})$
+        \item $\TLTSbr{\aN + \bN}{\cN} \NFAIso (\idTLTS{\aN} \tensor
+            \TLTSbr{\bN}{\cN}) \comp ( \TLTSbr{\aN}{\cN}\tensor \idTLTS{\bN})$
+    \end{enumerate}
+\end{proposition}
+\begin{proof}
+    We give a proof for (b), the proof of (a) is similar:
+
+    Observe that $\idTLTS{\aN}$,
+    $\TLTSbr{\bN}{\cN}$, $\TLTSbr{\aN}{\cN}$ and $\idTLTS{\bN}$ all have a
+    single state, thus their composition also has a single state.
+
+    The transitions of $\TLTSbr{\aN + \bN}{\cN}$ are labelled by:
+    \[
+        \setBuilder{\lbl{\aLbl\bLbl}{\bLbl\aLbl}}
+                {\aLbl \in \B^{\aN+\bN}, \bLbl \in \B^{\cN}} =
+    \setBuilder{\lbl{\cLbl\dLbl\bLbl}{\bLbl\cLbl\dLbl}}
+               {\cLbl \in \B^\aN, \dLbl \in \B^\bN, \bLbl \in \B^{\cN}}
+           \]
+
+    On the RHS, we have that $(\idTLTS{\aN} \tensor \TLTSbr{\bN}{\cN})$ has
+    transitions labelled with:
+    \[
+    \setBuilder{\lbl{\cLbl\dLbl\bLbl}{\cLbl\bLbl\dLbl}}
+                {\cLbl \in \B^\aN, \dLbl \in \B^\bN, \bLbl \in \B^{\cN}}
+    \]
+    and $(\TLTSbr{\aN}{\cN}\tensor \idTLTS{\bN})$ has transitions labelled
+    with:
+    \[
+        \setBuilder{\lbl{\cLbl\bLbl\dLbl}{\bLbl\cLbl\dLbl}}
+                {\cLbl \in \B^\aN, \dLbl \in \B^\bN, \bLbl \in \B^{\cN}}
+    \]
+    thus
+    $(\idTLTS{\aN} \tensor \TLTSbr{\bN}{\cN}) \comp (\TLTSbr{\aN}{\cN}\tensor
+    \idTLTS{\bN})$ has transitions labelled by
+    \[
+        \setBuilder{\lbl{\cLbl\dLbl\bLbl}{\bLbl\cLbl\dLbl}}
+                {\cLbl \in \B^\aN, \dLbl \in \B^\bN, \bLbl \in \B^{\cN}}
+    \] as required.
+\end{proof}
+
+\begin{proposition}\label{prop:TLTSSymmetry}
+    We have the following isomorphism:
+    \[
+        \TLTSbr{\aN}{\bN} \comp \TLTSbr{\bN}{\aN}
+        \NFAIso
+        \idTLTS{\aN + \bN}
+    \]
+\end{proposition}
+\begin{proof}
+    $\TLTSbr{\aN}{\bN}$ has transitions labelled by
+    \[
+        \setBuilder{\lbl{\aLbl\bLbl}{\bLbl\aLbl}}
+                {\aLbl \in \B^\aN, \bLbl \in \B^\bN}
+    \]
+    and $\TLTSbr{\bN}{\aN}$ has transitions labelled by
+    \[
+        \setBuilder{\lbl{\bLbl\aLbl}{\aLbl\bLbl}}
+                {\bLbl \in \B^\bN, \aLbl \in \B^\aN}
+    \]
+    by the definition of composition, $\TLTSbr{\aN}{\bN} \comp
+    \TLTSbr{\bN}{\aN}$ has transitions labelled by
+    \[
+        \setBuilder{\lbl{\aLbl\bLbl}{\aLbl\bLbl}}
+                {\aLbl \in \B^\aN, \bLbl \in \B^\bN}
+        = \setBuilder{\lbl{\cLbl}{\cLbl}}{\cLbl \in \B^{\aN+\bN}}
+    \] as required.
+\end{proof}
+
+We can now prove that \TLTSCat{} is a strict symmetric monoidal category, and
+indeed, a PROP:
+
+\begin{proposition}\label{prop:TLTSSymMonCat}
+    \TLTSCat{} is a strict symmetric monoidal category.
+\end{proposition}
+\begin{proof}
+    By Propositions \ref{prop:TLTSbraidingNatural},
+    \ref{prop:TLTSbraidingHexagonAxioms} and \ref{prop:TLTSSymmetry}.
+\end{proof}
+
+\begin{proposition}
+    \TLTSCat{} is a PROP.
+\end{proposition}
+\begin{proof}
+    By propositions \ref{prop:TLTSCategory}, \ref{prop:TLTSMonCat} and
+    \ref{prop:TLTSSymMonCat}.
+\end{proof}
+
+\section{Mapping between \PNBCat{} and \TLTSCat{}}
+
+Given $\aPNB \withNetType{\aN}{\bN}$, we can generate its \TLTS{} statespace,
+$\PNBToTLTS{\aPNB} \withNetType{\aN}{\bN}$, using the firing semantics
+described in \secref{sec:PNBfiring}.
+
+This mapping respects the identity \PNB{}:
+
+\begin{proposition}\label{prop:functorId}
+    For any $\aN \in \N$, $\PNBToTLTS{\PNBid{\aN}} \NFAIso \idTLTS{\aN}$.
+\end{proposition}
+\begin{proof}
+    There are no places in $\PNBid{\aN}$, giving only one possible state in
+    $\PNBToTLTS{\PNBid{\aN}}$, corresponding to the empty marking.  Each
+    transition of $\PNBid{\aN}$ is always enabled, allowing arbitrary subsets
+    of transitions to be fired, giving transitions in
+    $\PNBToTLTS{\PNBid{\aN}}$ labelled by each element of $\setBuilder{x}{x \in
+    \B^\aN}$. Therefore, we have $\PNBToTLTS{\PNBid{\aN}} = \idTLTS{\aN}$, as
+    required.
+\end{proof}
+
+and further, respects the compositions of \PNB{}s:
+
+We abuse notation when referring to states of the \TLTS{} corresponding to a
+PNB composed of $\aPNB$ and $\bPNB$. Such states are markings of the
+underlying \PNB; that is, some $M \subseteq \powerset{\places{\aPNB}
+\disjointUnion \places{\bPNB}}$, indeed, we can partition $M$ into $x$, a
+marking of $\aPNB$ and $y$, a marking of $\bPNB$, justifying our notation $(x,
+y)$.
+
+\begin{proposition}\label{prop:functorComps}
+    For any pair of \PNB{}s, $\aPNB \withNetType{\aN}{\bN}$ and $\bPNB
+    \withNetType{\bN}{\cN}$, we have that
+    \[
+    \PNBToTLTS{\aPNB \comp \bPNB}
+    \NFAIso
+    \PNBToTLTS{\aPNB} \comp \PNBToTLTS{\bPNB}
+    \]
+\end{proposition}
+\begin{proof}
+    The states of $\PNBToTLTS{\aPNB \comp \bPNB}$ are of
+    the form $\powerset{\places{\aPNB} \disjointUnion \places{\bPNB}}$, isomorphic
+    to those of $\PNBToTLTS{\aPNB} \comp \PNBToTLTS{\bPNB}$, which are
+    of the form $\powerset{\places{\aPNB}} \times 2^{\places{\bPNB}}$.
+    By~\cite[Theorem 3.8]{Bruni2013}, transitions,
+    \(
+    (\aNFAState, \bNFAState)
+    \LabelledTrans{\lbl{\aLbl}{\bLbl}}
+    (\aNFAState', \bNFAState')
+    \), exist in
+    $\PNBToTLTS{\aPNB \comp \bPNB}$ iff, for $\cLbl \in \B^\bN$, there
+    are transitions $\aNFAState \LabelledTrans{\lbl{\aLbl}{\cLbl}}
+    \aNFAState'$ in $\PNBToTLTS{\aPNB}$ and $\bNFAState
+    \LabelledTrans{\lbl{\cLbl}{\bLbl}} \bNFAState'$ in
+    $\PNBToTLTS{\bPNB}$, corresponding to transitions in $\PNBToTLTS{\aPNB}
+    \comp \PNBToTLTS{\bPNB}$.
+\end{proof}
+
+It follows that $\PNBToTLTS{-} : \text{\PNBCat} \to \text{\TLTSCat}$ is a functor:
+
+\begin{proposition}
+    $\PNBToTLTS{-}$ is a functor: identity on objects and firing semantics
+    (\defnref{defn:firePNBTransitions}) on morphisms.
+\end{proposition}
+\begin{proof}
+    By propositions \ref{prop:functorId} and \ref{prop:functorComps}.
+\end{proof}
+
+\begin{lemma} \label{lem:functorTensorArrows}
+    For any pair of \PNB{}s, $\aPNB \withNetType{\aN}{\bN}$ and $\bPNB
+    \withNetType{\cN}{\dN}$, we have:
+
+    $(\aNFAState, \bNFAState) \LabelledTrans{\lbl{\aLbl\cLbl}{\bLbl\dLbl}}
+    (\aNFAState', \bNFAState') \in \PNBToTLTS{\aPNB \tensor \bPNB}$ iff there
+    are $\aNFAState \LabelledTrans{\lbl{\aLbl}{\bLbl}} \aNFAState' \in
+    \PNBToTLTS{\aPNB}$ and $\bNFAState \LabelledTrans{\lbl{\cLbl}{\dLbl}}
+    \bNFAState' \in \PNBToTLTS{\bPNB}$.
+\end{lemma}
+\begin{proof}
+    $(\Rightarrow)$ Suppose we have $(\aNFAState, \bNFAState)
+    \LabelledTrans{\lbl{\aLbl\cLbl}{\bLbl\dLbl}} (\aNFAState', \bNFAState')$
+    in $\PNBToTLTS{\aPNB \tensor \bPNB}$. There is a contention-free
+    set of enabled transitions, $\aPNBTransSet \in \trans{\aPNB \tensor
+    \bPNB}$. Indeed, we can partition $\aPNBTransSet$ into (contention-free,
+    enabled) $\bPNBTransSet \subseteq \trans{\aPNB}$ and $\cPNBTransSet
+    \subseteq \trans{\bPNB}$, with $\ordinalSetToBinary{\source{\bPNBTransSet}}
+    = \aLbl$, $\ordinalSetToBinary{\target{\bPNBTransSet}} = \bLbl$,
+    $\ordinalSetToBinary{\source{\cPNBTransSet}} = \cLbl$ and
+    $\ordinalSetToBinary{\target{\cPNBTransSet}} = \dLbl$, which correspond to
+    the required transitions in $\PNBToTLTS{\aPNB}$ and $\PNBToTLTS{\bPNB}$.
+
+    $(\Leftarrow)$ Suppose we have $\aNFAState
+    \LabelledTrans{\lbl{\aLbl}{\bLbl}} \aNFAState'$ in $\PNBToTLTS{\aPNB}$
+    and $\bNFAState \LabelledTrans{\lbl{\cLbl}{\dLbl}} \bNFAState'$ in
+    $\PNBToTLTS{\bPNB}$; then, there exist contention-free, enabled
+    $\bPNBTransSet \subseteq \trans{\aPNB}$ and $\cPNBTransSet \subseteq
+    \trans{\bPNB}$, with $\ordinalSetToBinary{\source{\bPNBTransSet}} =
+    \aLbl$, $\ordinalSetToBinary{\target{\bPNBTransSet}} = \bLbl$,
+    $\ordinalSetToBinary{\source{\cPNBTransSet}} = \cLbl$, and
+    $\ordinalSetToBinary{\target{\cPNBTransSet}} = \dLbl$. By definition,
+    $\bPNBTransSet \disjointUnion \cPNBTransSet \subseteq \trans{\aPNB \tensor
+    \bPNB}$, giving the required transition in $\PNBToTLTS{\aPNB \tensor
+    \bPNB}$.
+\end{proof}
+
+\begin{proposition} \label{prop:functorTensors}
+    For any pair of \PNB{}s, $\aPNB \withNetType{\aN}{\bN}$ and $\bPNB
+    \withNetType{\cN}{\dN}$, we have that
+    \[
+    \PNBToTLTS{\aPNB} \tensor \PNBToTLTS{\bPNB}
+    \TLTSIso
+    \PNBToTLTS{\aPNB \tensor \bPNB}
+    \]
+\end{proposition}
+\begin{proof}
+    Similar to the proof of \propref{prop:functorComps}, employing
+    \lemref{lem:functorTensorArrows} to show equality of labelled transitions.
+\end{proof}
+
+\begin{proposition}
+    $\PNBToTLTS{-}$ is a strict monoidal functor.
+    \label{prop:PNBToTLTSMonFunctor}
+\end{proposition}
+\begin{proof}
+    The isomorphic \TLTS{}s of \propref{prop:functorTensors} form\footnote{Recall that morphisms of
+    \TLTSCat{} are isomorphism classes of \TLTS{}s.} a natural transformation with each component
+    being an identity map. Similarly, the unit morphism is an identity map, since $\PNBToTLTS{-}$
+    is the identity mapping on objects.
+\end{proof}
+
+\begin{proposition} \label{prop:functorBraiding}
+    We have a \TLTS{} isomorphism, $\TLTSbr{\aN}{\bN} \TLTSIso
+    \PNBToTLTS{\PNBbr{\aN}{\bN}}$.
+\end{proposition}
+\begin{proof}
+    The \PNB{} $\PNBbr{\aN}{\bN}$ (shown in \figref{fig:netBr}) has no places,
+    hence its \TLTS{} statespace has a single place corresponding to the
+    empty marking. Since the same permutation is embedded in the \PNB{} and
+    \TLTS{}, by definition, the generated \TLTS{} statespace will have
+    transitions labelled the same as those in $\TLTSbr{\aN}{\bN}$, as required.
+\end{proof}
+
+\begin{proposition}
+    $\PNBToTLTS{-}$ is a strict symmetric monoidal functor.
+\end{proposition}
+\begin{proof}
+    Since $\tensorAssoc$ is formed of identities, the commutativity
+    of~\figref{fig:braidingCoherence} is reduced to requiring equality of the top and bottom
+    morphisms; since morphisms of \TLTSCat{} are equivalence classes, this requirement is satisfied
+    by~\propref{prop:functorBraiding}.
+\end{proof}
+
+This statement is tantamount to saying that $\PNBToTLTS{-}$ is a homomorphism
+of PROPs.
+
+\begin{proposition}
+    $\PNBToTLTS{-}$ is a homomorphism of PROPs.
+\end{proposition}
+\begin{proof}
+    Immediate.
+\end{proof}
+
+Observe that \propref{prop:functorComps} and \propref{prop:functorTensors} are
+precisely equivalent to the standard definition of \emph{compositionality},
+which states that the semantics of a composite PNB is determined by the
+semantics of the component PNBs. Put differently, there is no emergent
+behaviour when composing the semantics of the components --- the semantics
+embody a precise account of all possible behaviours of the components. Indeed,
+we revisit compositionality, in its standard setting, in
+\propref{prop:compsem}.
+
+\section{Encoding Reachability}
+
+We can annotate \PNB{}s with a pair of markings, encoding a particular initial
+and target marking, as described in \secref{sec:markedPNB}. Intuitively, such
+an annotated \PNB{} represents a reachability problem: can the target marking
+be reached from the initial marking?
+
+\subsection{The category of \mPNB{}s}
+
+\mPNB{}s form a strict symmetric monoidal category, \mPNBCat, by lifting the
+various constructions from \PNB{}s to \mPNB{}s. We do not offer proofs for the
+definitions in this section, since they follow simply from the corresponding
+definitions on \PNB{}s:
+
+\begin{definition}\label{defn:mPNBComp}
+    Synchronous composition of \mPNB{}s, $\amPNB$ and $\bmPNB$ is defined as:
+    $\amPNB \comp \bmPNB \defeq (\aPNB \comp \bPNB,
+    \aPNBMarking \disjointUnion \aPNBMarking',
+    \bPNBMarking \disjointUnion \bPNBMarking')$
+\end{definition}
+
+The category of \mPNB{}s has structure:
+
+\begin{itemize}
+\item Objects are the natural numbers, \N,
+\item Arrows from $\aN$ to $\bN$ are the isomorphism classes of \mPNB{}s:
+    $\isoClass{\amPNB \withNetType{\aN}{\bN}}$,
+\item The identity morphism for $\aN \in \N$, is
+    $(\PNBid{\aN}, \emptyset, \emptyset)$
+\item The composition of morphisms is per \defnref{defn:mPNBComp}.
+\end{itemize}
+
+\begin{proposition}
+    \mPNBCat{} is a category. \qed
+\end{proposition}
+
+\begin{definition}\label{defn:mPNBTensor}
+    Tensor composition of \mPNB{}s, $\amPNB$ and $\bmPNB$ is defined as:
+    $\amPNB \tensor \bmPNB \defeq (\aPNB \tensor \bPNB,
+    \aPNBMarking \disjointUnion \aPNBMarking',
+    \bPNBMarking \disjointUnion \bPNBMarking')$
+\end{definition}
+
+\mPNBCat{} has a monoidal structure:
+
+\begin{itemize}
+    \item The tensor product is addition on objects and the operation described
+        in \defnref{defn:mPNBTensor} on morphisms,
+    \item The unit is $0$,
+    \item The associator and left/right unitors are identity natural
+        isomorphisms.
+\end{itemize}
+
+\begin{proposition}
+    \mPNBCat{} is a strict monoidal category. \qed
+\end{proposition}
+
+Furthermore, \mPNBCat{} has a symmetric structure, given by the following
+morphism:
+\[
+    (\PNBbr{\aN}{\bN}, \emptyset, \emptyset) \withNetType{\aN + \bN}{\bN + \aN}
+\]
+
+\begin{proposition}
+    \mPNBCat{} is a symmetric monoidal category. \qed
+\end{proposition}
+
+\subsection{The category of \TNFA{}s}
+
+A \TNFA{} is a \TLTS{}, together with a chosen initial state and a set of accepting states, as
+defined in \secref{sec:TNFA}.
+
+We then have that \TNFACat{}, the category of \TNFA{}s has structure:
+
+\begin{itemize}
+\item Objects are the natural numbers, \N,
+\item Arrows from $\aN$ to $\bN$ are the isomorphism classes of \TNFA{}s:
+    $\isoClass{\aTNFA \withNetType{\aN}{\bN}}$,
+\item The identity morphism for $\aN \in \N$, is
+    $(\idTLTS{\aN}, 0, \setof{0})$, where $0$ is the state of $\idTLTS{\aN}$,
+\item The composition of morphisms is per \defnref{defn:sequentialCompositionTNFA}.
+\end{itemize}
+
+\begin{proposition}
+    \TNFACat{} is a category.\qed
+\end{proposition}
+
+We have a monoidal structure on \TNFACat{}:
+
+\begin{itemize}
+    \item The tensor product is addition on objects and the operation described
+        in \defnref{defn:tensorCompositionTNFA} on morphisms,
+    \item The unit object is $0$,
+    \item The associator and left/right unitors are identity natural
+        isomorphisms.
+\end{itemize}
+
+\begin{proposition}
+    \TNFACat{} is a strict monoidal category. \qed
+\end{proposition}
+
+Furthermore, \TNFACat{} has a symmetric structure, given by the following
+morphism:
+\[
+    (\TLTSbr{\aN}{\bN}, 0, \setof{0}) \withNetType{\aN + \bN}{\bN + \aN}
+\] where $0$ is the single state of $\TLTSbr{\aN}{\bN}$.
+
+\begin{proposition}
+    \TNFACat{} is a symmetric monoidal category. \qed
+\end{proposition}
+
+\subsection{Mapping between \mPNBCat{}, \TNFACat{}, \PNBCat{} and
+\TLTSCat{}}\label{sec:functorPNBTLTS}
+
+\mPNB{}s can be given a \TNFA{} semantics:
+
+\begin{definition}[\TNFA{} semantics of \mPNB{}s]
+    For a \mPNB{}, $\amPNB$, its \TNFA{} semantics, $\mPNBToTNFA{\amPNB}$, is
+    $(\aTLTS, \aNFAInitState, \aNFAAcceptStates)$, where $\aTLTS$ is the
+    \TLTS{} semantics of $\aPNB$, $\aNFAInitState$ is the state
+    corresponding to $\aPNBMarking$, and $\aNFAAcceptStates$ is the (singleton
+    set containing the) state corresponding to $\bPNBMarking$.
+\end{definition}
+
+\begin{proposition}
+    $\mPNBToTNFA{-} : \mPNBCat \to \TNFACat$ is a strict symmetric monoidal
+    functor, identity on objects and \TNFA{} semantics on morphisms. \qed
+\end{proposition}
+
+Furthermore, we have two forgetful (strict symmetric monoidal) functors,
+mapping \mPNBCat{} to \PNBCat{}, and \TNFACat{} to \TLTSCat{}. The forgetful
+functor on \mPNBCat, $\mPNBToPNB : \mPNBCat \to \PNBCat$ is identity on
+objects, and forgets the markings on morphisms:
+\[
+    \mPNBToPNB(\amPNB) \defeq \aPNB
+\]
+Similarly, we can forget the initial and accepting states of a \TNFA, to obtain
+a \TLTS. The forgetful functor $\TNFAToTLTS : \TNFACat \to \TLTSCat$ is
+identity on objects, and on arrows:
+\[
+    \TNFAToTLTS(\aTNFA) \defeq \aTLTS
+\]
+
+Indeed, it is equivalent to take the \TNFA{} semantics of a \mPNB{}, before
+forgetting the initial and accepting states, or to forget the initial/target
+markings of the \mPNB before taking the \TLTS{} semantics. This equivalence is
+embodied in the commuting diagram of \figref{fig:categoryRelationships}.
+
+\begin{figure}[ht]
+    \centering
+\begin{tikzpicture}
+    \node (mPNB) {\mPNBCat{}};
+    \node (PNB) [below=of mPNB] {\PNBCat{}};
+    \node (TNFA) [right=of mPNB] {\TNFACat{}};
+    \node (TLTS) [below=of TNFA] {\TLTSCat{}};
+
+    \draw [->] (mPNB) to node [above] {$\mPNBToTNFA{-}$} (TNFA);
+    \draw [->] (mPNB) to node [left] {$\mPNBToPNB$} (PNB);
+    \draw [->] (PNB) to node [below] {$\PNBToTLTS{-}$} (TLTS);
+    \draw [->] (TNFA) to node [right] {$\TNFAToTLTS$} (TLTS);
+\end{tikzpicture}
+\caption{Commuting diagram illustrating the categories' relationships}
+\label{fig:categoryRelationships}
+\end{figure}
+
+\subsection{Summary}
+
+In this chapter we have illustrated the categorical structure of PNBs and
+\TLTS{}s and the relationship between these categories. We highlighted that the
+functorial relationship between the categories \PNBCat{} and \TLTSCat{} is
+equivalent to the property of compositionality and lifted the constructions to
+\emph{marked} PNBs and corresponding \TNFA{}s leading to the categories
+\mPNBCat{} and \TNFACat{} and illustrated their inter-relations.

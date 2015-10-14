@@ -1,0 +1,40 @@
+\chapter{Compositional Statespace Generation}\label{chp:compChecking}
+
+In this chapter we introduce a technique for \emph{compositional} generation of
+the global statespace of systems modelled using the PNB specifications of
+\chpref{chp:benchmarksAndLang}, \emph{without} first forming the corresponding
+composite global net. We show that because the boundary interactions of
+component nets are recorded in their statespaces, we are able to reconstruct
+the global statespace from the just the component statespaces.
+
+Our goal is to use our method of compositional statespace generation
+(\secref{sec:compStatespaceGen}) as the basis of a compositional approach for
+checking reachability. However, the initial compositional approach we introduce
+here makes no attempt to limit the effects of statespace explosion. Existing
+approaches also consider the global statespace, but use techniques such as
+unfoldings or partial-order reduction to avoid generating the entire
+statespace. We will use compositionality to avoid the statespace explosion
+problem, but first show that we can indeed generate the global statespace in a
+compositional manner. While we prove our compositional technique correct
+(\secref{sec:compCheckingProof}), evaluating its performance (\secref{sec:performance})
+shows degradation due to statespace explosion. However, as we will demonstrate
+in \chpref{chp:improveEfficiency}, with suitable optimisations, our
+compositional technique is \emph{particularly efficient} for several systems.
+
+\subimport{compositionalreachability}{}
+
+\subimport{timings}{}
+
+\subimport{proof}{}
+
+\section{Conclusion}
+
+In this chapter we introduced a technique for \emph{compositional} statespace
+generation of systems specified using PNBs, using it to form the basis of
+a reachability check. We proved the technique correct and illustrated the
+performance of the technique using the example systems of
+\chpref{chp:benchmarksAndLang}. Our results highlighted that without
+mitigation, statespace explosion leads to poor performance, even in small
+systems. To combat this, in the next chapter, we show that by exploiting
+the component-wise specification of systems, we can mitigate the statespace
+explosion problem and obtain good performance.

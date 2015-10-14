@@ -1,0 +1,119 @@
+\section{Performance of the Compositional Algorithm}\label{sec:performance}
+
+\newcommand{\exampleRef}[5][0]{%
+\item[] {%
+\begin{tabular}{r l}%
+    \emph{system}:& {\bf #2} (\secref{sec:example-#3})\\
+    \emph{initial}:& \parbox[t]{0.75\linewidth}{#4} \\
+    \emph{target} $(\mathlarger{\mathlarger{\ifthenelse{#1=1}{\yesReachable}{\noReachable}}})$:& \parbox[t]{0.75\linewidth}{#5} \\
+\end{tabular}}}
+
+We now turn to examining the performance of \algref{alg:PNBAlgorithm}, using
+the example systems introduced in \secref{sec:benchmarks}.  To do so, we must
+first specify the particular initial and target markings that we will use for
+each system. These markings are specified in \figref{fig:slowmarkings} (some
+are expected to be reachable, some not).
+
+\begin{figure}[ht]
+\begin{multicols}{2}
+\begin{itemize}
+    \exampleRef[1]{\bufferSys{-}}{buffer}
+        {``empty'': only tokens in upper places}
+        {``full'': only tokens in lower places}
+    \exampleRef{\tokenringSys{-}}{token-ring}
+        {System ready: workers idle}
+        {System started: \emph{all} workers working}
+    \exampleRef[1]{\contree{-}{-}}{trees}
+        {Root contains the only token}
+        {Leaves each contain a token}
+    \exampleRef{\distree{-}{-}}{trees}
+        {Root contains the only token}
+        {Leaves each contain a token}
+    \exampleRef[1]{\cliqueSys{-}}{cliques}
+        {Injector contains the only token}
+        {Final (rightmost) place contains the only token}
+    \exampleRef[1]{\powersetSys{-}}{powersets}
+        {Injector contains the only token}
+        {All places except root contain a token}
+    \exampleRef{\overtakeSys{-}}{over}
+        {All locks and interfaces unlocked, each car ready}
+        {All cars overtaking}
+    \exampleRef[1]{\hartstoneSys{-}}{hartstone}
+        {Controllers, tasks and master all ready}
+        {Each task working}
+    \exampleRef[1]{\iteratedchoiceSys{-}}{iter-choice}
+        {\addtokC{} contains the only token}
+        {Alternating taken/not-taken marking, \addtokC{} has no token}
+    \exampleRef[1]{\replicatorsSys{-}}{replicator}
+        {\addtokC{} contains the only token}
+        {\taketokC{} contains the only token}
+    \exampleRef{\DACSys{-}}{dac}
+        {Controller and workers ready}
+        {Every worker and controller awaiting a join}
+    \exampleRef[1]{\diningphilosophersSys{-}}{philos}
+        {Philos ready, forks present}
+        {Every fork taken}
+    \exampleRef[1]{\cyclicschedulerSys{-}}{cyclic}
+        {Injector contains token, each scheduler ready}
+        {Each task working}
+    \exampleRef[1]{\counterSys{-}}{counter}
+        {Counter set to 0: all components zero}
+        {Counter set to n: tester recognises counter is full}
+\end{itemize}
+\end{multicols}
+\newcommand{\capt}{Example markings used in benchmarking
+\algref{alg:PNBAlgorithm}.}
+\caption[\capt]{\capt{} Those marked $\yesReachable$ are expected to be
+    reachable and those $\noReachable$ are not}
+\label{fig:slowmarkings}
+\end{figure}
+
+Given these marked examples, we execute our implementation, recording the total
+time taken, averaged over 5 runs. The results are illustrated in
+\tabref{tab:slowtimings}.
+
+\input{results_timemem_slow}
+
+Consider the first entry in \tabref{tab:slowtimings}, that of $\bufferSys{3}$,
+which we evaluated by hand at the end of \secref{sec:compStatespaceGen}:
+the maximum composition size encountered there (illustrated in
+\figref{fig:exprtreestep3}) was $(8,1)$, agreeing with the recorded result.
+
+For all systems, small parameters lead to run-times of $< 1$ second; but
+small increments in the parameter sizes lead to vastly slower run-times, of
+many seconds, accompanied with large composition sizes. Indeed, moving from a
+parameter of $4$ to $5$ for $\overtakeSys{-}$ is catastrophic for the
+algorithm's performance, with a much larger \TNFA{} composition encountered.
+
+Indeed, the largest encountered compositions grows exponentially with the size
+of the system - indeed, this should be intuitively clear, since the number of
+markings of a net (and thus the number of states of its \TNFA{}) is exponential
+in the number of places.
+
+A final point to note is that in some cases, in particular,
+\tokenringSys{-},\overtakeSys{-}, and \cyclicschedulerSys{-}, the result for
+$\aN = 1$ differs to that for higher values of $\aN$. Indeed, inspecting the
+desired markings for these systems, we observe that they specify the target
+marking as a behaviour of all components, which can/cannot be reached for
+multiple components, but however \emph{is} easily reachable for single
+components.
+
+Summarising these results, and to set the scene for the following chapter, we
+can extract some key points that we will address:
+\begin{enumerate}
+    \item Without mitigation, the statespace explosion leads to NFA sizes that
+        grow exponentially. We will investigate \emph{weak language preserving}
+        reductions to reduce NFA sizes, while preserving correctness
+        (\secref{sec:boundaryProtocol}).
+    \item The behaviour of \bufferSys{3} should intuitively be no different to
+        that of \bufferSys{4}, yet the current compositional algorithm does not
+        exploit this. We will investigate \emph{fixed-points} of behaviour in
+        such systems, and use \emph{memoisation} to avoid repeated work in
+        their presence (\secref{sec:memoisation}).
+    \item While PNB composition \emph{is} associative (up to isomorphism)
+        w.r.t. the generated \TNFA{}, we will see that when employing
+        reduction, it is \emph{not} associative w.r.t. the (size of)
+        intermediate \TNFA{}s generated and thus the \emph{performance} of the
+        algorithm. We will show that the performance is subtly affected by
+        reassociating certain compositions (\secref{sec:reassociation}).
+\end{enumerate}

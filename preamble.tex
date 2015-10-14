@@ -1,0 +1,70 @@
+\documentclass{ecsthesis}
+\usepackage{show2e}
+\usepackage[T1]{fontenc}
+\usepackage{helvet}
+\renewcommand{\rmdefault}{phv}
+\usepackage{bm}
+\usepackage{calc}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{amsthm}
+\usepackage{latexsym}
+\usepackage{mathpartir}
+% Used for capitalisewords
+\usepackage{mfirstuc}
+\usepackage{subcaption}
+\usepackage{graphicx}
+\usepackage{listings}
+\usepackage{fixltx2e}
+\usepackage{float}
+\usepackage{multicol}
+\usepackage{multirow}
+\usepackage{bigdelim}
+% Lets us colour tables (must be before tikz)
+\usepackage[table]{xcolor}
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{tikz-qtree}
+\usetikzlibrary{fadings,arrows,fit,positioning,shapes.symbols,petri,automata,decorations,decorations.pathmorphing,calc,shapes.geometric,decorations.markings,shapes,decorations.pathreplacing, matrix, patterns}
+% IEEEtran and enumitem both define labelindent. IEEEtran is only defining it
+% for backwards-compatability, so this is fine.
+\let\labelindent\relax
+\usepackage[shortlabels]{enumitem}
+% Allows us to rotate figures.
+\usepackage{rotfloat}
+% Used to define commands with multiple optional params
+\usepackage{xparse}
+\usepackage{colonequals}
+\usepackage{nicefrac}
+\usepackage{stmaryrd}
+% CWD-relative imports
+\usepackage{import}
+% Provides ifdefempty to check for empty params
+\usepackage{etoolbox}
+% Provides ifmtarg to check for empty args, see http://tex.stackexchange.com/questions/33749/xparse-define-new-command-with-multiple-optional-parameters
+\usepackage{ifmtarg}
+% Provides the framed environment
+\usepackage{framed}
+\usepackage[chapter]{algorithm}
+% Make algorithm references use chapter number too
+\renewcommand{\thealgorithm}{\arabic{chapter}.\arabic{algorithm}}
+\usepackage{algpseudocode}
+% For scaling delimiters
+\usepackage{scalerel}
+% For better vector notation
+\usepackage{esvect}
+% Increase size of math symbols
+\usepackage{relsize}
+
+% Setup tikz out/in styles
+\foreach \out in {-360,-355,...,360}{
+    \foreach \in in {-360,-355,...,360}{
+        \globaldefs=1
+        \edef\dotikzset{\noexpand\tikzset{o\out i\in/.style={out=\out, in=\in}}}
+        \dotikzset
+    }
+}
+
+% To import graph data from sub-directories (assumes top-level path)
+\usepackage{currfile}

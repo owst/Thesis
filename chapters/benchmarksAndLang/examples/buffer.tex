@@ -1,0 +1,79 @@
+A $\aN$-buffer net (taken from~\cite{Esparza1996}) models a system of $\aN$
+buffer cells that can each either be ``full'' or ``empty''. Such a system is
+naturally described in a compositional manner: to form an $\aN$-buffer, simply
+compose $\aN$ suitable $1$-buffer components.
+
+\begin{figure}[ht]
+\centering
+\nBufPNB{3}
+\caption{\bufferSys{3}}
+\label{fig:buffer3}
+\end{figure}
+
+For example, \bufferSys{3} is illustrated in \figref{fig:buffer3}. Taking a
+component-wise view, and using the single-buffer component illustrated in
+\figref{fig:buffer1}, the schematic for \bufferSys{3} is illustrated in
+\figref{fig:bufferschematic}: with suitable terminators, we simply synchronously
+compose 3 buffers together.
+
+\begin{figure}[ht]
+\centering
+\setlength{\fboxsep}{0pt}
+\begin{subfigure}{0.33\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1] {};
+    \node[pnbplace] (p1) [below=of p0, rotate=180] {};
+
+    \drawBoundaries[1.2]{1}{1}
+
+    \foreach \from/\to/\side/\in/\out in {p0/p1/r1/180/0, p1/p0/l1/0/180}{%
+        \labelledpnbarr[\from\to]{\from.out}{\to.in}{}{out=\out, in=\out}{}
+        \draw (\from\to) edge[barr, out=90, in=\in] (\side);
+    }
+\end{tikzpicture}
+\caption{\bufferC{} \withNetType{1}{1}}
+\end{subfigure}%
+\caption{\bufferSys{\aN} component net}
+\label{fig:buffer1}
+\end{figure}
+
+Recall that to aid intuition, we often mark (parts of) partially-specified
+transitions using a lighter shade, emphasising the fully specified structure of
+a component net.
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[schematic]
+    \node[schematicnode] (lend) []              {\lendC{}};
+    \node[schematicnode] (buf1) [right=of lend] {\bufferC};
+    \node[schematicnode] (buf2) [right=of buf1] {\bufferC};
+    \node[schematicnode] (buf3) [right=of buf2] {\bufferC};
+    \node[schematicnode] (rend) [right=of buf3] {\rendC{}};
+
+    \newcommand{\offset}{0.5}
+
+    \rightBPort{lend}{\offset}{1}
+    \foreach \i in {1,2,3} {%
+        \leftBPort{buf\i}{\offset}{1}
+        \rightBPort{buf\i}{\offset}{1}
+    }
+    \leftBPort{rend}{\offset}{1}
+
+    \foreach \i in {1,2} {%
+        \pgfmathtruncatemacro{\next}{\i + 1}
+        \draw (buf\i-r1) -- (buf\next-l1);
+    }
+
+    \draw (lend-r1) -- (buf1-l1);
+    \draw (buf3-r1) -- (rend-l1);
+
+\end{tikzpicture}
+\caption{Schematic of \bufferSys{3}}
+\label{fig:bufferschematic}
+\end{figure}
+
+Arbitrarily-sized buffers are defined:
+\[
+    \bufferSys{\aN} \defeq \lendC{} \comp \bufferC^\aN \comp \rendC{}
+\]

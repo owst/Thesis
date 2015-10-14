@@ -1,0 +1,57 @@
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c || c | c | c | c | c | c | }
+\hline
+\multicolumn{2}{|c||}{Problem}&\multicolumn{6}{c|}{Max Resident (MB)} \\
+\hline
+name	&	size	&	Penrose	&	CLP	&	CNA	&	LOLA	&	TAAPL	&	MARCIE\\ \hline
+buffer	&	2	&	4.66	&	8.23	&	14.54	&	\highlightedResult{2.60}	&	6.47	&	506.98 \\
+buffer	&	8	&	4.67	&	8.23	&	14.87	&	\highlightedResult{2.86}	&	11.07	&	507.24 \\
+buffer	&	32	&	4.66	&	8.50	&	19.75	&	\highlightedResult{2.87}	&	29.69	&	509.56 \\
+buffer	&	512	&	\highlightedResult{4.69}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	31.52	&	\failureResult{\timeoutResult}	&	1087.10 \\
+buffer	&	4096	&	\highlightedResult{4.93}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult} \\
+buffer	&	32768	&	\highlightedResult{6.71}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult} \\
+\hline
+over	&	2	&	\highlightedResult{7.39}	&	\failureResult{\queryPortsUnhandledResult}	&	14.77	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+over	&	8	&	\highlightedResult{7.39}	&	\failureResult{\queryPortsUnhandledResult}	&	28.36	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+over	&	32	&	\highlightedResult{7.39}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\oomResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+over	&	512	&	\highlightedResult{7.42}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\oomResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+over	&	4096	&	\highlightedResult{7.75}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\oomResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+over	&	32768	&	\highlightedResult{8.69}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\oomResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\hline
+dac	&	2	&	4.73	&	8.24	&	14.59	&	2.61	&	\highlightedResult{2.12}	&	507.23 \\
+dac	&	8	&	4.73	&	8.26	&	15.08	&	2.87	&	\highlightedResult{2.37}	&	507.50 \\
+dac	&	32	&	4.72	&	8.55	&	20.43	&	3.12	&	\highlightedResult{3.04}	&	510.66 \\
+dac	&	512	&	\highlightedResult{4.76}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	52.00	&	75.49	&	1092.43 \\
+dac	&	4096	&	\highlightedResult{5.01}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+dac	&	32768	&	\highlightedResult{6.73}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+\hline
+philo	&	2	&	6.20	&	\failureResult{\incorrectResult}	&	14.62	&	\highlightedResult{2.87}	&	9.55	&	507.24 \\
+philo	&	8	&	6.23	&	\failureResult{\incorrectResult}	&	15.01	&	\highlightedResult{3.38}	&	23.60	&	508.11 \\
+philo	&	32	&	\highlightedResult{6.22}	&	\failureResult{\incorrectResult}	&	16.52	&	\failureResult{\oomResult}	&	79.86	&	523.23 \\
+philo	&	512	&	\highlightedResult{6.22}	&	\failureResult{\timeoutResult}	&	196.01	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult}	&	1094.48 \\
+philo	&	4096	&	\highlightedResult{6.22}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult} \\
+philo	&	32768	&	\highlightedResult{9.73}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult} \\
+\hline
+\nonCorbett{iter-choice}	&	2	&	4.75	&	8.24	&	14.71	&	\highlightedResult{2.61}	&	8.54	&	507.24 \\
+\nonCorbett{iter-choice}	&	8	&	\highlightedResult{4.75}	&	116.25	&	783.72	&	15.92	&	17.70	&	507.49 \\
+\nonCorbett{iter-choice}	&	32	&	\highlightedResult{4.76}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	55.05	&	512.76 \\
+\nonCorbett{iter-choice}	&	512	&	\highlightedResult{4.78}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	864.47	&	1160.22 \\
+\nonCorbett{iter-choice}	&	4096	&	\highlightedResult{5.02}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+\nonCorbett{iter-choice}	&	32768	&	\highlightedResult{6.75}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+\hline
+\nonCorbett{replicator}	&	2	&	4.70	&	\failureResult{\incorrectResult}	&	14.57	&	\highlightedResult{2.61}	&	7.25	&	\failureResult{\timeoutResult} \\
+\nonCorbett{replicator}	&	8	&	4.69	&	\failureResult{\incorrectResult}	&	14.72	&	\highlightedResult{2.86}	&	11.88	&	\failureResult{\timeoutResult} \\
+\nonCorbett{replicator}	&	32	&	4.68	&	\failureResult{\incorrectResult}	&	15.36	&	\highlightedResult{2.86}	&	30.66	&	\failureResult{\timeoutResult} \\
+\nonCorbett{replicator}	&	512	&	\highlightedResult{4.71}	&	\failureResult{\incorrectResult}	&	35.98	&	6.47	&	818.19	&	\failureResult{\timeoutResult} \\
+\nonCorbett{replicator}	&	4096	&	\highlightedResult{4.96}	&	\failureResult{\incorrectResult}	&	1582.63	&	37.59	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult} \\
+\nonCorbett{replicator}	&	32768	&	\highlightedResult{6.73}	&	\failureResult{\incorrectResult}	&	\failureResult{\oomResult}	&	504.84	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult} \\
+\hline
+\contree{-}{-}	&	1,1	&	4.69	&	8.21	&	14.52	&	\highlightedResult{2.61}	&	5.56	&	506.98 \\
+\contree{-}{-}	&	2,2	&	4.74	&	8.22	&	14.55	&	\highlightedResult{2.61}	&	7.78	&	506.98 \\
+\contree{-}{-}	&	3,3	&	4.74	&	8.23	&	14.75	&	\highlightedResult{2.86}	&	20.45	&	507.49 \\
+\contree{-}{-}	&	4,4	&	4.73	&	8.30	&	16.42	&	\highlightedResult{3.12}	&	136.62	&	589.97 \\
+\contree{-}{-}	&	5,5	&	\highlightedResult{4.73}	&	9.54	&	36.46	&	7.76	&	1556.56	&	\failureResult{\oomResult} \\
+\contree{-}{-}	&	6,6	&	\highlightedResult{4.73}	&	55.53	&	1291.74	&	81.94	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+\contree{-}{-}	&	7,7	&	\highlightedResult{4.73}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+\hline
+\end{tabular}

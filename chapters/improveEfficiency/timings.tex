@@ -1,0 +1,112 @@
+\newcommand{\netMap}{\texttt{knownNetNFAs}}
+\newcommand{\compMap}{\texttt{knownNFAComps}}
+\newcommand{\lineref}[1]{(Line \ref{line:#1})}
+\newcommand{\genOP}{\texttt{OP}}
+
+We now introduce an improved version of \algref{alg:compositionalAlgorithm},
+which incorporates the optimisations introduced in this chapter. We demonstrate
+the encouraging performance of this algorithm, by evaluating it on the examples
+of \chpref{chp:benchmarksAndLang} and \secref{sec:tweaks}.
+
+The optimised algorithm is presented as \algref{alg:thealgorithm}; observe that
+\TNFA{}s are reduced up-to weak-language equivalence (lines \ref{line:toNFA}
+and \ref{line:reduce2}) and the memoisation map is checked for membership up-to
+weak-language (since all \TNFA{}s are reduced w.r.t. weak-language we simply
+check for language equivalence at \lineref{contains}).
+
+% Fixes nested Calls
+% http://tex.stackexchange.com/questions/16046/how-to-nest-call-in-algorithmicx
+\renewcommand*\Call[2]{\textproc{#1}(#2)}
+    \newcommand{\mytriple}{(n_1,n_2,\genOP)}
+%
+\begin{algorithm}[ht]
+\hrule
+\vspace{1ex}
+\begin{algorithmic}[1]
+    \Require \netMap{}, \compMap{} initially empty
+    \Procedure{toNFA}{$t$}
+        \If{$t$ is a PNB} \label{line:isPNB}
+            \If{\Call{Contains}{$\netMap,t$}} \label{line:checkKnownNet}
+                \State \textbf{return} $\netMap[t]$ \label{line:returnNetMap}
+            \Else \label{line:notKnownNet}
+                \State $n \gets \Call{reduce}{\Call{$\tau$-close}{\Call{netToNFA}{t}}}$ \label{line:toNFA}
+                \State $\netMap[t] := n$ \label{line:updateNetMap}
+                \State \textbf{return} $n$
+            \EndIf
+            \Else \Comment{$t$ is $(t_1, t_2, \genOP)$, where \genOP{} is `$\comp$' or `$\tensor$'} \label{line:isComp}
+                \State $n_1 \gets \Call{toNFA}{t_1}$ \label{line:recurseT1}
+                \State $n_2 \gets \Call{toNFA}{t_2}$ \label{line:recurseT2}
+                \If{\Call{ContainsEquiv}{$\compMap,\mytriple$}} \label{line:contains}\Comment{Up-to $\weakLangEquiv$} \label{line:foundComp}
+                    \State \textbf{return} $\compMap[\mytriple]$ \label{line:returnCompMap}
+                \Else \label{line:notKnownComp}
+                    \State $n \gets
+                    \Call{reduce}{\Call{$\tau$-close}{n_1 \mathrel{\genOP} n_2}}$\label{line:reduce2}
+
+                    \State $\compMap[\mytriple] := n$ \label{line:addComp}
+                    \State \textbf{return} $n$
+                \EndIf
+        \EndIf
+    \EndProcedure
+\end{algorithmic}
+\hrule
+\caption{Optimised Algorithm}
+\label{alg:thealgorithm}
+\end{algorithm}
+
+We can now evaluate this algorithm on the examples of
+\chpref{chp:benchmarksAndLang} and \secref{sec:tweaks}, that is, the original
+benchmark examples, except those with refactored versions using more-performant
+composition associatations. Indeed, we present the new timing and memory
+requirements in \tabref{tab:fasttimings}.
+
+\input{results_timemem}
+
+Inspecting the values in \tabref{tab:fasttimings} and contrasting with those in
+\tabref{tab:slowtimings}, several points are clear:
+
+\begin{itemize}
+    \item For the majority of examples, the performance has \emph{vastly}
+        improved; indeed, for several systems (e.g. \overtakeSys{-}), the time
+        taken by the improved algorithm for parameter 32768 is less
+        than the naive algorithm for paremeter 1.
+    \item Indeed, we can observe the effects of reaching fixed points --- for
+        most systems (e.g. \bufferSys{-}), the time/memory use is essentially
+        constant\footnote{Our tool is written in Haskell, a language that uses
+            garbage collection for automatic memory management, which may
+            explain some of the slight variance in memory usage.}
+    \item The performance is \emph{not} directly proportional to net size:
+        indeed, \overtakeSys{-} is a ``large'' system, with scalable
+        performance, whereas \counterSys{-} is a ``small'' system, with poor
+        performance.
+\end{itemize}
+
+To help interpreting our results, we have plotted the data in
+\figref{fig:penrosetimes}.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[trim axis left, trim axis right]
+\pgfplotsset{width=\textwidth}
+\newcommand{\datadir}{chapters/improveEfficiency/individual_bench_data}
+\newcommand{\nameprefix}{penrose_data}
+\begin{loglogaxis}[
+    cycle list name=exotic,
+    xlabel={Problem Size},
+    ylabel={Time (s)},
+    grid=major,
+    log basis x=2,
+    legend style={%
+        overlay,
+        at={(1,1)},
+        anchor=north east},
+]
+\foreach \name in
+{disjunction-tree,token-ring,counter,hartstone,philo,over,iterated-choice,replicator,dac,buffer,conjunction-tree}{%
+\addplot+ [smooth] table {\datadir/\nameprefix_\name.tsv};
+\addlegendentryexpanded{\name}
+}
+\end{loglogaxis}
+\end{tikzpicture}
+\caption{Time vs Problem size for \algref{alg:thealgorithm}}
+\label{fig:penrosetimes}
+\end{figure}

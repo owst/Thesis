@@ -1,0 +1,65 @@
+Compositional algebraic systems have the property that behaviour of composite
+systems is determined only by the behaviour of their component systems.  While
+Petri nets are sometimes considered as being inherently non-compositional,
+early work by Mazurkiewicz~\cite{Mazurkiewicz1988} defined a compositional
+algebra of nets, based on fusion of named transitions. In the algebra of nets
+we use in this thesis, Petri Nets With Boundaries,
+(PNBs)~\cite{Sobocinski2010,Bruni2013} it is also transitions that are fused,
+however, the composition operations are quite different in nature: PNB
+compositions are not commutative, and operate on transitions connected to local
+\emph{boundary ports} rather than by (global) name. Indeed, Mazurkiewicz's
+composition is a commutative parallel composition in the spirit of CSP and CCS.
+
+Similar operations were used for the development of the Petri Box calculus
+(PBC), a process algebra of labelled Petri nets~\cite{Best1992}, with a
+compositional Petri net semantics. The PBC features two kinds of composition:
+the first is a control-flow-style sequential composition that utilises certain
+places labelled as \emph{entry} or \emph{exit} places in order to enforce a
+computation order, the second a synchronising composition, introducing new
+transitions based on the \emph{global} fusion of transitions with conjugate
+labels, whilst preserving the original transitions. The composition operations
+of PNBs, instead, are closely related to the geometry of nets, with no
+control-flow style composition and only \emph{local} synchronisation (that
+fuses transitions) through shared boundary ports. {Best and
+Koutny}~\cite{Koutny1999} later introduced the Box algebra, a generalisation of
+the PBC, giving a (compositional) operational and denotational semantics and a
+general view of various composition operations as specific instances of generic
+transition refinement/relabelling operations. A tutorial-style
+overview of the Box algebra can be found in~\cite{Best1995}.
+
+Reisig's~\cite{Reisig2009} simple composition of nets (SCN) is an
+elegantly simple way of composing nets and is conceptually quite close to our
+work. His nets, similarly to PNBs, have left and right interfaces that are made
+up of ports and ought not to be confused with notions of input and output,
+rather reflecting the structural geometry of nets. Differently, in SCN the
+interfaces typically expose places, whereas PNB interfaces expose only
+transitions. Another difference is that in PNB, composition $N_1\mathrel{;}N_2$
+is only defined when the right interface of $N_1$ is equal to the left
+interface of $N_2$. While~\cite{Reisig2009} demonstrates that the operation is
+very natural for composing real systems, the compositional semantic aspects of
+the theory have not, so far, been developed.
+
+Component-wise construction of nets was emphasised by
+Kindler~\cite{Kindler1997}, who worked with a partial order semantics. The
+interfaces are a set of input and output places, which are connected with a
+transition when composed. The semantics was shown to be compositional with
+respect to this operation. Since the composition introduces additional
+transitions, it is not always clear how to \emph{divide} a net into components
+with input and output places. A similar approach was taken by {Baldan et
+al.}~\cite{Baldan2001}, who introduced \emph{Open nets}: nets with certain
+identified input and output places. Composition of Open nets is defined in
+terms of a pushout in the category of Open nets, realised as joining a common
+subnet. Another related approach is that of {Priese and
+Wimmel}~\cite{Priese1998}, who use a combination of interface places \emph{and}
+transitions to define \emph{Petri nets with interface}, with composition
+operators that join interface places and transitions. An algebra of nets is
+defined, with combinators to form complex nets from basic components.
+
+In this thesis, we will give a compositional semantics to the algebra of Petri
+nets with boundaries, by a translation into the algebra of non deterministic
+finite automata with boundaries (\secref{sec:TNFA}). This algebra is an instance of the algebra of
+Span(Graph)~\cite{Katis1997}, developed by Walters and collaborators: in fact, a translation from
+Petri nets to this algebra was already present in~\cite{Katis1997a}. In more recent
+work~\cite{Sobocinski2010, Bruni2011, Bruni2013}, the algebra of Span(Graph) was lifted to the
+level of nets in a compositional way, and the resulting behavioural equivalences and connections
+with process algebra were explored.

@@ -1,0 +1,46 @@
+\chapter{Efficient Compositional Reachability Checking}\label{chp:improveEfficiency}
+
+In the previous chapter we introduced a technique for compositional statespace
+generation for systems modelled using PNBs. We proved that it was correct, but
+its performance left something to be desired --- indeed, even for reasonably
+small examples, the generated intermediate \TNFA{}s were large, hindering
+performance of \TNFA{} composition and thus the overall technique.
+
+In this chapter, we describe improvements that can be made to the naive
+compositional algorithm to improve its performance, such that it can be used to
+efficiently check marking reachability. Briefly, the two key improvements are:
+we exploit the fact that (weak) language equivalence is a congruence, to reduce
+intermediate \TNFA{}s, and use memoisation to avoid repeated computation.
+
+First, we introduce the notion of \emph{boundary protocol} and internal, or
+$\tau$, transitions which must be preserved by any structural reduction
+performed on intermediate \TNFA{}s, to ensure correctness of the resulting
+performance improvements.
+
+\section{Boundary protocol and $\tau$-transitions} \label{sec:boundaryProtocol}
+\subimport{improve}{}
+
+\section{Memoisation, Associativity and Fixed Points}\label{sec:memoisation}
+\subimport{associativity}{}
+
+\section{Reassociated Examples}\label{sec:reassociation}
+\subimport{tweaks}{}
+
+\section{Optimised Algorithm}
+\subimport{timings}{}
+
+\section{Poorly performing Examples}
+\subimport{poorexamples}{}
+
+\section{Summary}
+
+In this chapter, we have introduced and evaluated improvements to our algorithm
+for compositionally checking reachability in PNB systems, taking advantage of
+weak-language equivalence and the fixed-points that can be exploited by
+memoisation.  In summary, our approach embodies a simple divide-and-conquer and
+memoisation strategy, i.e.\ a bottom-up \emph{dynamic programming} approach.
+The component-wise specification is exploited to avoid re-computing local
+reachability \TNFA{}s when particular components appear more than once, while
+intermediate \TNFA{}s are minimised to reduce composition costs, possible since
+\TNFA{} (weak) language-equivalence is a congruence w.r.t.\ the composition
+operations.

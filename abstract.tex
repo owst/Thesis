@@ -1,0 +1,23 @@
+\begin{abstract}
+
+Concurrent systems are frequently scrutinised using automated model checking, routinely using Petri
+nets as a model. While for small system models, it is often sufficient to give the system
+specification in a monolithic manner, for larger systems this approach is infeasible. Instead, a
+compositional, or component-wise specification can be used. However, while existing model checking
+techniques sometimes allow the specification of nets in terms of components, the techniques used
+for checking properties of the system all consider the composed, global net.
+
+In this thesis, we investigate and advocate compositional system specification and an alternative
+approach to model checking that uses the structural compositional information to its advantage,
+vastly improving efficiency in many examples. In particular, we examine the categorical structure
+of component nets and their semantics, illustrating the functoriality of a map between the
+categories as compositionality. We introduce contextual Petri Nets with Boundaries (PNBs), adding
+read arcs, which naturally model behaviour that non-destructively reads the token state of a place.
+Furthermore, we introduce a type-checked specification language that allows us to compositionally
+construct systems to be modelled using PNBs, whilst ensuring that only correct compositions are
+expressible. We then discuss and implement compositional statespace generation, which can be used
+to check reachability.  Via optimisations using weak language equivalence and memoisation, we
+obtain substantial speed ups and demonstrate that our checker outperforms the current
+state-of-the-art for several examples. A final contribution is the compositional specification of
+existing benchmark examples, in more natural, component-wise style.
+\end{abstract}

@@ -1,0 +1,573 @@
+\label{sec:poorexamples}
+An immediate problem with examples that do not reach fixed points is the
+monotonic size increase of the \TNFA{}-composition cache. One might imagine
+that expiring old cache entries (for example, using a least-recently used (LRU)
+strategy) would improve performance; however, if there is also a monotonic
+increase in the \emph{size} of the \TNFA{}s being composed, the cost of
+checking equivalence and minimisation will dominate.
+
+Indeed, growth of \TNFA{}s does not have to be monotonic. In several examples,
+the growth is ``intermediate'' in the sense that large \TNFA{}s are generated,
+only to be quotiented later.
+For example, in
+the \tokenringSys{-} system (\secref{sec:example-token-ring}), intermediate
+growth is caused by the sequence of \workerC{} components being able to receive
+multiple tokens. However, when composing the \workerC{}s components with the
+\injectorC{}, which can only input a single token into the system, the
+behaviour is quotiented, vastly reducing the size of the resulting \TNFA{}.
+
+Another example of a system exhibiting intermediate growth is the
+\distree{\aN}{\bN} system, with depth $\aN$ and width $\bN$
+(\secref{sec:example-trees}); consider the target marking that places a token
+in each leaf place, having started with only a single token in the root place.
+Intuitively, such a target marking is not reachable: at each internal
+node of the tree, we can only pass a token to a single sub-tree, and thus we
+can't pass tokens down to every leaf from the root. However, until the root
+node is composed with the rest of the tree, the behaviour of the sub-tree is not
+constrained to only receive a single token and thus has behaviour that allows
+it to reach its target marking by receiving a token for each leaf component.
+
+Indeed, the \distree{3}{3} system, illustrated in \figref{fig:distree33}, has a
+component-wise specification (given in \secref{sec:example-trees}) that builds
+the composite net by recursively building larger complete sub-trees. As an
+detailed example, let us consider the \TNFA{}s obtained during such a
+procedure.
+
+\begin{figure}[ht]
+    \centering
+    \scalebox{0.8}{
+\begin{tikzpicture}[pnb, node distance=2.2cm and 0.7cm]
+    \node (1) [pnbplace, wantedTokenPlace, rotate=-90] {};
+
+    \foreach \x in {2,...,27}{
+        \pgfmathtruncatemacro{\prev}{\x - 1}
+        \node (\x) [pnbplace, wantedTokenPlace, left=of \prev, rotate=-90] {};
+    }
+
+    \foreach \x in {2,5,...,26}{
+        \pgfmathtruncatemacro{\prev}{\x - 1}
+        \pgfmathtruncatemacro{\next}{\x + 1}
+        \node (lvl1\x) [pnbplace, above=of \x, rotate=-90] {};
+
+        \foreach \to in {\prev, \x, \next}{
+            \draw (lvl1\x.out) edge [pnbarr,out=-90, in=90] (\to.in);
+        }
+    }
+
+    \foreach \x in {5,14,23}{
+        \pgfmathtruncatemacro{\prev}{\x - 3}
+        \pgfmathtruncatemacro{\next}{\x + 3}
+        \node (lvl2\x) [pnbplace, above=of lvl1\x, rotate=-90] {};
+
+        \foreach \to in {\prev, \x, \next}{
+            \draw (lvl2\x.out) edge [pnbarr,out=-90, in=90] (lvl1\to.in);
+        }
+    }
+
+    \node (lvl314) [pnbplace, tokens=1, above=of lvl214, rotate=-90] {};
+
+    \foreach \to in {5,14,23}{
+        \draw (lvl314.out) edge [pnbarr,out=-90, in=90] (lvl2\to.in);
+    }
+\end{tikzpicture}
+}
+\caption{\distree{3}{3}}
+\label{fig:distree33}
+\end{figure}
+
+The leaf sub-tree is illustrated in \figref{fig:leavesSubtree}; first, the
+component PNBs are converted to their \TNFA{} semantics, as per
+\figref{fig:leafComponentTNFAs}. Then, \TNFA{} compositions are performed, with
+reduction up to weak-language being performed after each composition. The first
+composition leads to the \TNFA{}\footnote{Here, we use $\aLbl$ to stand for
+either 0 or 1 --- N.B. that $\lbl{\aLbl}{\aLbl} = \setof{\lbl{0}{0},
+\lbl{1}{1}} \neq \setof{\lbl{0}{0}, \lbl{0}{1}, \lbl{1}{0}, \lbl{1}{1}} =
+\lbl{*}{*}$.} that is not in \figref{fig:firstLeafCompositionTNFA}; notice
+that the leaf components can reach their target marking ``in either order''
+since tokens can either be consumed by a leaf, or passed to the next. Indeed,
+it is this lack of order that leads to a blowup in \TNFA{} size. Therefore, a
+simpler, language-equivalent \TNFA{} can be constructed, which disregards the
+internal state of the composition.
+
+\newcommand{\treeTree}[2]{%
+\begin{tikzpicture}[wiringTree]
+\Tree
+    [. \node[draw, circle]{$\comp$};
+        [. \node[draw, circle]{$\comp$};
+            [. \node[draw, circle]{$\comp$};
+                    [. \node[draw] {#1}; ]
+                    [. \node[draw] {#1}; ]
+            ]
+            [. \node[draw] {#1}; ]
+        ]
+        [. \node[draw] {#2}; ]
+    ]
+\end{tikzpicture}
+}
+
+\makesavebox{\markedDisLeafBox}{%
+    \disLeaf{1}
+}
+
+\begin{figure}[ht]
+    \centering
+    \treeTree{\usescalebox[0.8]{\markedDisLeafBox}}{\usescalebox[0.8]{\rtermOneBox}}
+\caption{Leaves sub-tree of \distree{3}{3}}
+\label{fig:leavesSubtree}
+\end{figure}
+
+\makesavebox{\markedDisLeafTNFABox}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {};
+        \node (1) [state, accepting, below=of 0] {};
+
+        \nfaArr[loop left]{0}{0}{\aLbl}{\aLbl}
+        \nfaArr{0}{1}{1}{0}
+        \nfaArr[loop left]{1}{1}{\aLbl}{\aLbl}
+    \end{tikzpicture}
+}
+
+\makesavebox{\rtermOneTNFABox}{%
+\begin{tikzpicture}[nfa]
+    \node (0) [state, init, accepting] {};
+
+    \nfaArr[loop left]{0}{0}{0}{}
+\end{tikzpicture}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \matrix (m)[every node/.style={anchor=center}, matrix of nodes, column sep=2cm, row sep=0.5cm] {
+        \usebox\markedDisLeafBox & \usebox\markedDisLeafTNFABox \\
+        \usebox\rtermOneBox & \usebox\rtermOneTNFABox \\
+        };
+        \translateArr{m-1-1}{m-1-2}
+        \translateArr{m-2-1}{m-2-2}
+    \end{tikzpicture}
+    \caption{\TNFA{} semantics of leaf components}
+    \label{fig:leafComponentTNFAs}
+\end{figure}
+
+\newcommand{\gooTNFA}[1]{
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, initial where=left, init] {};
+
+        \nfaArr[loop above]{0}{0}{\aLbl}{\aLbl}
+
+        \foreach \x in {1,...,#1}{%
+            \ifthenelse{\x = #1}{
+                \tikzset{wanted style/.style=accepting}
+            }{}
+            \pgfmathtruncatemacro{\prev}{\x - 1}
+            \node (\x) [state, wanted style, right=of \prev] {};
+
+            \nfaArr{\prev}{\x}{1}{0}
+            \nfaArr[loop above]{\x}{\x}{\aLbl}{\aLbl}
+        }
+    \end{tikzpicture}
+}
+
+\newcommand{\fooTNFA}[1]{
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, initial where=left, init] {};
+
+        \nfaArr[loop above]{0}{0}{0}{}
+
+        \foreach \x in {1,...,#1}{%
+            \ifthenelse{\x = #1}{
+                \tikzset{wanted style/.style=accepting}
+            }{}
+            \pgfmathtruncatemacro{\prev}{\x - 1}
+            \node (\x) [state, wanted style, right=of \prev] {};
+
+            \nfaArr{\prev}{\x}{1}{}
+            \nfaArr[loop above]{\x}{\x}{0}{}
+        }
+    \end{tikzpicture}
+}
+
+\makesavebox{\twoDisLeafBox}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {};
+        \node (1) [state, below left=of 0] {};
+        \node (2) [state, below right=of 0] {};
+        \node (3) [state, accepting, below left=of 2] {};
+
+        \nfaArr[swap]{0}{1}{1}{0}
+        \nfaArr{0}{2}{1}{0}
+        \nfaArr[swap]{1}{3}{1}{0}
+        \nfaArr{2}{3}{1}{0}
+
+        \foreach \x in {0,1,3}{%
+            \nfaArr[loop left]{\x}{\x}{\aLbl}{\aLbl}
+        }
+        \nfaArr[loop right]{2}{2}{\aLbl}{\aLbl}
+    \end{tikzpicture}
+}
+
+\makesavebox{\twoDisLeafReducedBox}{%
+    \gooTNFA{2}
+}
+
+\makesavebox{\threeDisLeafBox}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {};
+        \node (1) [state, below right=of 0] {};
+        \node (2) [state, below left=of 0] {};
+        \node (4) [state, below=of 2] {};
+        \node (3) [state, below=of 1] {};
+        \node (5) [state, accepting, below left=of 3] {};
+
+        \nfaArr{0}{1}{1}{0}
+        \nfaArr[swap]{0}{2}{1}{0}
+        \nfaArr{1}{3}{1}{0}
+        \nfaArr[swap]{2}{3}{1}{0}
+        \nfaArr[swap]{2}{4}{1}{0}
+        \nfaArr[swap]{4}{5}{1}{0}
+        \nfaArr{3}{5}{1}{0}
+
+        \foreach \x in {0,2,4,5}{%
+            \nfaArr[loop left]{\x}{\x}{\aLbl}{\aLbl}
+        }
+        \foreach \x in {1,3}{%
+            \nfaArr[loop right]{\x}{\x}{\aLbl}{\aLbl}
+        }
+    \end{tikzpicture}
+}
+
+\makesavebox{\threeDisLeafReducedBox}{%
+    \gooTNFA{3}
+}
+
+\makesavebox{\leavesBox}{%
+    \fooTNFA{3}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node (1)              {\usebox\twoDisLeafBox};
+        \node (2) [below=of 1] {\usebox\twoDisLeafReducedBox};
+
+        \translateArr{1}{2}
+    \end{tikzpicture}
+    \caption{\TNFA{} composition of two leaf components}
+    \label{fig:firstLeafCompositionTNFA}
+\end{figure}
+
+The reduced \TNFA{} for two leaf components is then composed with the
+\TNFA{} of a single leaf component, leading to the \TNFA{} illustrated in
+\figref{fig:secondLeafCompositionTNFA}. Again, the \TNFA{} can be simplified,
+as shown.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node (1)              {\usebox\threeDisLeafBox};
+        \node (2) [below=of 1] {\usebox\threeDisLeafReducedBox};
+
+        \translateArr{1}{2}
+    \end{tikzpicture}
+    \caption{\TNFA{} composition of three leaf components}
+    \label{fig:secondLeafCompositionTNFA}
+\end{figure}
+
+The final composition for the leaf sub-tree composes the reduced three-leaf
+\TNFA{} with the \TNFA{} of the terminator, leading to the \TNFA{} shown in
+\figref{fig:leavesSubtreeTNFA}, which is the \TNFA{} representing the
+PNB-expression sub-tree of three leaf components.
+
+\begin{figure}[ht]
+    \centering
+    \usebox\leavesBox
+    \caption{\TNFA{} semantics of a leaves sub-tree}
+    \label{fig:leavesSubtreeTNFA}
+\end{figure}
+
+\makesavebox{\idOneBox}{%
+\begin{tikzpicture}[pnb]
+    \drawBoundaries[1][2]{1}{1}
+
+    \labelledpnbarr{l1}{r1}{}{barr}{}
+\end{tikzpicture}
+}
+
+The deepest internal node sub-tree has the structure shown in
+\figref{fig:deepestInternalNodeSubtreeStructure}; \texttt{leaves} is the
+sub-tree of \figref{fig:leavesSubtree}. Again the component PNBs are converted
+to their \TNFA{} semantics, shown in \figref{fig:internalComponentTNFAs}. The
+compositions lead to intermediate \TNFA{}s shown in \figref{fig:tensorSubtree}
+and \figref{fig:deepestInternalNodeSubtreeTNFA}. Indeed this \TNFA{} shows that
+the boundary protocol of the deepest internal-node sub-tree simple requires
+three tokens to be inserted to the sub-tree (and internally, passed to the
+leaves), while passing additional tokens to the sub-tree's next sibling.
+
+\begin{figure}[ht]
+    \centering
+\begin{tikzpicture}[wiringTree]
+\Tree
+    [. \node[draw, circle]{$\comp$};
+        [. \node[draw] {\usebox\disNodeBox}; ]
+        [. \node[draw, circle]{$\tensor$};
+                [. \node[draw] {\usebox\idOneBox}; ]
+                [. \node[draw] {\texttt{leaves}}; ]
+        ]
+    ]
+\end{tikzpicture}
+\caption{Deepest internal-node sub-tree structure}
+\label{fig:deepestInternalNodeSubtreeStructure}
+\end{figure}
+
+\makesavebox{\disNodeTNFABox}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init, accepting] {};
+        \node (1) [state, below=of 0] {};
+
+        \nfaArr[loop left]{0}{0}{\aLbl}{\aLbl0}
+        \nfaArr[bend left]{0}{1}{1}{00}
+        \nfaArr[loop left]{1}{1}{\aLbl}{\aLbl0}
+        \nfaArr[bend left]{1}{0}{\aLbl}{\aLbl1}
+    \end{tikzpicture}
+}
+
+\makesavebox{\idOneTNFABox}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init, accepting] {};
+        \nfaArr[loop left]{0}{0}{\aLbl}{\aLbl}
+    \end{tikzpicture}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[node distance=1.5cm]
+        \matrix (m)[every node/.style={anchor=center}, matrix of nodes, column sep=2cm, row sep=0.5cm] {
+        \usebox\disNodeBox & \usebox\disNodeTNFABox \\
+        \usebox\idOneBox & \usebox\idOneTNFABox \\
+        };
+
+        \translateArr{m-1-1}{m-1-2}
+        \translateArr{m-2-1}{m-2-2}
+    \end{tikzpicture}
+    \caption{\TNFA{} semantics of internal components}
+    \label{fig:internalComponentTNFAs}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, initial where=left, init] {};
+
+        \nfaArr[loop above]{0}{0}{\aLbl0}{\aLbl}
+
+        \foreach \x in {1,2,3}{%
+            \ifthenelse{\x = 3}{
+                \tikzset{wanted style/.style=accepting}
+            }{}
+            \pgfmathtruncatemacro{\prev}{\x - 1}
+            \node (\x) [state, wanted style, right=of \prev] {};
+
+            \nfaArr{\prev}{\x}{\aLbl1}{\aLbl}
+            \nfaArr[loop above]{\x}{\x}{\aLbl0}{\aLbl}
+        }
+    \end{tikzpicture}
+    \caption{\TNFA{} of tensor sub-tree shown from
+    \figref{fig:deepestInternalNodeSubtreeStructure}}
+    \label{fig:tensorSubtree}
+\end{figure}
+
+\makesavebox{\nodeSubTreeTNFABox}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, initial where=left, init] {};
+
+        \nfaArr[loop above]{0}{0}{\aLbl}{\aLbl}
+
+        \foreach \x in {1,3,5}{%
+            \ifthenelse{\x = 5}{
+                \tikzset{wanted style/.style=accepting}
+            }{}
+            \pgfmathtruncatemacro{\prev}{\x - 1}
+            \pgfmathtruncatemacro{\next}{\x + 1}
+
+            \node (\x) [state, right=of \prev] {};
+            \node (\next) [state, wanted style, right=of \x] {};
+
+            \nfaArr{\prev}{\x}{1}{0}
+            \nfaArr{\x}{\next}{\aLbl}{\aLbl}
+
+            \nfaArr[loop above]{\x}{\x}{\aLbl}{\aLbl}
+            \nfaArr[loop above]{\next}{\next}{\aLbl}{\aLbl}
+        }
+
+        \node (7) [state, right=of 6] {};
+        \nfaArr{6}{7}{1}{0}
+        \nfaArr[loop above]{7}{7}{\aLbl}{\aLbl}
+    \end{tikzpicture}
+}
+
+\makesavebox{\nodeSubTreeReducedTNFABox}{%
+    \gooTNFA{3}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node (1)              {\scalebox{0.75}{\usebox\nodeSubTreeTNFABox}};
+        \node (2) [below=of 1] {\usebox\nodeSubTreeReducedTNFABox};
+
+        \translateArr{1}{2}
+    \end{tikzpicture}
+    \caption{\TNFA{} semantics of deepest internal-node sub-tree}
+    \label{fig:deepestInternalNodeSubtreeTNFA}
+\end{figure}
+
+Three deepest internal-node sub-trees are composed, as per
+\figref{fig:compositionOfDeepestInternalSubtrees}, where \texttt{dins} is the
+sub-tree shown in \figref{fig:deepestInternalNodeSubtreeStructure}.
+
+Indeed, the reduced \TNFA{} shown in
+\figref{fig:deepestInternalNodeSubtreeTNFA} has a repeated structure similar to
+that of a single leaf component, albeit requiring 3 transitions to reach the
+accepting state. Thus, one would expect that composing two such \TNFA{}s in
+order to perform the compositions of
+\figref{fig:compositionOfDeepestInternalSubtrees} will lead to similar blow up
+in state space.
+
+\begin{figure}[ht]
+    \centering
+    \treeTree{\texttt{dins}}{\usescalebox[0.8]{\rtermOneBox}}
+    \caption{Composition of deepest internal node sub-trees}
+    \label{fig:compositionOfDeepestInternalSubtrees}
+\end{figure}
+
+\makesavebox{\twoSubTreesTNFABox}{%
+    \begin{tikzpicture}[nfa]
+        \node (00) [state, init] {};
+        \nfaArr[loop left]{00}{00}{\aLbl}{\aLbl}
+
+        \nodeRow{1}{1}
+        \nodeRow{2}{2}
+        \nodeRow{3}{3}
+        \nodeRow[0]{4}{2}
+        \nodeRow[0]{5}{1}
+
+        \node (60) [state, accepting, below right=of 50] {};
+        \nfaArr[loop left]{60}{60}{\aLbl}{\aLbl}
+        \nfaArr{50}{60}{1}{0}
+        \nfaArr{51}{60}{1}{0}
+    \end{tikzpicture}
+}
+
+\makesavebox{\twoSubTreesReducedTNFABox}{%
+    \gooTNFA{6}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node (1)              {\scalebox{0.75}{\usebox\twoSubTreesTNFABox}};
+        \node (2) [below=of 1] {\scalebox{0.75}{\usebox\twoSubTreesReducedTNFABox}};
+
+        \translateArr{1}{2}
+    \end{tikzpicture}
+    \caption{\TNFA{} semantics of deepest internal-node sub-tree composition}
+    \label{fig:internalNodeComposition}
+\end{figure}
+
+Indeed, this is the case: with the first composition leading to the \TNFA{}
+illustrated in \figref{fig:internalNodeComposition}; again, all possible
+orderings of the sub-trees reaching their target markings are represented in the
+composite \TNFA{}.
+
+\makesavebox{\threeSubTreesTNFABox}{%
+    \begin{tikzpicture}[nfa]
+        \node (00) [state, init] {};
+        \nfaArr[loop left]{00}{00}{\aLbl}{\aLbl}
+
+        \nodeRow{1}{1}
+        \nodeRow{2}{2}
+        \nodeRow{3}{3}
+        \nodeRow[2]{4}{3}
+        \nodeRow[2]{5}{3}
+        \nodeRow[2]{6}{3}
+        \nodeRow[0]{7}{2}
+        \nodeRow[0]{8}{1}
+
+        \node (90) [state, accepting, below right=of 80] {};
+        \nfaArr[loop left]{90}{90}{\aLbl}{\aLbl}
+        \nfaArr{80}{90}{1}{0}
+        \nfaArr{81}{90}{1}{0}
+    \end{tikzpicture}
+}
+
+\makesavebox{\threeSubTreesReducedTNFABox}{%
+    \gooTNFA{9}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}
+        \node (1)              {\scalebox{0.75}{\usebox\threeSubTreesTNFABox}};
+        \node (2) [below=of 1] {\scalebox{0.5}{\usebox\threeSubTreesReducedTNFABox}};
+
+        \translateArr{1}{2}
+    \end{tikzpicture}
+    \caption{\TNFA{} semantics of three composed internal-node sub-trees}
+    \label{fig:threeInternalNodeSubtreesTNFA}
+\end{figure}
+
+Composing the reduced \TNFA{} of \figref{fig:internalNodeComposition}
+with another internal-node \TNFA{} leads to the \TNFA{} shown in
+\figref{fig:threeInternalNodeSubtreesTNFA}. Indeed, such a \TNFA{} represents the
+semantics of the sub-tree containing three internal nodes (and thus, 9 leaf
+components), as can be witnessed in the language of the reduced \TNFA{}.
+
+The preceding pattern of large composite \TNFA{}s being generated, that are
+later reduced, repeats for the final internal-node level of \distree{3}{3},
+with the final composition leading to a (unminimised) \TNFA{} of $190$ nodes.
+We show the intermediate \TNFA{} sizes in \tblref{tbl:productSizesDisTree}: for
+any sub tree containing $\aN$ leaf components the minimised \TNFA{} semantics
+will have $\aN + 1$ states. Only when composing with the root, does the \TNFA{}
+drastically in size: since the root can only perform a single
+$\lbl{}{1}$-labelled transition, thus the composite \TNFA{} only has 2 states,
+neither of which are accepting, as illustrated in
+\figref{fig:TNFARootComposed}. Therefore, the reduced final \TNFA{} only has a
+single non-accepting state, indicating the target marking is not reachable.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {};
+        \node (1) [state, below=of 0] {};
+
+        \nfaArr[loop left]{0}{0}{}{}
+        \nfaArr{0}{1}{}{}
+        \nfaArr[loop left]{1}{1}{}{}
+    \end{tikzpicture}
+    \caption{\TNFA{} after composing with the root component}
+    \label{fig:TNFARootComposed}
+\end{figure}
+
+\begin{table}
+    \centering
+    \newcommand{\hilight}[1]{\textbf{#1}}
+\begin{tabular}{| r c r c | r | c | c |}
+    \hline
+    \multicolumn{5}{|c|}{\textbf{Product Size}} & \textbf{Minimised NFA size} &
+    \textbf{Sub-tree level} \\
+    \hline
+    $2$ &$\times$ &$2$ &= &\hilight{4} &3 & \multirow{2}{*}{Leaf level} \\
+    $3$ &$\times$ &$2$ &= &\hilight{6} &4 &\\
+    \hline
+    $4$ &$\times$ &$4$ &= &\hilight{16} &7 & \multirow{2}{*}{1st Node Level} \\
+    $7$ &$\times$ &$4$ &= &\hilight{28} &10 & \\
+    \hline
+    $10$ &$\times$ &$10$ &= &\hilight{100} &19 & \multirow{2}{*}{2nd Node Level} \\
+    $19$ &$\times$ &$10$ &= &\hilight{190} &28 & \\
+    \hline
+    $28$ &$\times$ &$2$ &= &\hilight{2} &1 & Root Level \\
+    \hline
+\end{tabular}
+\caption{Intermediate Product Sizes for \distree{3}{3}}
+\label{tbl:productSizesDisTree}
+\end{table}

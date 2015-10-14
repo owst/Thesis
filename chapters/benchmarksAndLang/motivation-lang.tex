@@ -1,0 +1,113 @@
+In the previous examples we demonstrated the algebraic description of Petri net
+systems in terms of their component PNBs. We now motivate using a Domain
+Specific Language (DSL), \DSL{}, that evaluates to the algebra of PNBs, but
+adds expressive high-level functional programming language features.
+
+Consider again the algebraic description of a token ring network; how might we
+generate the algebraic expression representing a similar network of, say, 10
+worker components? The simple approach given is to explicitly write the term
+\[
+    \etaC{} \comp ((\injectorC \comp \workerC \comp \workerC \dots \comp
+    \workerC) \tensor \idC{}) \comp \epsilonC{}
+\]
+where $\workerC$ appears precisely 10 times. However, this is clearly not
+scalable: for large numbers of components, or more complex components (that may
+themselves be formed of component compositions) it becomes a nuisance to
+construct such low-level expressions, and furthermore, ensure that they are
+correctly composed.
+
+Consider the following expression that we might (accidentally) write
+when composing worker nets, $\workerC{} \withNetType{1}{1}$:
+\[
+    \workerC \comp (\workerC \tensor \workerC)
+\]
+the resulting net is undefined, since the
+two nets being synchronously composed have different size boundaries ---
+composition on such nets is not definable in a unique way\footnote{In general
+there will be many ways to align the boundaries, giving different nets.}.
+Indeed, it is easy to observe that  $\workerC \tensor \workerC
+\withNetType{2}{2}$. Yet, for the synchronous composition to be well-defined, we
+must have that $\workerC \tensor \workerC$ has boundaries $(1, \aN)$ for any
+$\aN$, a contradiction, indicating an invalid expression. To ensure that we
+disallow such invalid expressions, we use an appropriate notion of \emph{type},
+which can be ascribed to expressions, to ensure that incompatible nets are
+never composed during evaluation. We will return to the description of the type
+system later in this section.
+
+When describing complex components, we would like any repeated sub-components
+to be described only once, rather than each time they are used. Specifically,
+we would like to bind a name to a sub-expression and be able to use that name
+to refer to the sub-expression.
+For example, we might consider an extended token ring network model where each
+worker task, \workerC, is comprised of two sub-components: $\workerC_1$
+and $\workerC_2$. Using name binding, we might describe a sequence of such
+tasks as:
+\newcommand{\workerVar}{\varName{w}}
+\[
+    \bindExpr
+        {\workerVar}
+        {(\compExpr
+            {\workerC_1}
+            {\workerC_2})}
+        {\compExpr
+            {\workerVar}
+            {\compExpr{\workerVar}
+                      {\compExpr{\dots}{\workerVar}}}}
+\]
+
+Another improvement that we can make is to introduce a compact form for
+expressions that feature sequences of a repeated component, with
+\emph{parameterised}
+length.
+\begin{align*}
+    &\bindExpr
+        {\workerVar}
+        {(\compExpr
+            {\workerC_1}
+            {\workerC_2})}{} \\
+    &\sequenceExpr{\aN}{\workerVar}
+\end{align*}
+where $\sequenceExpr{\aN}{c}$ represents $((c \comp c) \comp c) \dots \comp c$
+with $c$ appearing $\aN$ times, similarly to the syntax sugar introduced in
+\remref{rem:exponentiationSyntax}.
+
+Finally, consider the procedure that takes an arbitrary-length sequence of
+workers and forms a ring by connecting the first to the last. Such a procedure
+can be written, using a lambda notation common to functional programming
+languages, as:
+\[
+    \lamExpr{\varExpr}{\netType{1}{1}}
+        {\compExpr{\etaC{}}
+                  {\compExpr{\parens{\tensExpr{\varExpr}{\idC{}}}}
+                            {\epsilonC{}}}}
+\]
+that is, take a suitable sequence of workers (with left and right boundaries of
+size 1), represent it by the variable $\varExpr$ and perform the appropriate
+compositions to form the ring.
+
+Other examples, such as those in the remainder of this section, are naturally
+\emph{parametric} and can thus be compactly represented for any particular
+parameter choice. As examples, we may represent the \bufferSys{\aN} system
+as:
+\[
+    \compExpr{\lendC{}}{\compExpr{\sequenceExpr{\aN}{\bufferC}}{\rendC{}}}
+\]
+and the \tokenringSys{3} system shown in \figref{fig:tokenring}, with the
+expression:
+\begin{align*}
+    &\bindExpr
+        {\varName{makeRing}}
+        {\lamExpr{\varExpr}{\netType{1}{1}}
+                 {\compExpr{\etaC{}}
+                           {\compExpr{\parens{\tensExpr{\varExpr}{\idC{}}}}
+                                     {\epsilonC{}}}}}
+        {}\\
+    &\bindExpr
+        {\varName{procs}}
+        {\sequenceExpr{3}{\workerC}}
+        {}\\
+    &\appExpr{\varName{makeRing}}{\parens{\compExpr{\injectorC}{\varName{procs}}}}
+\end{align*}
+
+We defer formally introducing \DSL{} to \secref{sec:lang}. Instead, we now use
+it to give encodings of several well-known example systems.

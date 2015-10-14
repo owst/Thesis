@@ -1,0 +1,18 @@
+Since unfoldings represent choice between transitions as copying, it is
+possible to obtain unfoldings that are exponentially larger than the net from
+which they are generated. For example, if a net consists of a sequence of
+choices between transitions (an example of such a net is given later in
+this thesis: \secref{sec:example-iter-choice}), then each choice introduces
+a branching point in the unfolding, leading to an exponential blow-up in
+unfolding size. Indeed, unfoldings cope poorly when state explosion is caused
+by a sequence of choices, rather than inherent concurrency~\cite{Khomenko2006}.
+Recently introduced by {Khomenko et al.}~\cite{Khomenko2005, Khomenko2006},
+merged processes are a condensed representation of a Petri net's behaviour,
+remedying the problem of sequenced choices, whilst being amenable to
+(generalised) unfoldings-based model checking. Merged processes can be thought
+of as reduced unfoldings, where certain conditions are identified, and
+duplicate events are removed, quotienting the unfolding.
+
+In the original presentation, a merged processes was obtained by reducing a
+pre-computed unfolding; however, in recent work, algorithms have been developed
+that directly compute merged processes~\cite{Khomenko2011}.

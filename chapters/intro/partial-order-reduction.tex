@@ -1,0 +1,190 @@
+Partial-order reduction methods aim to prevent the statespace explosion caused
+by representing all possible interleavings of truly-concurrent events. The
+method relies on determining those transitions that have low mutual
+interference; two transitions interfere if firing one enables or disables the
+other, or if the resulting marking changes when the order of firing of the two
+transitions is swapped. A reduced state space can be built and explored if sets
+of transitions with low mutual interference are only fired in only one of the
+possible orderings. Since the marking reached after firing the set of
+transitions is the same, regardless of the chosen order (if it were not, there
+would be a pair of transitions that interfere), the particular chosen order
+does not matter. The name \emph{partial-order} methods is used since those
+transitions that do not interfere can be considered as unrelated by some
+\emph{dependency} ordering.  As an example, consider the example net shown
+in~\figref{fig:lowInterferenceNet}, originally due to Wolf~\cite{Wolf2014}. The
+transition $\aTrans_4$ does not interfere with $\aTrans_2$ or $\aTrans_3$ and
+therefore we can only consider one of the three possible interleavings. The
+corresponding statespace, illustrated in~\figref{fig:lowInterferenceNetLTS},
+contains 6 redundant transitions and 4 redundant states, highlighted with
+dashed lines.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[node distance=2cm]
+    \node[pnbplace] (p0) [tokens=1] {};
+    \node[pnbplace] (p1) [above right=of p0] {};
+    \node[pnbplace] (p2) [below right=of p0] {};
+    \node[pnbplace] (p3) [right=of p1] {};
+    \node[pnbplace] (p4) [right=of p3] {};
+    \node[pnbplace] (p5) [below right=of p4] {};
+    \node[pnbplace] (p6) [below left=of p5] {};
+
+    \xHalfwayYFirst{p0}{p1}{join1}
+    \labelledpnbarr{p0.out}{join1}{$\aTrans_1$}{}{pos=1}
+    \labelledpnbarr{join1}{p1.in}{}{o0i180}{draw=none}
+    \labelledpnbarr{join1}{p2.in}{}{o0i180}{draw=none}
+
+    \xHalfwayYFirst{p5}{p4}{join2}
+    \labelledpnbarr{join2}{p5.in}{$\aTrans_5$}{}{pos=0}
+    \labelledpnbarr{p4.out}{join2}{}{o0i180}{draw=none}
+    \labelledpnbarr{p6.out}{join2}{}{o0i180}{draw=none}
+
+    \labelledpnbarr{p1.out}{p3.in}{$\aTrans_2$}{}{}
+    \labelledpnbarr{p3.out}{p4.in}{$\aTrans_3$}{}{}
+    \labelledpnbarr{p2.out}{p6.in}{$\aTrans_4$}{}{}
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{Example Petri net}
+\label{fig:lowInterferenceNet}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\makebox[\textwidth][c]{
+\scalebox{0.9}{
+\begin{tikzpicture}[nfa]
+    \node (0) [state]             {};
+    \node (1) [state, right=of 0] {};
+
+    \node (4) [state, dashed, right=of 1] {};
+    \node (5) [state, dashed, right=of 4] {};
+
+    \node (2) [state, above=of 4] {};
+    \node (3) [state, right=of 2] {};
+
+    \node (6) [state, dashed, below=of 4] {};
+    \node (7) [state, dashed, right=of 6] {};
+
+    \node (8) [state, right=of 5] {};
+    \node (9) [state, right=of 8] {};
+
+    \foreach \x/\y/\l/\style in {%
+0/1/$\aTrans_1$/solid,%
+1/2/$\aTrans_2$/solid,%
+1/4/$\aTrans_2$/dashed,%
+1/6/$\aTrans_4$/dashed,%
+2/3/$\aTrans_3$/solid,%
+4/5/$\aTrans_4$/dashed,%
+6/7/$\aTrans_2$/dashed,%
+3/8/$\aTrans_4$/solid,%
+5/8/$\aTrans_3$/dashed,%
+7/8/$\aTrans_3$/dashed,%
+8/9/$\aTrans_5$/solid%
+}{\path [\style] (\x) edge node [swap] {\l} (\y);}
+
+\end{tikzpicture}
+}
+}
+\caption{Statespace of the net in \figref{fig:lowInterferenceNet}}
+\label{fig:lowInterferenceNetLTS}
+\end{figure}
+
+To explore a reduced statespace using the partial order method, the essential
+idea is to fire only a subset of the enabled transitions at any particular
+marking. Indeed, the trivial case would be to take the set of all
+enabled transitions, but firing such a set offers no possibility of exploring a
+reduced statespace. However, it is not necessarily the case that firing smaller
+sets of transitions leads to a smaller explored statespace~\cite{Valmari1998}.
+For a trivial example, consider the simple net
+in~\figref{fig:concurrentEnabledNet}, both $\aTrans_1$ and $\aTrans_2$ are
+enabled (and do not interfere). If we fire both simultaneously, the explored
+statespace will have two states with one connecting transition; however, if we
+pick a smaller set of transitions (i.e.  firing $\aTrans_1$ or $\aTrans_2$
+alone), the explored statespace will have 3 states and 2 transitions since the
+transitions will have been interleaved.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1] {};
+    \node[pnbplace] (p1) [right=of p0] {};
+    \node[pnbplace] (p2) [tokens=1, below=of p0] {};
+    \node[pnbplace] (p3) [below=of p1] {};
+
+    \labelledpnbarr{p0.out}{p1.in}{$\aTrans_1$}{}{}
+    \labelledpnbarr{p2.out}{p3.in}{$\aTrans_2$}{}{}
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{Example Petri net}
+\label{fig:concurrentEnabledNet}
+\end{figure}
+
+Several related partial order reduction approaches exist in the literature, with
+slight variations on the set of transitions considered in each case. So called
+\emph{stubborn}~\cite{Valmari1991}, \emph{persistent}~\cite{Godefroid1990} and
+\emph{ample}~\cite{Peled1993} set methods each specify the (sub)set of the
+enabled transitions for a state that should be explored. Here, we only present
+an intuitive overview of the stubborn set method; details of the precise
+differences between the approaches can be found in surveys by
+Valmari~\cite{Valmari1998}, Godefroid~\cite{Godefroid1996a} and {Clarke et
+al.}~\cite{Clarke1999}. Additionally, in recent research, {Valmari and
+Hansen}~\cite{Valmari2011} investigated optimality of stubborn sets and the
+effect of particular choices of dependency relations on transitions.
+
+As a general definition (c.f. \cite{Valmari1998}), a set of transitions
+$\aPnTransSet$ is \emph{stubborn} iff:
+\begin{enumerate}
+    \item If firing some sequence of transitions \emph{not} in $\aPnTransSet$
+        allows some $\aTrans \in \aPnTransSet$ to be fired, reaching a marking
+        $\aPnMarking$, then we can also fire that same sequence \emph{after}
+        firing $\aTrans$, to also reach $\aPnMarking$,
+    \item There is at least one $\aTrans \in \aPnTransSet$ that is enabled
+        after firing any length sequence of transitions \emph{not} in
+        $\aPnTransSet$.
+\end{enumerate}
+
+In other words, the firing of some transition in $\aPnTransSet$ commutes with
+the firing of transitions not in $\aPnTransSet$. Thus, the search
+algorithm is justified in choosing the ordering where (the enabled transitions
+of) $\aPnTransSet$ are fired first: the marking reached in either order is the
+same.
+
+However, to ensure that the possible statespace reduction enabled by the
+stubborn set method is sound w.r.t. a particular net property, the definition
+of stubborn sets must take into account the particular property being checked.
+For example, considering the trivial example net shown
+in~\figref{fig:concurrentEnabledNet}, if the property to check is reachability
+of the marking with a token in top-left and bottom-right places only, then the
+set of stubborn sets cannot include $\setof{\aTrans_1, \aTrans_2}$ since firing
+this set does not preserve reachability of the target marking.  Whereas early
+papers related to stubborn sets focussed on preserving deadlock,
+Schmidt~\cite{Schmidt1999} detailed an encoding to efficiently check other
+Petri net properties, including reachability, using the stubborn set method.
+
+The stubborn set method was later improved by Godefroid and
+co-authors~\cite{Godefroid1993,Wolper1993}, particularly by combining stubborn
+sets and \emph{sleep}~\cite{Godefroid1990} sets for additional improvements.
+The sleep set method attempts to avoid visiting states that have already been
+explored by an alternative interleaving of transitions, by tracking the set of
+transitions fired to reach a particular state. In later work, {Alur et
+al.}~\cite{Alur1997} demonstrated efficiency improvements when combining
+efficient representation via decision diagrams (see
+\secref{sec:decision-diagrams}) and partial order reductions using ample sets.
+Recent work by {Hansen and Wang}~\cite{Hansen2011} has shown that combining
+stubborn sets with compositional approaches (see
+\secref{sec:compositionalApproaches}) to determine transition dependencies can
+improve the reduction effect.
+
+An alternative to standard reachability graph representations, due to {Vernadat
+et al.}~\cite{Vernadat1996} is the notion of a \emph{covering step graph}
+(CSG). A CSG groups independent events into single transition step, which is
+fired atomically, and thus implicitly avoids the state explosion due to
+interleaving. CSGs can be combined with the persistent set method, as shown by
+{Ribet et al.}~\cite{Ribet2002}.
+
+In-depth surveys of stubborn set-like methods were presented by both
+Valmari~\cite{Valmari1998} and Godefroid~\cite{Godefroid1996, Godefroid1996a},
+examining the practical applicability and effectiveness of stubborn set methods
+for various Petri net model checking problems.

@@ -1,0 +1,137 @@
+\mkC{scheduler}
+Milner's \cyclicschedulerSys{\aN} system models a set of $\aN$ processes
+arranged in a cycle; each process starts in turn and notifies the next process
+in the cycle to start. Upon finishing, the processes may start again, but only
+if they have been signalled to do so by the previous process; similarly, if a
+process is signalled whilst still running, it must wait to finish before
+starting and passing the signal along.
+
+\begin{figure}[ht]%
+\centering
+\centering
+\begin{tikzpicture}[pnb]
+\node[pnbplace] (init)  [tokens=1, rotate=270] {};
+
+\node[pnbplace] (ready)  [below of=init, rotate=270] {};
+\node[pnbplace] (startedNext) [below of=ready, rotate=270] {};
+\node[pnbplace] (fws)  [below left of=startedNext, rotate=180] {};
+\node[pnbplace] (swf)  [below right of=startedNext, rotate=0] {};
+
+\drawBoundaries{1}{3}
+
+\lBoundaryLabel{1}{signalMe}
+\rBoundaryLabel{1}{startTask}
+\rBoundaryLabel{2}{taskFinished}
+\rBoundaryLabel{3}{signalNext}
+
+\labelledpnbarr[initready]{init.out}{ready.in}{}{relative}{}
+\draw (l1) edge[barr, out=30, in=120] (initready);
+
+\labelledpnbarr[readystartedNext]{ready.out}{startedNext.in}{}{pnbarrstyle1, relative}{}
+
+\labelledpnbarr[startedNextfws]{startedNext.out}{fws.in}{}{pnbarrstyle2, out=-135, in=0}{pos=0.7}
+
+\labelledpnbarr[startedNextswf]{startedNext.out}{swf.in}{}{out=-45, in=180}{pos=0.7}
+
+\labelledpnbarr[fwsready]{fws.out}{ready.in}{}{pnbarrstyle2, out=180, in=120}{pos=0.6}
+\draw (l1) edge[barr, pnbarrstyle2, out=0, in=-150] (fwsready);
+
+\draw (l1) edge[barr, out=-60, in=135] (startedNextswf);
+
+\labelledpnbarr[swfready]{swf.out}{ready.in}{}{out=0, in=60}{pos=0.6}
+\draw (swfready) edge[barr, out=-30, in=180] (r2);
+
+\draw (r1) edge[barr, pnbarrstyle1, out=-120, in=70] (readystartedNext);
+\draw (r3) edge[barr, pnbarrstyle1, out=120, in=-70] (readystartedNext);
+\draw (r2) edge[barr, pnbarrstyle2, out=-120, in=45] (startedNextfws);
+
+\end{tikzpicture}
+\caption{\schedulerC{} \withNetType{2}{2}}
+\label{fig:schedulerC}
+\end{figure}
+
+The component-wise specification of \cyclicschedulerSys{\aN} makes use of the
+same task component net as \hartstoneSys{\aN} (illustrated in
+\figref{fig:taskC}). Each \schedulerC{} component, illustrated in
+\figref{fig:schedulerC} has a corresponding \taskC{} component that it controls.
+Each scheduler/task component feeds its signalNext into the next component; the
+cycle is initially started by the $\injectorC$ component from
+\tokenringSys{\aN} (shown in \figref{fig:injectorC}). The specification is
+then:
+\begin{flalign*}
+    \cyclicschedulerSys{\aN} \defeqsp
+    &\bindExpr
+        {\varName{schedTask}}
+        {\compExpr{\schedulerC}{\tensExpr{\taskC}{\idC{}}}}
+        {}\\
+    &\bindExpr
+        {\varName{tasks}}
+        {\compExpr{\injectorC}{\sequenceExpr{\aN}{\varName{schedTask}}}}
+        {} \\
+    & \compExpr
+        {\etaC{}}
+        {\compExpr
+            {\parens{\tensExpr{\varName{tasks}}{\idC{}}}}
+            {\epsilonC{}}}
+\end{flalign*}
+The schematic of \cyclicschedulerSys{2} is shown in
+\figref{fig:cyclicschematic}.
+
+\begin{figure}[ht]%
+\centering
+\makebox[\textwidth][c]{
+\begin{tikzpicture}[schematic]
+    \def\mainsize{4cm}
+    \def\upperSizeRatio{5/8}
+    \def\lowerSizeRatio{2/8}
+
+    \tikzset{main/.append style={minimum height=\mainsize}}
+    \tikzset{int21t/.append style={minimum height=\upperSizeRatio * \mainsize}}
+    \tikzset{int21b/.append style={minimum height=\lowerSizeRatio * \mainsize}}
+    \tikzset{int22t/.append style={minimum height=\upperSizeRatio * \upperSizeRatio * \mainsize}}
+    \tikzset{int22b/.append style={minimum height=\upperSizeRatio * \lowerSizeRatio * \mainsize}}
+
+    \node [schematicnode] (eta) [main] {\etaC{}};
+    \node [schematicnode] (injector) [int21t, aligntop=eta] {\injectorC};
+    \node [schematicnode] (sched1) [int21t, aligntop=injector] {\schedulerC};
+
+    \node [schematicnode] (task1) [int22t, aligntop=sched1] {\taskC};
+    \node [schematicnode] (id1) [int22b, alignbot=sched1, samewidthas={task1 and task1}] {\idC{}};
+
+    \node [schematicnode] (sched2) [int21t, aligntop=task1] {\schedulerC};
+    \node [schematicnode] (task2) [int22t, aligntop=sched2] {\taskC};
+    \node [schematicnode] (id2) [int22b, alignbot=sched2, samewidthas={task2 and task2}] {\idC{}};
+
+    \node [schematicnode] (idbot) [int21b, alignbot=eta, samewidthas={injector and id2}] {\idC{}};
+    \node [schematicnode] (epsilon) [main, aligntop=task2] {\epsilonC{}};
+
+    \drawBoundaryPortsOn{idbot}{1}{1}
+    \drawBoundaryPortsOn{injector}{0}{0}
+
+    \connectedBetweenL{eta}{idbot-l1}{2}
+
+    \foreach \i in {1,2}{%
+        \drawBoundaryPortsOn{id\i}{1}{1}
+        \drawBoundaryPortsOn{task\i}{2}{0}
+
+        \foreach \j in {1,2}{%
+            \connectedBetweenL{sched\i}{task\i-l\j}{\j}
+        }
+
+        \connectedBetweenL{sched\i}{id\i-l1}{3}
+
+        \lPortAtHeightOf{sched\i}{sched\i-r3}{1}
+    }
+
+    \connectedBetweenR{epsilon}{id2-r1}{1}
+    \connectedBetweenR{epsilon}{idbot-r1}{2}
+
+    \connectedBetweenL{injector}{sched1-l1}{1}
+    \draw (id1-r1) -- (sched2-l1);
+    \lPortAtHeightOf{injector}{injector-r1}{1}
+    \connectedBetweenL{eta}{injector-l1}{1}
+\end{tikzpicture}
+}
+\caption{Schematic of \cyclicschedulerSys{2}}
+\label{fig:cyclicschematic}
+\end{figure}

@@ -1,0 +1,32 @@
+\chapter{Benchmarks and a Domain Specific Language for Net Compositions} \label{chp:benchmarksAndLang}
+
+In this chapter we introduce the example systems that we will use to
+demonstrate and benchmark our reachability checking techniques. Several of
+these examples are taken from Corbett's benchmark suite~\cite{Corbett1996},
+commonly used as reference benchmarks in the Petri net literature. However,
+here we give alternative, \emph{parameterised} specifications in a
+\emph{component-wise} manner; we propose that such specifications are more
+natural and easier to construct and reason about, relative to the standard
+monolithic definitions. Indeed, for this purpose, we motivate and introduce a
+\emph{Domain Specific Language} (DSL) for constructing such systems, proving
+that it ensures that invalid constructions cannot be formed. This chapter is
+formed from two of the author's papers; the core was presented at Petri Nets
+2014~\cite{Sobocinski2014}, while some of the example systems are taken
+from~\cite{Rathke2013}.
+
+\section{Component-wise Specification of Nets}
+\label{sec:benchmarks}
+\subimport{}{examples}
+
+\section{Specification Domain Specific Language}
+\label{sec:lang}
+\subimport{}{lang}
+
+\section{Summary}
+In this section we introduced the example systems we use to demonstrate and
+benchmark our reachability checking techniques. We illustrated that using a
+suitable DSL for net system specification gives convenient representations,
+especially for parametric systems, such as the example systems we consider. We
+illustrated our net system DSL, \DSL{}, and proved that by using a static type
+system, we can ensure that well-typed expressions are guaranteed to terminate
+and construct well-composed net systems.

@@ -1,0 +1,105 @@
+A replicator is a simple component that is able to fire the transition
+connected to its right boundary port an unbounded number of times, once the
+transition connected to its left boundary port has fired once. Sequences of
+such replicators can be formed into a chain, similarly to the
+\iteratedchoiceSys{\aN} system.
+
+\newcommand{\drawRepPlaces}[1]{%
+    \node (p0#1) [pnbplace] {};
+    \node (p1#1) [pnbplace, below=of p0#1, rotate=180] {};
+
+    \labelledpnbarr{p1#1.out}{p0#1.in}{}{overlay, bend left=45}{}
+    \labelledpnbarr[p0p1#1]{p0#1.out}{p1#1.in}{}{overlay, bend left=45}{pos=0.1}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \drawRepPlaces{}
+
+        \drawBoundaries{0}{0}
+
+        \lBAlignedWith{p0}{1}
+        \rBAlignedWith{p0}{1}
+
+        \labelledpnbarr{l1}{p0.in}{}{barr}{}
+        \draw (p0p1) edge[barr, out=-30, in=180] (r1);
+    \end{tikzpicture}
+    \caption{\replicatorC \withNetType{1}{1}}
+    \label{fig:replicatorC}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+    \centering
+    \begin{tikzpicture}[pnb]
+        \node (tok) [pnbplace] {};
+
+        \drawBoundaries{1}{0}
+
+        \labelledpnbarr{l1}{tok.in}{}{barr}{}
+    \end{tikzpicture}
+        \caption{\taketokC \withNetType{1}{0}}
+    \end{subfigure}%
+\end{figure}
+
+The \replicatorsSys{\aN} system is defined:
+\[
+    \replicatorsSys{\aN} \defeq
+    \compExpr{\addtokC}{\compExpr{\sequenceExpr{\aN}{\replicatorC}}{\taketokC}}
+\]
+the schematic of such a system is again almost trivial, e.g. the
+schematic for \replicatorsSys{3} is illustrated in
+\figref{fig:replicatorsschematic}, with the corresponding composite net shown
+in \figref{fig:replicatorscomposed}.
+
+\begin{figure}[ht]%
+\centering
+\makebox[\textwidth][c]{
+\begin{tikzpicture}[schematic]
+    \node[schematicnode] (lend) []              {\addtokC};
+    \node[schematicnode] (rep1) [right=of lend] {\replicatorC};
+    \node[schematicnode] (rep2) [right=of rep1] {\replicatorC};
+    \node[schematicnode] (rep3) [right=of rep2] {\replicatorC};
+    \node[schematicnode] (rend) [right=of rep3] {\taketokC};
+
+    \newcommand{\offset}{0.5}
+
+    \foreach \from/\to in {lend/rep1, rep1/rep2, rep2/rep3, rep3/rend}{
+        \rightBPort{\from}{\offset}{1}
+        \leftBPort{\to}{\offset}{1}
+
+        \draw (\from-r1) -- (\to-l1);
+    }
+\end{tikzpicture}
+}
+\caption{Schematic of \replicatorsSys{3}}
+\label{fig:replicatorsschematic}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb]
+    \node (init0) [pnbplace, tokens=1] {};
+
+    \coordinate (p0p10) at (init0.out);
+
+    \foreach \i in {1,2,3}{
+        \pgfmathtruncatemacro{\prev}{\i - 1}
+        \def\prevjoin{p0p1\prev}
+        \begin{scope}[shift={(\i*\nodedist, 0cm)}]
+            \drawRepPlaces{\i}
+        \end{scope}
+
+        \draw (\prevjoin) edge[pnbarr, out=-20, in=180] (p0\i.in);
+    }
+
+    \node (consume) [pnbplace, right=of p03] {};
+
+    \draw (p0p13) edge[pnbarr, out=-20, in=180] (consume.in);
+
+    \drawBoundaries{0}{0}
+    \end{tikzpicture}
+    \caption{\replicatorsSys{3}}
+    \label{fig:replicatorscomposed}
+\end{figure}

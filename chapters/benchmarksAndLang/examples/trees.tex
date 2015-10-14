@@ -1,0 +1,441 @@
+Another class of systems with regular structure that can exploit a
+component-wise specification are (full, complete)
+$(\aN,\bN)$-trees, with width $\aN$ and depth $\bN$. In such trees, each
+non-leaf node has exactly $\aN$ children (full) and every ``level'' of the tree
+other than the last is fully saturated (complete), i.e. there are $\aN^\cN$
+nodes at depth $\cN < \bN$. Together, these properties give the total number of
+nodes as:
+\[
+    \frac{1}{\aN-1} \left(\aN^{\bN+1} - 1\right)
+\]
+for example, a $(3,2)$-tree contains $13$ nodes.
+
+We identify 2 such classes of trees: \emph{conjunction} trees,
+$\contree{\aN}{\bN}$, illustrated in \figref{fig:conTree}, and
+\emph{disjunction} trees, $\distree{\aN}{\bN}$, illustrated in
+\figref{fig:disTree}. A conjunction tree node is connected by a single
+transition to all of its (direct) children, whereas a disjunction tree's nodes
+have distinct transitions to each child.
+
+\newcommand{\drawConTreeLevel}[2][0]{
+    \def\levelSepA{0.75cm}
+    \node[pnbplace] (p#2-0) {};
+
+    \node (p#2-1) [pnbplace, right=of p#2-0, yshift=-1.5*\levelSepA, anchor=center] {};
+    \node (p#2-2) [pnbplace, right=of p#2-0, yshift=-0.5*\levelSepA, anchor=center] {};
+    \node         [right=of p#2-0, yshift=0.5*\levelSepA, anchor=center, rotate=90] {$\cdots$};
+    \node (p#2-3) [pnbplace, right=of p#2-0, yshift=1.5*\levelSepA, anchor=center] {};
+
+    \tikzstyle{foo}=[pnbarr, o0i180]
+
+    \ifthenelse{\equal{#1}{0}}{
+        \coordinate (join#2) at ([xshift=0.5cm]p#2-0);
+        \draw (p#2-0.out) edge[pnbarr, mark inside=1] (join#2);
+    }{
+        \tikzset{foo/.append style={mark inside=0.75}}
+        \coordinate (join#2) at (p#2-0.out);
+    }
+
+    \draw (join#2) edge[foo] (p#2-1.in);
+    \draw (join#2) edge[foo] (p#2-2.in);
+    \draw (join#2) edge[foo] (p#2-3.in);
+
+    \draw[mirrorbrace, decoration={raise=0.125cm}] (p#2-1.out) -- (p#2-3.out) node [right=0.2cm, pos=0.5] {$\aN$};
+}
+
+\newcommand{\klTree}[1]{
+    \begin{tikzpicture}[pnb]
+        \begin{scope}
+            \drawConTreeLevel[#1]{1}
+        \end{scope}
+
+        \begin{scope}[shift={($(p1-1.out)+(1.5cm,-0.5cm)$)}]
+            \drawConTreeLevel[#1]{2}
+        \end{scope}
+
+        \path (p1-1.out) to node [sloped] {$\cdots$} (p2-0.in);
+
+        \begin{scope}[shift={($(p1-3.out)+(1.5cm,0.5cm)$)}]
+            \drawConTreeLevel[#1]{3}
+        \end{scope}
+
+        \path (p1-3.out) to node [sloped] {$\cdots$} (p3-0.in);
+
+        \draw[mirrorbrace, decoration={raise=0.125cm}] let \p1 = (p2-1.south), \p2 = (p1-0.south) in (\x2, \y1) -- (\x1, \y1) node [below=0.2cm, pos=0.5] {$\bN$};
+    \end{tikzpicture}
+}
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \klTree{0}
+        \caption{Conjunction tree, \contree{\aN}{\bN}}
+    \label{fig:conTree}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \klTree{1}
+        \caption{Disjunction tree, \distree{\aN}{\bN}}
+        \label{fig:disTree}
+    \end{subfigure}
+    \caption{$(\aN,\bN)$-Tree Nets}
+    \label{fig:foo}
+\end{figure}
+
+Such trees are naturally specified in a compositional manner. To see how, we
+first discuss how to construct a transition connecting the $\aN$ leaf nodes in
+$\contree{\aN}{\bN}$. Let us consider this transition for
+$\contree{3}{2}$; such a transition must connect to the first leaf place
+\emph{and} the remaining 2 leaf places. We can represent this by a component
+with a single left and right boundary and a single transition connecting the
+left/right boundary ports and the in-port of its single leaf place. The
+intuition being that the transition connects to the in-port of the place and
+whatever else is connected to the right boundary port of the component: if we
+sequentially compose 3 such components (illustrated in
+\figref{fig:conleafComponent}) and a suitable ``terminator'' component
+(illustrated in \figref{fig:rendComponent}),
+as shown in \figref{fig:3LeavesComponents},
+we will obtain a component isomorphic to one with a single left boundary and
+transition connecting the 3 places' in-ports (illustrated in
+\figref{fig:3LeavesSingle}). In a similar manner, we can give component-wise
+specifications for internal nodes, and thus the entire tree net.
+
+\makesavebox{\ConLeafBox}{%
+\begin{tikzpicture}[pnb]
+    \node (hidden) [pnbhidden] {};
+    \node (tok) [pnbplace, yshift=0.5\nodedist, below=of hidden] {};
+
+    \drawBoundaries{0}{0}
+    \lBAlignedWith{hidden}{1}
+    \rBAlignedWith{hidden}{1}
+
+    \labelledpnbarr[l1r1]{l1}{r1}{}{barr}{pos=0.1}
+    \draw (l1r1) edge[barr,o0i180] (tok.in);
+\end{tikzpicture}
+}
+
+\makesavebox{\REndBox}{%
+\begin{tikzpicture}[pnb]
+    \node[pnbhidden] (p0) {};
+    \drawBoundaries{1}{0}
+    \labelledpnbarr{l1}{p0.in}{}{barr}{}
+\end{tikzpicture}%
+}
+
+\begin{figure}[ht]
+    \centering
+\begin{subfigure}[b]{0.7\textwidth}
+    \centering
+\begin{tikzpicture}[node distance=0cm]
+    \newcommand{\lBox}{\scalebox{0.7}{\usebox\ConLeafBox}}
+    \node (1)              {\lBox};
+    \node (2) [right=of 1] {$\comp$};
+    \node (3) [right=of 2] {\lBox};
+    \node (4) [right=of 3] {$\comp$};
+    \node (5) [right=of 4] {\lBox};
+    \node (6) [right=of 5] {$\comp$};
+    \node (7) [right=of 6] {\scalebox{0.7}{\usebox\REndBox}};
+\end{tikzpicture}
+\caption{3 leaf components and a terminator}
+\label{fig:3LeavesComponents}
+\end{subfigure}%
+\begin{subfigure}[b]{0.3\textwidth}
+    \centering
+    \scalebox{0.7}{%
+    \begin{tikzpicture}[pnb]
+        \node (p0) [pnbplace] {};
+        \node (p1) [pnbplace, below=of p0] {};
+        \node (p2) [pnbplace, below=of p1] {};
+        \drawBoundaries{1}{0}
+
+        \labelledpnbarr[l1p1]{l1}{p1.in}{}{barr}{pos=0.25}
+        \path (l1p1) edge[pnbarr, o0i180] (p0.in);
+        \path (l1p1) edge[pnbarr, o0i180] (p1.in);
+        \path (l1p1) edge[pnbarr, o0i180] (p2.in);
+    \end{tikzpicture}
+}
+\caption{3 leaf component}
+\label{fig:3LeavesSingle}
+\end{subfigure}
+\caption{Isomorphic specification of 3 leaf nodes}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.33\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) {};
+
+    \drawBoundaries{0}{1}
+
+    \draw[barr, mark inside=0.5] (p0.out) to (r1);
+\end{tikzpicture}
+\caption{\rootC{} \withNetType{0}{1}}
+\end{subfigure}%
+\begin{subfigure}{0.33\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node (hidden) [pnbhidden] {};
+    \node (tok) [pnbplace, yshift=0.5\nodedist, below=of hidden] {};
+
+    \drawBoundaries{0}{0}
+    \lBAlignedWith{hidden}{1}
+    \rBAlignedWith{hidden}{1}
+    \rBAlignedWith{tok}{2}
+
+    \labelledpnbarr[l1r1]{l1}{r1}{}{barr}{pos=0.1}
+    \draw (l1r1) edge[barr,o0i180] (tok.in);
+    \labelledpnbarr{tok.out}{r2}{}{barr}{}
+\end{tikzpicture}
+\caption{\component{\connode} \withNetType{1}{2}}
+\end{subfigure}%
+\begin{subfigure}{0.33\textwidth}
+\centering
+\usebox\ConLeafBox
+\caption{\component{\conleaf} \withNetType{1}{1}}
+\label{fig:conleafComponent}
+\end{subfigure}%
+\caption{\contree{\aN}{\bN} component nets}
+\label{fig:conTreeComponents}
+\end{figure}
+
+We can now give the components and specification for $\contree{\aN}{\bN}$;
+the root, internal node and leaf components are shown in
+\figref{fig:conTreeComponents}. Using \DSL{} syntax,
+$\contree{\aN}{\succNat{\bN}}$ is:
+\begin{flalign*}
+    \contree{\aN}{\succNat{\bN}} \defeqsp
+    &\bindExpr
+        {\varName{leaves}}
+        {\compExpr{\sequenceExpr{\aN}{\conleaf}}{\rendC}}
+        {}\\
+    &\bindExpr
+        {\varName{addSubTree}}
+        {\lamExpr{\varExpr}{\netType{1}{0}}{\compExpr{\sequenceExpr{\aN}{\parens{\compExpr{\connode}{\parens{\tensExpr{\idC{}}{\varExpr}}}}}}{\rendC}}}
+        {}\\
+    &\bindExpr
+        {\varName{createSubTrees}}
+        {\lamExpr{\varExpr}{\natType}{\natRecursionExpr{\varExpr}{\varName{leaves}}{\varName{addSubTree}}}}
+        {}\\
+    & \compExpr
+        {\rootC}
+        {\parens{\appExpr{\varName{createSubTrees}}{\bN}}}
+\end{flalign*}
+Intuitively, $\varName{createSubTrees}$ adds $\bN$ ``levels'', to the bottom
+level of $\aN$ leaf nodes, where each non-leaf level is $\aN$ repetitions of
+the level before. Indeed, to get the correct depth, we must define the net
+system in terms of $\succNat{\bN}$, not $\bN$.
+
+\begin{remark}
+A relevant design detail of our language to briefly discuss at this point is
+that of providing folds over $\N$ (which, as noted by
+Coquand~\cite{Coquand1992}, can obscure a program's meaning), instead of
+pattern matching on $\N$ and recursive definitions; indeed, had we allowed such
+features, the definition of $\contree{\aN}{\bN}$ can be expressed more
+directly:
+\begin{flalign*}
+    \contree{\aN}{\bN} \defeqsp
+    &\mathbfsf{bind}\; \varName{mkSubTree} \bm{=} \lamExpr{\varExpr}{\natType}{} \\
+        &\hspace{1.25cm} \textbf{match } \varExpr \textbf{ with} \\
+            & \hspace{1.5cm} \begin{aligned}
+                1 &\Rightarrow \compExpr{\sequenceExpr{\aN}{\conleaf}}{\rendC{}} \\
+                \succNat{\cN} &\Rightarrow
+                {\compExpr{\sequenceExpr{\aN}{\parens{\compExpr{\connode}{\parens{\tensExpr{\idC{}}{\parens{\appExpr{\varName{mkSubTree}}{\cN}}}}}}}}{\rendC{}}}
+            \end{aligned}\\
+        & \mathbfsf{in} \; \compExpr
+        {\rootC}
+        {\parens{\appExpr{\varName{mkSubTree}}{\bN}}}
+\end{flalign*}
+Notice that the definitions of $\varName{leaves}$ and $\varName{addSubTree}$
+have been inlined, and since we can pattern match on $\N$, we can directly
+define $\contree{\aN}{\bN}$, since the ``base-case'' pattern match\footnote{The
+pattern match is of course ``incomplete'', since there is no case for 0, but
+such a matter is not important for the purposes of our discussion.} can be for
+$1$, rather than $0$. However, the choice to provide folds instead has the
+benefit that termination is guaranteed, since the structural recursion is
+``hidden'' in the implementation of $\natRecursionExprName$. Indeed, in the
+presence of general recursion, non-terminating computations abound; static
+approximations are however possible, e.g. that of Abel and
+Altenkirch~\cite{Abel2002}, which checks for decreasing-size arguments to
+recursive calls, but these, along with pattern matching, are non-trivial to
+implement.
+\end{remark}
+
+Continuing after our slight digression, as an example, $\contree{2}{2}$ is
+shown in \figref{fig:treecon22}, with the corresponding schematic shown in
+\figref{fig:treeconSchematic}.
+
+\newcommand{\threeFork}[3]{
+    \coordinate (join) at ([xshift=0.25cm]#1);
+
+    \draw (#1) edge[pnbarr, mark inside=1] (join);
+
+    \draw (join) edge[pnbarr, o0i180] (#2);
+    \draw (join) edge[pnbarr, o0i180] (#3);
+}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) {};
+
+    \node[pnbplace] (p1) [right=of p0, yshift=-\levelSepA] {};
+
+    \node[pnbplace] (p2a) [right=of p1, yshift=-\levelSepB] {};
+    \node[pnbplace] (p2b) [right=of p1, yshift=\levelSepB] {};
+
+    \node[pnbplace] (p3) [right=of p0, yshift=\levelSepA] {};
+
+    \node[pnbplace] (p4a) [right=of p3, yshift=-\levelSepB] {};
+    \node[pnbplace] (p4b) [right=of p3, yshift=\levelSepB]  {};
+
+    \threeFork{p0.out}{p1.in}{p3.in}
+
+    \threeFork{p1.out}{p2a.in}{p2b.in}
+    \threeFork{p3.out}{p4a.in}{p4b.in}
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{\contree{2}{2}}
+\label{fig:treecon22}
+\end{figure}
+
+\begin{figure}[ht]%
+\makebox[\textwidth][c]{
+    \begin{tikzpicture}[schematic]
+
+    \def\upperSizeRatio{5/8}
+    \def\lowerSizeRatio{2/8}
+
+    \tikzset{main/.append style={minimum height=\mainsize}}
+    \tikzset{int21t/.append style={minimum height=\lowerSizeRatio * \mainsize}}
+    \tikzset{int21b/.append style={minimum height=\upperSizeRatio * \mainsize}}
+    \tikzset{int22t/.append style={minimum height=\upperSizeRatio * \lowerSizeRatio * \mainsize}}
+    \tikzset{int22b/.append style={minimum height=\upperSizeRatio * \upperSizeRatio * \mainsize}}
+
+    \node[schematicnode] (root) [main] {\component{root}};
+    \node[schematicnode] (node1) [main, right=of root] {\connode};
+
+    \node[schematicnode] (l11) [int21b, alignbot=node1] {\conleaf};
+    \node[schematicnode] (l12) [int21b, right=of l11] {\conleaf};
+    \node[schematicnode] (l13) [int21b, right=of l12] {\rendC{}};
+    \node[schematicnode] (id1) [int21t, aligntop=node1, samewidthas={l11 and l13}] {\idC{}};
+
+    \node[schematicnode] (node2) [main, aligntop=id1] {\connode};
+
+    \node[schematicnode] (l21) [int21b, alignbot=node2] {\conleaf};
+    \node[schematicnode] (l22) [int21b, right=of l21] {\conleaf};
+    \node[schematicnode] (l23) [int21b, right=of l22] {\rendC{}};
+    \node[schematicnode] (id2) [int21t, aligntop=node2, samewidthas={l21 and l23}] {\idC{}};
+
+    \node[schematicnode] (rend) [main, aligntop=id2] {\rendC{}};
+
+    \rightBPort{root}{0.5}{1}
+    \leftBPort{node1}{0.5}{1}
+
+    \newcommand{\leftRightBPort}[1]{
+        \leftBPort{#1}{0.5}{1}
+        \rightBPort{#1}{0.5}{1}
+    }
+
+    \foreach \x in {1,2} {
+        \foreach \y in {1,2} {
+            \leftRightBPort{l\y\x}
+        }
+    }
+
+    \leftBPort{l13}{0.5}{1}
+    \leftBPort{l23}{0.5}{1}
+    \leftRightBPort{id1}
+    \leftRightBPort{id2}
+
+    \portAtHeightOf{node1.east}{id1-l1}{node1-r1}
+    \portAtHeightOf{node1.east}{l11-l1}{node1-r2}
+
+    \portAtHeightOf{node2.west}{id1-r1}{node2-l1}
+    \portAtHeightOf{node2.east}{id2-l1}{node2-r1}
+    \portAtHeightOf{node2.east}{l21-l1}{node2-r2}
+
+    \portAtHeightOf{rend.west}{id1-r1}{rend-l1}
+
+    \draw (root-r1) -- (node1-l1);
+    \draw (id1-r1) -- (node2-l1);
+    \draw (id2-r1) -- (rend-l1);
+
+    \foreach \x in {1,2} {
+        \pgfmathtruncatemacro{\next}{\x + 1}
+        \draw (node\x-r1) -- (id\x-l1);
+        \draw (node\x-r2) -- (l\x1-l1);
+        \foreach \y in {1,2} {
+            \draw (l\y\x-r1) -- (l\y\next-l1);
+        }
+    }
+
+\end{tikzpicture}
+}
+\caption{Schematic of \contree{2}{2}} \label{fig:treeconschematic}
+\label{fig:treeconSchematic}
+\end{figure}
+
+Having shown how to construct $\contree{\aN}{\bN}$, we now consider
+$\distree{\aN}{\bN}$; we simply need to modify the node and leaf components
+from their definitions for $\contree{\aN}{\bN}$: rather than single
+transitions into the node (leaf) and its sibling, we have separate transitions.
+The modified components are illustrated in \figref{fig:disTreeComponents}.
+
+\makesavebox{\disLeafBox}{%
+    \disLeaf{0}
+}
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.5\textwidth}
+\centering
+\usebox\disNodeBox
+\caption{\component{\disnode} \withNetType{1}{2}}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+\centering
+\usebox\disLeafBox
+\caption{\component{\disleaf} \withNetType{1}{1}}
+\end{subfigure}%
+\caption{\distree{\aN}{\bN} component nets}
+\label{fig:disTreeComponents}
+\end{figure}
+
+Indeed, by replacing $\connode$ with $\disnode$ and $\conleaf$ with $\disleaf$
+in the specification, we obtain $\distree{\aN}{\bN}$. As an example,
+$\distree{2}{2}$ is illustrated in \figref{fig:treedis22}.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) {};
+
+    \node[pnbplace] (p1) [right=of p0, yshift=-\levelSepA] {};
+
+    \node[pnbplace] (p2a) [right=of p1, yshift=-\levelSepB] {};
+    \node[pnbplace] (p2b) [right=of p1, yshift=\levelSepB] {};
+
+    \node[pnbplace] (p3) [right=of p0, yshift=\levelSepA] {};
+
+    \node[pnbplace] (p4a) [right=of p3, yshift=-\levelSepB] {};
+    \node[pnbplace] (p4b) [right=of p3, yshift=\levelSepB]  {};
+
+    \pnbarr{p0.out}{p1.in}
+    \pnbarr{p0.out}{p3.in}
+
+    \pnbarr{p3.out}{p4a.in}
+    \pnbarr{p3.out}{p4b.in}
+
+    \pnbarr{p1.out}{p2a.in}
+    \pnbarr{p1.out}{p2b.in}
+
+    \drawBoundaries{0}{0}
+
+\end{tikzpicture}
+\caption{\distree{2}{2}}
+\label{fig:treedis22}
+\end{figure}

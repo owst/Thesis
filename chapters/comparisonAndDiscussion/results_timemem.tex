@@ -1,0 +1,174 @@
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c || c | c | c | c | c | c | }
+\hline
+\multicolumn{2}{|c ||}{Problem}&\multicolumn{6}{c |}{Time} \\
+name	&	size	&	LOLA	&	CLP	&	CNA	&	Penrose	&	TAAPL	&	MARCIE\\ \hline
+buffer	&	2	&	\highlightedResult{0.000}	&	0.002	&	0.014	&	0.001	&	0.001	&	0.043 \\
+buffer	&	8	&	\highlightedResult{0.001}	&	0.003	&	0.017	&	\highlightedResult{0.001}	&	0.002	&	0.044 \\
+buffer	&	32	&	\highlightedResult{0.001}	&	0.013	&	0.824	&	0.002	&	0.005	&	0.048 \\
+buffer	&	512	&	0.058	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.001}	&	\failureResult{T}	&	157.449 \\
+buffer	&	4096	&	\failureResult{T}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.002}	&	\failureResult{T}	&	\failureResult{M} \\
+buffer	&	32768	&	\failureResult{T}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.007}	&	\failureResult{T}	&	\failureResult{M} \\
+over	&	2	&	\highlightedResult{0.001}	&	0.003	&	0.016	&	0.017	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	8	&	31.039	&	\highlightedResult{0.008}	&	1.071	&	0.017	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	32	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.017}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	512	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.017}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	4096	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.017}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	32768	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.019}	&	\failureResult{Q}	&	\failureResult{Q} \\
+dac	&	2	&	\highlightedResult{0.001}	&	0.002	&	0.015	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.045 \\
+dac	&	8	&	\highlightedResult{0.001}	&	0.003	&	0.017	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.046 \\
+dac	&	32	&	\highlightedResult{0.001}	&	0.005	&	0.028	&	\highlightedResult{0.001}	&	0.002	&	0.056 \\
+dac	&	512	&	0.005	&	\failureResult{T}	&	255.847	&	\highlightedResult{0.001}	&	0.083	&	266.221 \\
+dac	&	4096	&	2.462	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.002}	&	\failureResult{M}	&	\failureResult{M} \\
+dac	&	32768	&	\failureResult{T}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.003}	&	\failureResult{M}	&	\failureResult{M} \\
+philo	&	2	&	\highlightedResult{0.001}	&	0.002	&	0.014	&	0.008	&	0.004	&	0.044 \\
+philo	&	8	&	\highlightedResult{0.002}	&	0.003	&	0.016	&	0.011	&	\highlightedResult{0.002}	&	0.046 \\
+philo	&	32	&	\failureResult{M}	&	\highlightedResult{0.003}	&	0.017	&	0.011	&	0.007	&	1.040 \\
+philo	&	512	&	\failureResult{M}	&	0.020	&	0.086	&	\highlightedResult{0.011}	&	68.033	&	\failureResult{T} \\
+philo	&	4096	&	\failureResult{M}	&	7.853	&	\failureResult{M}	&	\highlightedResult{0.011}	&	\failureResult{M}	&	\failureResult{T} \\
+philo	&	32768	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{0.012}	&	\failureResult{M}	&	\failureResult{T} \\
+\nonCorbett{iter-choice}	&	2	&	\highlightedResult{0.001}	&	0.003	&	0.015	&	0.002	&	\highlightedResult{0.001}	&	0.044 \\
+\nonCorbett{iter-choice}	&	8	&	0.006	&	5.025	&	19.062	&	\highlightedResult{0.002}	&	0.003	&	0.044 \\
+\nonCorbett{iter-choice}	&	32	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{0.002}	&	0.005	&	0.054 \\
+\nonCorbett{iter-choice}	&	512	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{0.002}	&	6.084	&	36.066 \\
+\nonCorbett{iter-choice}	&	4096	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{0.002}	&	\failureResult{M}	&	\failureResult{M} \\
+\nonCorbett{iter-choice}	&	32768	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{0.004}	&	\failureResult{M}	&	\failureResult{M} \\
+\nonCorbett{replicator}	&	2	&	\highlightedResult{0.001}	&	\failureResult{/}	&	0.015	&	0.002	&	\highlightedResult{0.001}	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	8	&	\highlightedResult{0.001}	&	\failureResult{/}	&	0.016	&	\highlightedResult{0.001}	&	0.002	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	32	&	\highlightedResult{0.001}	&	\failureResult{/}	&	0.017	&	\highlightedResult{0.001}	&	0.004	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	512	&	0.002	&	\failureResult{/}	&	1.023	&	\highlightedResult{0.001}	&	112.248	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	4096	&	0.062	&	\failureResult{/}	&	64.046	&	\highlightedResult{0.002}	&	\failureResult{M}	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	32768	&	91.646	&	\failureResult{/}	&	\failureResult{M}	&	\highlightedResult{0.004}	&	\failureResult{M}	&	\failureResult{T} \\
+conjunction-tree	&	1,1	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.043 \\
+conjunction-tree	&	2,2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.044 \\
+conjunction-tree	&	3,3	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	0.003	&	0.045 \\
+conjunction-tree	&	4,4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	0.012	&	2.066 \\
+conjunction-tree	&	5,5	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	9.069	&	\failureResult{M} \\
+conjunction-tree	&	6,6	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	\failureResult{M}	&	\failureResult{M} \\
+conjunction-tree	&	7,7	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.001}	&	\failureResult{M}	&	\failureResult{M} \\
+\hline
+\end{tabular}
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c || c | c | c | c | c | c | }
+\hline
+\multicolumn{2}{|c ||}{Problem}&\multicolumn{6}{c |}{Time} \\
+name	&	size	&	LOLA	&	CLP	&	CNA	&	Penrose	&	TAAPL	&	MARCIE\\ \hline
+\nonCorbett{counter}	&	2	&	\highlightedResult{0.000}	&	\failureResult{/}	&	0.015	&	0.004	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.011}	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	8	&	\highlightedResult{0.001}	&	\failureResult{/}	&	\failureResult{/}	&	0.087	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	16	&	\highlightedResult{0.000}	&	\failureResult{/}	&	\failureResult{/}	&	1.075	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	32	&	\highlightedResult{0.001}	&	\failureResult{/}	&	\failureResult{/}	&	4.035	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	64	&	\highlightedResult{0.001}	&	\failureResult{/}	&	\failureResult{/}	&	8.649	&	\failureResult{Q}	&	\failureResult{Q} \\
+hartstone	&	2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.013}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.039}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	8	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{2.013}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	10	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{4.016}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	13	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{10.445}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	16	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{25.252}	&	\failureResult{/}	&	\failureResult{/} \\
+token-ring	&	2	&	\highlightedResult{0.001}	&	0.002	&	0.017	&	0.008	&	\highlightedResult{0.001}	&	0.043 \\
+token-ring	&	8	&	\highlightedResult{0.001}	&	0.007	&	0.071	&	0.035	&	0.002	&	0.043 \\
+token-ring	&	10	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	2.043	&	\highlightedResult{0.001}	&	0.044 \\
+token-ring	&	16	&	1.824	&	\failureResult{T}	&	\failureResult{T}	&	4.072	&	\highlightedResult{0.001}	&	0.045 \\
+token-ring	&	32	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	10.026	&	\highlightedResult{0.002}	&	0.047 \\
+token-ring	&	64	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	19.247	&	\highlightedResult{0.003}	&	0.048 \\
+cyclic	&	2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	0.005	&	\highlightedResult{0.002}	&	0.045 \\
+cyclic	&	4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	0.017	&	\highlightedResult{0.002}	&	0.044 \\
+cyclic	&	8	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	0.094	&	\highlightedResult{0.004}	&	0.053 \\
+cyclic	&	10	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	1.077	&	\highlightedResult{0.004}	&	0.069 \\
+cyclic	&	13	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	3.075	&	\highlightedResult{0.004}	&	2.037 \\
+cyclic	&	16	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	6.091	&	\highlightedResult{0.005}	&	19.235 \\
+disjunction-tree	&	1,1	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	0.002	&	\highlightedResult{0.001}	&	0.043 \\
+disjunction-tree	&	2,2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{0.004}	&	\failureResult{/}	&	\failureResult{/} \\
+disjunction-tree	&	3,3	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{12.455}	&	\failureResult{/}	&	\failureResult{/} \\
+disjunction-tree	&	4,4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{T}	&	\failureResult{/}	&	\failureResult{/} \\
+disjunction-tree	&	5,5	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{T}	&	\failureResult{/}	&	\failureResult{M} \\
+disjunction-tree	&	6,6	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{T}	&	\failureResult{M}	&	\failureResult{M} \\
+\hline
+\end{tabular}
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c || c | c | c | c | c | c | }
+\hline
+\multicolumn{2}{|c ||}{Problem}&\multicolumn{6}{c |}{Max} \\
+name	&	size	&	LOLA	&	CLP	&	CNA	&	Penrose	&	TAAPL	&	MARCIE\\ \hline
+buffer	&	2	&	7.51	&	33.16	&	37.81	&	14.19	&	\highlightedResult{6.47}	&	506.98 \\
+buffer	&	8	&	\highlightedResult{7.51}	&	33.30	&	38.45	&	14.24	&	11.07	&	507.24 \\
+buffer	&	32	&	\highlightedResult{7.51}	&	34.49	&	48.09	&	14.22	&	29.68	&	509.56 \\
+buffer	&	512	&	83.44	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{14.38}	&	\failureResult{T}	&	1087.10 \\
+buffer	&	4096	&	\failureResult{T}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{14.90}	&	\failureResult{T}	&	\failureResult{M} \\
+buffer	&	32768	&	\failureResult{T}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{21.30}	&	\failureResult{T}	&	\failureResult{M} \\
+over	&	2	&	\highlightedResult{7.51}	&	33.36	&	38.41	&	21.02	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	8	&	3812.00	&	37.63	&	141.85	&	\highlightedResult{21.02}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	32	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{21.02}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	512	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{21.06}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	4096	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{21.10}	&	\failureResult{Q}	&	\failureResult{Q} \\
+over	&	32768	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{22.65}	&	\failureResult{Q}	&	\failureResult{Q} \\
+dac	&	2	&	7.51	&	33.20	&	37.88	&	15.18	&	\highlightedResult{2.11}	&	507.23 \\
+dac	&	8	&	7.51	&	33.28	&	38.85	&	15.26	&	\highlightedResult{2.37}	&	507.50 \\
+dac	&	32	&	7.50	&	34.50	&	49.45	&	15.20	&	\highlightedResult{3.04}	&	512.98 \\
+dac	&	512	&	20.62	&	\failureResult{T}	&	6012.00	&	\highlightedResult{15.23}	&	75.72	&	1062.78 \\
+dac	&	4096	&	166.07	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{15.81}	&	\failureResult{M}	&	\failureResult{M} \\
+dac	&	32768	&	\failureResult{T}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{22.18}	&	\failureResult{M}	&	\failureResult{M} \\
+philo	&	2	&	\highlightedResult{7.51}	&	33.25	&	37.91	&	20.02	&	8.74	&	507.24 \\
+philo	&	8	&	\highlightedResult{8.86}	&	33.22	&	38.54	&	20.64	&	20.66	&	508.07 \\
+philo	&	32	&	\failureResult{M}	&	33.53	&	40.87	&	\highlightedResult{20.64}	&	67.30	&	536.20 \\
+philo	&	512	&	\failureResult{M}	&	41.69	&	290.77	&	\highlightedResult{20.64}	&	3063.57	&	\failureResult{T} \\
+philo	&	4096	&	\failureResult{M}	&	172.76	&	\failureResult{M}	&	\highlightedResult{19.25}	&	\failureResult{M}	&	\failureResult{T} \\
+philo	&	32768	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{M}	&	\highlightedResult{22.61}	&	\failureResult{M}	&	\failureResult{T} \\
+\nonCorbett{iter-choice}	&	2	&	\highlightedResult{7.51}	&	33.21	&	38.13	&	15.23	&	8.54	&	507.24 \\
+\nonCorbett{iter-choice}	&	8	&	36.37	&	465.17	&	1570.64	&	\highlightedResult{15.25}	&	17.69	&	507.50 \\
+\nonCorbett{iter-choice}	&	32	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{15.24}	&	55.05	&	512.76 \\
+\nonCorbett{iter-choice}	&	512	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{15.30}	&	864.47	&	1160.22 \\
+\nonCorbett{iter-choice}	&	4096	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{15.86}	&	\failureResult{M}	&	\failureResult{M} \\
+\nonCorbett{iter-choice}	&	32768	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	\highlightedResult{22.32}	&	\failureResult{M}	&	\failureResult{M} \\
+\nonCorbett{replicator}	&	2	&	7.51	&	\failureResult{/}	&	37.84	&	15.22	&	\highlightedResult{7.24}	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	8	&	\highlightedResult{7.51}	&	\failureResult{/}	&	38.15	&	15.23	&	11.87	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	32	&	\highlightedResult{7.51}	&	\failureResult{/}	&	39.41	&	15.22	&	30.66	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	512	&	\highlightedResult{14.72}	&	\failureResult{/}	&	77.87	&	15.31	&	818.19	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	4096	&	86.85	&	\failureResult{/}	&	3256.00	&	\highlightedResult{15.81}	&	\failureResult{M}	&	\failureResult{T} \\
+\nonCorbett{replicator}	&	32768	&	1524.50	&	\failureResult{/}	&	\failureResult{M}	&	\highlightedResult{22.31}	&	\failureResult{M}	&	\failureResult{T} \\
+conjunction-tree	&	1,1	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	15.22	&	\highlightedResult{5.56}	&	506.98 \\
+conjunction-tree	&	2,2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	15.22	&	\highlightedResult{7.77}	&	506.98 \\
+conjunction-tree	&	3,3	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{15.22}	&	20.44	&	507.49 \\
+conjunction-tree	&	4,4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{15.22}	&	136.62	&	589.97 \\
+conjunction-tree	&	5,5	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{15.22}	&	1556.56	&	\failureResult{M} \\
+conjunction-tree	&	6,6	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{15.22}	&	\failureResult{M}	&	\failureResult{M} \\
+conjunction-tree	&	7,7	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{15.22}	&	\failureResult{M}	&	\failureResult{M} \\
+\hline
+\end{tabular}
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c || c | c | c | c | c | c | }
+\hline
+\multicolumn{2}{|c ||}{Problem}&\multicolumn{6}{c |}{Max} \\
+name	&	size	&	LOLA	&	CLP	&	CNA	&	Penrose	&	TAAPL	&	MARCIE\\ \hline
+\nonCorbett{counter}	&	2	&	\highlightedResult{7.51}	&	\failureResult{/}	&	37.87	&	16.09	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{20.56}	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	8	&	\highlightedResult{7.51}	&	\failureResult{/}	&	\failureResult{/}	&	21.36	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	16	&	\highlightedResult{7.51}	&	\failureResult{/}	&	\failureResult{/}	&	22.75	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	32	&	\highlightedResult{7.51}	&	\failureResult{/}	&	\failureResult{/}	&	28.59	&	\failureResult{Q}	&	\failureResult{Q} \\
+\nonCorbett{counter}	&	64	&	\highlightedResult{8.60}	&	\failureResult{/}	&	\failureResult{/}	&	28.60	&	\failureResult{Q}	&	\failureResult{Q} \\
+hartstone	&	2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{19.33}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{19.61}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	8	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{21.41}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	10	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{20.62}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	13	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{25.74}	&	\failureResult{/}	&	\failureResult{/} \\
+hartstone	&	16	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{28.65}	&	\failureResult{/}	&	\failureResult{/} \\
+token-ring	&	2	&	7.51	&	33.20	&	37.98	&	17.99	&	\highlightedResult{2.11}	&	507.24 \\
+token-ring	&	8	&	7.51	&	39.96	&	89.81	&	19.79	&	\highlightedResult{2.18}	&	507.24 \\
+token-ring	&	10	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	21.33	&	\highlightedResult{2.31}	&	507.50 \\
+token-ring	&	16	&	318.08	&	\failureResult{T}	&	\failureResult{T}	&	21.11	&	\highlightedResult{2.42}	&	507.75 \\
+token-ring	&	32	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	25.22	&	\highlightedResult{2.50}	&	508.36 \\
+token-ring	&	64	&	\failureResult{M}	&	\failureResult{T}	&	\failureResult{T}	&	28.65	&	\highlightedResult{2.61}	&	508.78 \\
+cyclic	&	2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	16.81	&	\highlightedResult{10.88}	&	507.24 \\
+cyclic	&	4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	19.52	&	\highlightedResult{16.17}	&	507.50 \\
+cyclic	&	8	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{20.57}	&	27.29	&	510.95 \\
+cyclic	&	10	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{20.59}	&	32.77	&	520.13 \\
+cyclic	&	13	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{22.24}	&	40.95	&	603.45 \\
+cyclic	&	16	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{24.60}	&	48.96	&	1041.87 \\
+disjunction-tree	&	1,1	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	15.03	&	\highlightedResult{5.56}	&	506.98 \\
+disjunction-tree	&	2,2	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{15.63}	&	\failureResult{/}	&	\failureResult{/} \\
+disjunction-tree	&	3,3	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\highlightedResult{32.45}	&	\failureResult{/}	&	\failureResult{/} \\
+disjunction-tree	&	4,4	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{T}	&	\failureResult{/}	&	\failureResult{/} \\
+disjunction-tree	&	5,5	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{T}	&	\failureResult{/}	&	\failureResult{M} \\
+disjunction-tree	&	6,6	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{NA}	&	\failureResult{T}	&	\failureResult{M}	&	\failureResult{M} \\
+\hline
+\end{tabular}

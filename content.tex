@@ -1,0 +1,36 @@
+%&preamble
+% Import the pre-compiled preamble, use `make preamble` to regenerate it.
+\input{macro}
+\input{tikzsetup}
+
+\lstset{frame=none,mathescape=true,basicstyle=\ttfamily\small,escapeinside={(*@}{@*)}}
+
+\title{Compositional Specification and Reachability Checking of Net Systems}
+\authors{Owen Stephens}
+\supervisor{Dr Julian Rathke and Dr Pawel Sobocinski}
+\examiner{\dots}
+\department{Electronics and Computer Science}
+\group{Electronics and Software Systems}
+\date{\today}
+
+\newcommand{\chapA}{intro}
+\newcommand{\chapB}{prelims}
+\newcommand{\chapC}{catStructure}
+\newcommand{\chapD}{benchmarksAndLang}
+\newcommand{\chapE}{compChecking}
+\newcommand{\chapF}{improveEfficiency}
+\newcommand{\chapG}{comparisonAndDiscussion}
+\newcommand{\chapH}{conclusion}
+
+\includeonly{bibliography,\chapH}\setcounter{chapter}{7}
+
+\begin{document}
+\include{prelude}
+
+\foreach \x in {A,B,C,D,E,F,G,H}{%
+    \newcommand{\chap}{\csname chap\x\endcsname}
+    \includefrom{chapters/\chap/}{\chap}
+}
+
+\include{bibliography}
+\end{document}

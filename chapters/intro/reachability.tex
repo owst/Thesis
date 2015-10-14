@@ -1,0 +1,22 @@
+Petri nets are a well-known mathematical model with a vivid graphical
+presentation, used to model concurrent and distributed systems. A Petri net
+consists of a set of places, and a set of transitions that connect sets of
+places to sets of places. Petri nets were originally introduced by Petri in his
+PhD thesis~\cite{Petri1962}, while Murata~\cite{Murata1989} gave a detailed
+introduction to the definition, properties and applications of Petri nets.
+
+The problem of \emph{reachability} is concerned with determining if, from a
+given starting marking, a Petri net is able to reach a particular target
+marking. For general Petri nets (i.e. those that can place any number of tokens
+on a single place), the problem was shown to be decidable by
+Mayr~\cite{Mayr1981}, whose algorithm was simplified by
+Kosaraju~\cite{Kosaraju1982} and later further simplified by
+Lambert~\cite{Lambert1992}.  The reachability problem has a lower bound
+complexity of EXPSPACE, as proved by Lipton, in the equivalent setting of
+Vector Addition Systems~\cite{Lipton1976}. The survey of {Esparza and
+Nielsen}~\cite{Esparza1994} covers these results in detail.
+
+In the restricted case of Petri nets with markings that assign at most 1 token
+to each place---known as 1-bounded, or safe nets---the problem of checking
+reachability is PSPACE-complete, as demonstrated by {Cheng et
+al.}~\cite{Cheng1995}. In this thesis, we only consider safe nets.

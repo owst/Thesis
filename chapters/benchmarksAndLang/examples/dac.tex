@@ -1,0 +1,123 @@
+\mkC{controller}
+\mkC{term}
+The \DACSys{\aN} system~\cite{Corbett1996} models the recursion in divide and
+conquer approaches to problem solving. \DACSys{\aN} is comprised of $\aN$
+\workerC{} components; each worker can chose to invoke a computation in a child
+process, or perform all computation itself. If a worker invokes a child
+process, it must then wait for it and all of its descendants to finish. Each
+layer in the recursion is modelled by the addition of a worker net. Varying the
+number of worker nets allows one to treat recursion up to any depth. The worker
+chain is terminated by a net without synchronising transitions, forcing the
+last worker to do any remaining work itself.
+
+The components of \DACSys{\aN} are illustrated in \figref{fig:daccomponents};
+the \controllerC{} component starts the chain of workers, before ``joining''
+(waiting for) them.
+
+\begin{figure}[ht]
+\centering
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, rotate=-90] {};
+    \node[pnbplace] (p1) [below of=p0, rotate=-90] {};
+    \node[pnbplace] (p2) [below of=p1, rotate=-90] {};
+
+    \drawBoundaries{0}{2}
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{relative}{}
+    \draw (p0p1) edge[barr,out=-90, in=180] (r1);
+
+    \labelledpnbarr[p1p2]{p1.out}{p2.in}{}{relative}{}
+    \draw (p1p2) edge[barr,out=-90, in=180] (r2);
+
+    \rBoundaryLabel{1}{forkTasks}
+    \rBoundaryLabel{2}{joinTasks}
+\end{tikzpicture}
+\caption{\controllerC{} \withNetType{0}{2}}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, rotate=90] {};
+    \node[pnbplace] (p1) [left=of p0, rotate=-90] {};
+    \node[pnbplace] (p2) [below=of p0, rotate=-90] {};
+    \node[pnbplace] (p4) [below=of p2, rotate=90] {};
+    \node[pnbplace] (p3) [left=of p4, rotate=-90] {};
+
+    \drawBoundaries{0}{0}
+    \lBAlignedWith{p0}{1}
+    \lBAlignedWith{p4}{2}
+    \rBAlignedWith{p0}{1}
+    \rBAlignedWith{p4}{2}
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{bend right=45}{pos=0.8}
+    \draw (l1) edge[barr, o0i180] (p0p1);
+
+    \labelledpnbarr[p3p4]{p3.out}{p4.in}{}{bend right=45}{pos=0.2}
+    \draw (l2) edge[barr, o0i180] (p3p4);
+
+    \labelledpnbarr[p1p2]{p1.out}{p2.in}{}{out=-90, in=90}{pos=0.7}
+    \draw (p1p2) edge[barr, o0i180] (r1);
+
+    \labelledpnbarr[p2p3]{p2.out}{p3.in}{}{out=-90, in=90}{pos=0.3}
+    \draw (p2p3) edge[barr, o0i180] (r2);
+
+    \labelledpnbarr{p1.out}{p3.in}{}{relative}{}
+
+    \rBoundaryLabel{1}{forkChild}
+    \rBoundaryLabel{2}{joinChild}
+    \lBoundaryLabel{1}{forkMe}
+    \lBoundaryLabel{2}{joinMe}
+\end{tikzpicture}%
+\caption{\workerC{} \withNetType{2}{2}}
+\end{subfigure}
+\caption{\DACSys{\aN} component nets\label{fig:daccomponents}}
+\end{figure}
+
+The specification of \DACSys{\aN} with $\aN$ workers is:
+\[
+    \DACSys{\aN} \defeqsp
+    \compExpr{\controllerC}{\compExpr{\sequenceExpr{\aN}{\workerC}}{\rtermC{2}}}
+\]
+The schematic of \DACSys{3} is shown in \figref{fig:dacschematic}.
+
+\begin{figure}[ht]%
+\centering
+\begin{tikzpicture}[schematic]
+    \node[schematicnode] (1) []           {$\controllerC$};
+    \node[schematicnode] (2) [right=of 1] {\workerC};
+    \node[schematicnode] (3) [right=of 2] {\workerC};
+    \node[schematicnode] (4) [right=of 3] {\workerC};
+    \node[schematicnode] (5) [right=of 4] {$\rtermC{2}$};
+
+    \newcommand{\loffset}{1/3}
+    \newcommand{\uoffset}{2/3}
+
+    \newcommand{\leftPorts}[1]{
+        \leftBPort{#1}{\uoffset}{1}
+        \leftBPort{#1}{\loffset}{2}
+    }
+    \newcommand{\rightPorts}[1]{
+        \rightBPort{#1}{\uoffset}{1}
+        \rightBPort{#1}{\loffset}{2}
+    }
+
+    \rightPorts{1}
+    \foreach \i in {2,3,4} {
+        \leftPorts{\i}
+        \rightPorts{\i}
+    }
+    \leftPorts{5}
+
+    \foreach \i in {1,...,4} {
+        \pgfmathtruncatemacro{\next}{\i + 1}
+        \foreach \p in {1,2}{
+            \draw (\i-r\p) -- (\next-l\p);
+        }
+    }
+\end{tikzpicture}
+\caption{Schematic of \DACSys{3}}
+\label{fig:dacschematic}
+\end{figure}
+

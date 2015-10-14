@@ -1,0 +1,42 @@
+\rowcolors{2}{gray!25}{white}
+\begin{tabular}{ | c | c || c | c | c | c | c | c | }
+\hline
+\multicolumn{2}{|c||}{Problem}&\multicolumn{6}{c|}{Time (s)} \\
+\hline
+name	&	size	&	Penrose	&	CLP	&	CNA	&	LOLA	&	TAAPL	&	MARCIE\\ \hline
+\nonCorbett{counter}	&	2	&	\highlightedResult{0.011}	&	\failureResult{\queryPortsUnhandledResult}	&	0.020	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\nonCorbett{counter}	&	4	&	\highlightedResult{0.021}	&	\failureResult{\queryPortsUnhandledResult}	&	0.022	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\nonCorbett{counter}	&	8	&	0.640	&	\failureResult{\queryPortsUnhandledResult}	&	\highlightedResult{0.047}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\nonCorbett{counter}	&	10	&	1.278	&	\failureResult{\queryPortsUnhandledResult}	&	\highlightedResult{1.045}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\nonCorbett{counter}	&	13	&	\highlightedResult{4.038}	&	\failureResult{\queryPortsUnhandledResult}	&	14.057	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\nonCorbett{counter}	&	16	&	\highlightedResult{8.050}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\timeoutResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult}	&	\failureResult{\queryPortsUnhandledResult} \\
+\hline
+cyclic	&	2	&	0.012	&	\failureResult{\incorrectResult}	&	0.021	&	\highlightedResult{0.001}	&	0.003	&	0.043 \\
+cyclic	&	4	&	0.026	&	\failureResult{\incorrectResult}	&	0.020	&	\highlightedResult{0.001}	&	0.003	&	0.045 \\
+cyclic	&	8	&	1.014	&	\failureResult{\incorrectResult}	&	0.022	&	\highlightedResult{0.001}	&	0.004	&	0.053 \\
+cyclic	&	10	&	1.274	&	\failureResult{\incorrectResult}	&	0.024	&	\highlightedResult{0.002}	&	0.005	&	0.069 \\
+cyclic	&	13	&	4.004	&	\failureResult{\incorrectResult}	&	0.023	&	\highlightedResult{0.002}	&	0.006	&	2.035 \\
+cyclic	&	16	&	7.048	&	\failureResult{\incorrectResult}	&	0.021	&	\highlightedResult{0.003}	&	0.005	&	19.220 \\
+\hline
+hartstone	&	2	&	0.017	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+hartstone	&	4	&	0.037	&	0.002	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.001}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+hartstone	&	8	&	1.084	&	0.002	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.001}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+hartstone	&	10	&	3.270	&	\highlightedResult{0.001}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.001}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+hartstone	&	13	&	10.045	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+hartstone	&	16	&	25.031	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+\hline
+token-ring	&	2	&	0.015	&	0.002	&	0.020	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.043 \\
+token-ring	&	4	&	0.048	&	0.002	&	0.025	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.044 \\
+token-ring	&	8	&	2.063	&	0.007	&	0.080	&	\highlightedResult{0.002}	&	\highlightedResult{0.002}	&	0.045 \\
+token-ring	&	10	&	4.466	&	0.053	&	4.637	&	\highlightedResult{0.002}	&	0.003	&	0.047 \\
+token-ring	&	13	&	10.650	&	\failureResult{\timeoutResult}	&	95.065	&	0.016	&	\highlightedResult{0.003}	&	0.050 \\
+token-ring	&	16	&	20.460	&	\failureResult{\timeoutResult}	&	\failureResult{\timeoutResult}	&	2.030	&	\highlightedResult{0.003}	&	0.048 \\
+\hline
+\distree{-}{-}	&	1,1	&	0.009	&	\highlightedResult{0.001}	&	0.020	&	\highlightedResult{0.001}	&	\highlightedResult{0.001}	&	0.045 \\
+\distree{-}{-}	&	2,2	&	0.011	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.001}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+\distree{-}{-}	&	3,3	&	13.478	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.001}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+\distree{-}{-}	&	4,4	&	\failureResult{\timeoutResult}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.002}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult} \\
+\distree{-}{-}	&	5,5	&	\failureResult{\timeoutResult}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult}	&	\highlightedResult{0.009}	&	\failureResult{\incorrectResult}	&	\failureResult{\oomResult} \\
+\distree{-}{-}	&	6,6	&	\failureResult{\timeoutResult}	&	\failureResult{\incorrectResult}	&	\failureResult{\incorrectResult}	&	\highlightedResult{18.669}	&	\failureResult{\oomResult}	&	\failureResult{\oomResult} \\
+\hline
+\end{tabular}

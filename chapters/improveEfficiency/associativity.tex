@@ -1,0 +1,453 @@
+To improve the efficiency of our approach further, we can avoid unnecessary
+re-computation, by using \emph{memoisation}. Indeed, there are two potential
+points at which memoisation can improve performance:
+\begin{enumerate}
+    \item\label{memo1} When computing the \TNFA{} semantics of a arbitrary PNB
+        expression, we may often encounter the same PNB component,
+    \item\label{memo2} When composing \TNFA{}s, we may compose ``the same''
+        \TNFA{}s multiple times.
+\end{enumerate}
+in both cases, each repeated component/composition only incurs the additional
+cost of checking for the existence of a pre-computed result. Since memoisation
+allows us to only compute a single representative of a language-equivalence
+class of \TNFA{}s once, our approach is somewhat
+similar to symmetry-reduction (see \secref{sec:symmetryreduction}).
+
+Since weak-language equivalence is a congruence, we can freely substitute
+\TNFA{}s if their weak-language is respected. We say that a \TNFA{} is
+weak-language reduced if it has been structurally reduced while preserving
+weak-language.  Indeed, exploiting case~\ref{memo1} is simple: we maintain a
+mapping from PNB components to their (weak language reduced) \TNFA{} semantics;
+upon encountering a PNB component, we simply look for its presence in the
+mapping, returning the previously computed \TNFA{} or computing (and reducing)
+the \TNFA{} and updating the mapping, as appropriate. Case~\ref{memo2} leads us
+to maintain a mapping from (weak language reduced) pairs of \TNFA{} to their
+(weak language reduced) composition. When encountering a composition, we check
+for membership in the mapping \emph{up-to} weak-language, returning the reduced
+\TNFA{} or computing the reduced composition and updating the mapping as
+necessary.
+
+\newcommand{\stewie}{S}
+
+As an example of the utility of memoisation, consider the somewhat contrived
+PNB, $\stewie$, and its \TNFA{} semantics, $\PNBToTNFA{\stewie}$, illustrated
+in \figref{fig:memoisationPNB}. This PNB can reach its target marking by a
+single firing of $\aTrans_1$, interacting on both boundaries; in both its
+initial and target marking the PNB is able to fire the empty set of transitions
+and also fire $\aTrans_0$, which only connects to the two boundary ports.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[pnb]
+            \node (p0) [pnbplace, tokens=1, pnblabel=$\aPlace_0$] {};
+            \node (p1) [pnbplace, wantedTokenPlace, right=of p0, pnblabel=$\aPlace_1$] {};
+            \drawBoundaries{1}{1}
+
+            \labelledpnbarr{l1}{r1}{below:$\aTrans_0$}{bend left=45}{}
+            \labelledpnbarr[l1r1]{l1}{r1}{$\aTrans_1$}{bend right=45}{}
+
+            \draw (p0.out) edge[pnbarr, out=0, in=180] (l1r1);
+            \draw (l1r1) edge[pnbarr, out=0, in=180] (p1.in);
+        \end{tikzpicture}
+        \caption{PNB, $\stewie$}
+        \label{fig:memoPNB}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \begin{tikzpicture}[nfa]
+            \node (0) [state, init] {$0$};
+            \node (1) [state, accepting, below=of 0] {$1$};
+
+            \draw (0) edge [loop right] node {$\setof{\lbl{0}{0}, \lbl{1}{1}}$} (0);
+            \draw (0) edge node {$\lbl{1}{1}$} (1);
+            \draw (1) edge [loop right] node {$\setof{\lbl{0}{0}, \lbl{1}{1}}$} (1);
+        \end{tikzpicture}
+        \caption{\TNFA{}, $\PNBToTNFA{\stewie}$}
+        \label{fig:memoTNFA}
+    \end{subfigure}%
+    \caption{Example PNB and its \TNFA{} semantics}
+    \label{fig:memoisationPNB}
+\end{figure}
+
+Now, consider a sequence of $\aN$ such PNBs that are synchronously composed; in
+traversing this sequence from left to right to perform the required
+compositions, we encounter $\aN$ $\stewie$ PNBs. Due to memoisation, we only
+need compute and reduce $\stewie$'s \TNFA{} semantics, $\PNBToTNFA{\stewie}$,
+once, obtaining the \TNFA{}, $\bNFA$, shown in \figref{fig:memoTNFAEquiv};
+thus, a mapping $\stewie \mapsto \bNFA$ is added. On each subsequent $\stewie$
+component we simply lookup this new entry in the mapping.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {$0$};
+        \node (1) [state, accepting, below=of 0] {$1$};
+
+        \draw (0) edge [loop right] node {$\lbl{0}{0}$} (0);
+        \draw (0) edge node {$\lbl{1}{1}$} (1);
+        \draw (1) edge [loop right] node {$\setof{\lbl{0}{0}, \lbl{1}{1}}$} (1);
+    \end{tikzpicture}
+    \caption{$\bNFA$, (weak) language-equivalent to the \TNFA{} in
+    \figref{fig:memoTNFA}}
+    \label{fig:memoTNFAEquiv}
+\end{figure}
+
+Now, consider the first composition; at this stage the mapping from
+compositions to \TNFA{}s is empty, so we must perform the composition $\bNFA
+\comp \bNFA$, obtaining the \TNFA{}, $\cNFA$, illustrated in
+\figref{fig:memoTNFAComposition}, thus, we store the mapping $\left(\bNFA \comp
+\bNFA\right) \mapsto \cNFA$. On the next (and each subsequent) composition, we
+have $\cNFA \comp \bNFA$; the only mapping we have is from $\bNFA \comp \bNFA$,
+however, we lookup entries up-to (weak) language-equivalence, and $\bNFA
+\langEquiv \cNFA$, thus we are able to match the mapping's entry and can simply
+return $\cNFA$ rather than perform any further compositions. To summarise:
+\begin{itemize}
+    \item We have a single PNB to \TNFA{} mapping: $\stewie \mapsto \bNFA$,
+    \item We have a single \TNFA{}-composition to \TNFA{} mapping:
+        $\left(\bNFA \comp \bNFA\right) \mapsto \cNFA$,
+    \item The \TNFA{} semantics of \emph{any} $\aN$ $\stewie{}$ nets in a
+        sequence is $\cNFA$; when determining this, we perform a single PNB to
+        \TNFA{} conversion, with $\aN - 1$ lookups and a single \TNFA{}
+        composition with $\aN - 2$ lookups.
+\end{itemize}
+Intuitively, the behaviour of such a sequence of $\stewie$ nets is that each
+component must perform one firing of $\aTrans_1$ to reach its desired marking,
+and in doing so interact on both boundaries. Indeed, each component can either
+fire $\aTrans_1$ at the same time, or can simply ``pass the interaction'' along
+the sequence by firing $\aTrans_0$. Any components remaining that need to fire
+$\aTrans_1$ can do so, as encoded by the $\lbl{1}{1}$ self-loop in the
+accepting state of $\bNFA$.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {$\compStates{0}{0}$};
+        \node (1) [state, accepting, below=of 0] {$\compStates{1}{1}$};
+
+
+        \draw (0) edge [loop right] node {$\lbl{0}{0}$} (0);
+        \draw (0) edge  node {$\lbl{1}{1}$} (1);
+        \draw (1) edge [loop right] node {$\setof{\lbl{0}{0},\lbl{1}{1}}$} (1);
+    \end{tikzpicture}
+    \caption{\TNFA{} $\cNFA = \bNFA \comp \bNFA$}
+    \label{fig:memoTNFAComposition}
+\end{figure}
+
+\subsection{Behavioural fixed-points}\label{sec:fixedPoints}
+
+% Fixed points: invariant semantics
+The previous example demonstrated an important feature of certain PNB
+expressions, that of reaching a \emph{fixed-point} w.r.t. \TNFA{} semantics:
+
+\begin{definition}[Left-composition fixed-point of \TNFA{} semantics]
+    For a \NFAB{\aN}{\bN}, $\aNFA$, and \NFAB{\bN}{\cN}, $\bNFA$, we say that
+    there is a left-composition, $\dN$-step fixed-point, if $\aPNB \comp
+    \cNFA_\dN \weakLangEquiv \cNFA_\dN$, where:
+    \begin{align*}
+        \cNFA_0 &\defeq \bNFA \\
+        \cNFA_{\aI + 1} &\defeq \aNFA \comp \cNFA_\aI
+    \end{align*}
+    we refer to $\cNFA_\dN$ as the fixed-point.
+\end{definition}
+
+\begin{definition}[Right-composition fixed-point of \TNFA{} semantics]
+    For a \NFAB{\aN}{\bN}, $\bNFA$, and \NFAB{\bN}{\cN}, $\aNFA$, we say that
+    we say that there is a right-composition, $\dN$-step fixed-point, if
+    $\cPNB_\dN \comp \aNFA \weakLangEquiv \cNFA_\dN$, where:
+    \begin{align*}
+        \cNFA_0 &\defeq \bNFA \\
+        \cNFA_{\aI + 1} &\defeq \cNFA_\aI \comp \aNFA
+    \end{align*}
+    again, we refer to $\cNFA_\dN$ as the fixed-point.
+\end{definition}
+
+In other words, after composing $\bNFA$ with $\aNFA$ some number of times,
+composing again with $\aNFA$ has no effect on the weak language of the
+resulting \TNFA{}.
+
+In our previous example, we reached a left-composition fixed-point of $\stewie$
+(\figref{fig:memoPNB}) composed with itself, after $0$ steps, with the simple
+fixed-point illustrated in \figref{fig:memoTNFAComposition}. However,
+fixed-points need not be trivial, for example the sequence of
+\philoC{}-with-\forkC{} components in the \diningphilosophersSys{-} system
+reaches a fixed-point, which is illustrated in \figref{fig:philoFixedPoint}, at
+2; indeed, we have:
+\[
+    \forall \aN \geq 2 . \parens{\philoC \comp \forkC}^\aN \weakLangEquiv \parens{\philoC \comp \forkC}^{\aN + 1}
+\]
+In fact, a independent observation of the fixed-point behaviour of the dining
+philosophers was made in the setting of Span(Graph)~\cite{Katis2004}.
+
+\begin{figure}[ht]
+    \centering
+    \makebox[\textwidth][c]{%
+        \scalebox{0.6}{%
+    \begin{tikzpicture}[nfa, node distance=7cm, bend angle=20]
+    \node[state,initial where=left,init,accepting] (1) {$1$};
+    \node[state, below of=1] (2) {$2$};
+    \node[state, left of=2] (6) {$6$};
+    \node[state, below of=6] (3) {$3$};
+    \node[state, accepting, right of=2] (4) {$4$};
+    \node[state, accepting, below of=4] (5) {$5$};
+    \path (1) edge [loop above] node {$\lbl{00}{00}$} (1);
+    \path (1) edge [bend left] node {$\lbl{10}{00}$} (2);
+    \path (1) edge [out=180, in=180, looseness=1.4, swap] node {$\lbl{00}{01}$} (3);
+    \path (1) edge [bend left] node {$\lbl{00}{10}$} (4);
+    \path (1) edge [out=0, in=0, looseness=1.4] node {$\lbl{10}{10}$} (5);
+    \path (1) edge [bend left] node {$\lbl{10}{01}$} (6);
+    \path (2) edge [bend left] node {$\lbl{01}{00}$} (1);
+    \path (2) edge [loop right] node {$\lbl{00}{00}$} (2);
+    \path (2) edge [bend left] node {$\lbl{01}{01}$} (3);
+    \path (2) edge [bend left] node {$\lbl{01}{10}$} (4);
+    \path (2) edge [bend left] node {$\lbl{00}{10}$} (5);
+    \path (2) edge [bend left] node {$\lbl{00}{01}$} (6);
+    \path (3) edge [out=150, in=190, looseness=1.2, pos=0.2] node {$\lbl{00}{10}$} (1);
+    \path (3) edge [bend left] node {$\lbl{10}{10}$} (2);
+    \path (3) edge [loop below] node {$\lbl{00}{00}$} (3);
+    \path (3) edge [bend left] node {$\lbl{10}{00}$} (6);
+    \path (4) edge [bend left] node {$\lbl{00}{01}$} (1);
+    \path (4) edge [bend left] node {$\lbl{10}{01}$} (2);
+    \path (4) edge [loop right] node {$\lbl{00}{00}$} (4);
+    \path (4) edge [bend left] node {$\lbl{10}{00}$} (5);
+    \path (5) edge [out=30, in=-10, looseness=1.2, swap, pos=0.2] node {$\lbl{01}{01}$} (1);
+    \path (5) edge [bend left] node {$\lbl{00}{01}$} (2);
+    \path (5) edge [bend left] node {$\lbl{01}{00}$} (4);
+    \path (5) edge [loop below] node {$\lbl{00}{00}$} (5);
+    \path (6) edge [bend left] node {$\lbl{01}{10}$} (1);
+    \path (6) edge [bend left] node {$\lbl{00}{10}$} (2);
+    \path (6) edge [bend left] node {$\lbl{01}{00}$} (3);
+    \path (6) edge [loop left] node {$\lbl{00}{00}$} (6);
+    \end{tikzpicture}
+}
+}
+\caption{Fixed-point of $\parens{\philoC \comp \forkC}^\aN$, reached at $\aN = 2$}
+\label{fig:philoFixedPoint}
+\end{figure}
+
+The performance of our technique is vastly improved when a system reaches a
+fixed-point --- rather than perform additional conversion/compositions, we
+simply look up and return previously-computed results; additional repetitions
+become essentially free. However, an interesting property is that not all
+isomorphic PNB expressions (i.e. when evaluated to a single PNB) will reach
+fixed-points: indeed, even re-associating an expression can cause a fixed-point
+to not be reached.
+
+We return once more to the \bufferSys{3} system, to illustrate this property of
+PNB expressions. Consider the two expression trees shown in
+\figref{fig:BufferExprTreeAssocs}; indeed we can trivially transform one into
+the other by re-associating the `$\comp$' nodes.
+
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{\textwidth}%
+        \centering
+        \scalebox{0.75}{%
+        \makeThreeCompTree{\usescalebox[0.75]\lendOneBox}
+                          {\usescalebox[0.75]\bufferBox}
+                          {\usescalebox[0.75]\rendOneBox}
+        }
+        \caption{Left associative}
+        \label{fig:leftassocBuffers}
+    \end{subfigure}\\
+    \begin{subfigure}{\textwidth}%
+        \centering
+        \scalebox{0.75}{%
+        \makeThreeCompTreeRAssoc{\usescalebox[0.75]\lendOneBox}
+                                {\usescalebox[0.75]\bufferBox}
+                                {\usescalebox[0.75]\rendOneBox}
+        }
+        \caption{Right associative}
+        \label{fig:rightassocBuffers}
+    \end{subfigure}%
+\caption{Left vs Right associativity of `$\comp$' in \bufferSys{3} Expression tree}
+\label{fig:BufferExprTreeAssocs}
+\end{figure}
+
+Now, consider a depth-first traversal of the expression trees, performing
+conversion to \TNFA{}, before applying \tauClosure{} and then minimisation. We
+highlight the intermediate \TNFA{}s obtained at each step (i.e.\ after each
+composition) in \figref{fig:leftassocBuffersIntermediate} for the
+left-associative case and \figref{fig:rightassocBuffersIntermediate} for the
+right-associative case. Indeed, the end result is guaranteed to be equal,
+since, as a direct corollary of \propref{prop:TLTSCatAxioms}\ref{seq-item2},
+composition of \TNFA{}s is associative. However, the intermediate \TNFA{}s are
+vastly different.
+
+\newcommand{\rLoopOverlay}[4]{\nfaArr[loop right][overlay]{#1}{#2}{#3}{#4}}
+
+\makesavebox{\lAssocBoxA}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init, accepting] {$0$};
+
+        \rLoopOverlay{0}{0}{}{0}
+    \end{tikzpicture}
+}
+\makesavebox{\lAssocBoxB}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {$0$};
+        \node (1) [state, accepting, below=of 0] {$1$};
+
+        \rLoopOverlay{0}{0}{}{0}
+        \nfaArr{0}{1}{}{1}
+        \rLoopOverlay{1}{1}{}{*}
+    \end{tikzpicture}
+}
+\makesavebox{\lAssocBoxC}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {$0$};
+        \node (1) [state, below=of 0] {$1$};
+        \node (2) [state, accepting, below=of 1] {$2$};
+
+        \rLoopOverlay{0}{0}{}{0}
+        \nfaArr{0}{1}{}{1}
+        \rLoopOverlay{1}{1}{}{0}
+        \nfaArr{1}{2}{}{1}
+        \rLoopOverlay{2}{2}{}{*}
+    \end{tikzpicture}
+}
+\makesavebox{\lAssocBoxD}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init] {$0$};
+        \node (1) [state, below=of 0] {$1$};
+        \node (2) [state, below=of 1] {$2$};
+        \node (3) [state, accepting, below=of 2] {$3$};
+
+        \rLoopOverlay{0}{0}{}{0}
+        \nfaArr{0}{1}{}{1}
+        \rLoopOverlay{1}{1}{}{0}
+        \nfaArr{1}{2}{}{1}
+        \rLoopOverlay{2}{2}{}{0}
+        \nfaArr{2}{3}{}{1}
+        \rLoopOverlay{3}{3}{}{*}
+    \end{tikzpicture}
+}
+\makesavebox{\lAssocBoxE}{%
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init, accepting] {$0$};
+
+        \rLoopOverlay{0}{0}{}{}
+    \end{tikzpicture}
+}
+
+\begin{figure}[ht]
+    \centering
+    \makebox[\textwidth][c]{%
+    \scalebox{0.75}{%
+    \begin{tikzpicture}[node distance=2cm]
+        \node (0)              {\usebox\lAssocBoxA};
+        \node (1) [right=of 0] {\usebox\lAssocBoxB};
+        \node (2) [right=of 1] {\usebox\lAssocBoxC};
+        \node (3) [right=of 2] {\usebox\lAssocBoxD};
+        \node (4) [right=of 3] {\usebox\lAssocBoxE};
+
+        \translateArr{0}{1}
+        \translateArr{1}{2}
+        \translateArr{2}{3}
+        \translateArr{3}{4}
+    \end{tikzpicture}
+}
+}
+\caption{Intermediate \TNFA{}s encountered when converting the expression of
+\figref{fig:leftassocBuffers}}
+\label{fig:leftassocBuffersIntermediate}
+\end{figure}
+
+\makesavebox{\rAssocBox}{
+    \begin{tikzpicture}[nfa]
+        \node (0) [state, init, accepting] {$0$};
+
+        \rLoopOverlay{0}{0}{*}{}
+    \end{tikzpicture}
+}
+
+\begin{figure}[ht]
+    \centering
+    \makebox[\textwidth][c]{%
+    \scalebox{0.75}{%
+    \begin{tikzpicture}[node distance=2cm]
+        \node (0)              {\usebox\lAssocBoxE};
+        \node (1) [right=of 0] {\usebox\rAssocBox};
+        \node (2) [right=of 1] {\usebox\rAssocBox};
+        \node (3) [right=of 2] {\usebox\rAssocBox};
+        \node (4) [right=of 3] {\usebox\rAssocBox};
+
+        \translateArr[rotate=180]{4}{3}
+        \translateArr[rotate=180]{3}{2}
+        \translateArr[rotate=180]{2}{1}
+        \translateArr[rotate=180]{1}{0}
+    \end{tikzpicture}
+}
+}
+\caption{Intermediate \TNFA{}s encountered when converting the expression of
+\figref{fig:rightassocBuffers}}
+\label{fig:rightassocBuffersIntermediate}
+\end{figure}
+
+As is readily seen in \figref{fig:rightassocBuffersIntermediate}, when
+processing the right-associative expression, we reach a fixed-point after $0$
+steps (indeed, $\bufferC \comp \rendC{} \weakLangEquiv \rendC{}$). On the other
+hand, processing the left-associative expression \emph{does not} reach a
+fixed-point. Not (quickly) reaching a fixed-point leads to poor performance -
+at each composition step we check for weak-language equivalence with
+\emph{every} previous composition, since the cache monotonically increases in
+size. Indeed, one might think that expiring infrequently-used cache entries
+(e.g.\ using a LRU cache algorithm, commonly found in operating system memory
+managers) may alleviate the problem, and it does to an extent, but a greater
+overhead is that not only is the number of entries cache growing, but the
+\emph{size} of the cache entries is growing, leading to increasing time to
+check for membership.
+
+The conclusion we draw is that while it is \emph{semantically} unimportant
+which way an expression's compositions are associated, when using the
+optimisation techniques outlined in this chapter, different composition
+associations may lead to vastly different \emph{performance}. Unfortunately,
+this leads us to conclude that we must carefully consider the \emph{form} of
+expressions that specify systems. Indeed, it is not clear that we can determine
+a priori that changing associations in an expression will improve performance
+(or not!).
+
+\subsection{Quadratic firing sequence $\to$ linear reachability check}
+
+Consider again the composite \bufferSys{-} net, e.g. we illustrate
+\bufferSys{4} in \figref{fig:buffer4}.
+
+\begin{figure}[ht]
+    \centering
+    \nBufPNB[1][1][0]{4}
+    \caption{\bufferSys{4}}
+    \label{fig:buffer4}
+\end{figure}
+
+Now, the minimal length of a firing sequence required to reach the target
+marking in $\bufferSys{\aN}$ is quadratic in $\aN$; precisely, it is the
+$\aN^\text{th}$ \emph{triangle number}, $T_\aN$, with:
+\begin{align*}
+    T_1 &\defeq 1\\
+    T_{\aI + 1} &= \aI + T_\aI
+\end{align*}
+Indeed, for \bufferSys{4} to reach its target marking, $\aTrans_\aI$ must
+appear $\aI - 1$ times in the firing sequence.
+
+Thus the naive monolithic approach of simply firing enabled transitions until
+reaching the target marking has to fire a quadratic number of transitions.
+Improving slightly, using the compositional technique \emph{without}
+optimisation, each of the $\aN$ single-buffer components is converted to their
+\TNFA{} semantics, before composing the \TNFA{}s. Without reduction w.r.t. weak language, the
+intermediate \TNFA{}s quickly grow large (the final \TNFA{} has $2^\aN$ states, since each
+marking is reachable). However, with a right-associated composition, as we have
+shown, we reach a fixed-point after $0$ steps, thus, the only computation we
+must perform is:
+\begin{enumerate}
+    \item Convert the three distinct components to their \TNFA{}
+semantics,
+    \item Perform one composition of the \TNFA{}s corresponding to \bufferC{}
+        and \rendC{},
+    \item For each of the remaining $\aN - 1$ \bufferC{} compositions, lookup
+        the cached composition,
+    \item Finally, perform a last composition with the \TNFA{} of \lendC{}.
+\end{enumerate}
+
+Thus, by a naive cost approximation, we have reduced an inherent quadratic complexity to
+\emph{linear} complexity, assuming a linear cost for conversions, lookup and compositions.

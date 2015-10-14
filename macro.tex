@@ -1,0 +1,613 @@
+
+\definecolor{rowhilite}{gray}{0.9}
+\newcommand{\penrose}{\texttt{Penrose}}
+
+\newcommand{\todo}[1]{{\Large\bf\textcolor{red}{TODO: #1}}}
+
+% Use - as an item bullet for itemize
+\def\labelitemi{-}
+
+% Nested parens should get smaller
+\setlength{\delimitershortfall}{-0.75pt}
+
+
+% Diagrams
+\newcommand{\inferrulespace}{0.3cm}
+
+\newcommand{\makesavebox}[2]
+{
+\newsavebox{#1}
+\begin{lrbox}{#1}
+#2
+\end{lrbox}%
+}
+
+% Allows for a scale (defaulting to 1) to be given when using a box.
+\newcommand{\usescalebox}[2][1]{\scalebox{#1}{\usebox#2}}
+
+% References
+\newcommand{\figref}[1]{Fig.~\ref{#1}}
+\newcommand{\tblref}[1]{Table.~\ref{#1}}
+\newcommand{\defnref}[1]{Defn.~\ref{#1}}
+\newcommand{\secref}[1]{\S\ref{#1}}
+\newcommand{\thmref}[1]{Thm.~\ref{#1}}
+\newcommand{\lemref}[1]{Lem.~\ref{#1}}
+\newcommand{\corref}[1]{Cor.~\ref{#1}}
+\newcommand{\propref}[1]{Prop.~\ref{#1}}
+\newcommand{\exref}[1]{Exm.~\ref{#1}}
+\newcommand{\chpref}[1]{Chapter~\ref{#1}}
+\newcommand{\remref}[1]{Remark~\ref{#1}}
+% Already defined by algorithm package, but I want my own style, so renew
+\renewcommand{\algref}[1]{Algorithm~\ref{#1}}
+\newcommand{\tabref}[1]{Table~\ref{#1}}
+\newcommand{\stepref}[1]{step~\ref{#1}}
+
+% General definitions
+\newcommand{\ordinal}[1]{\underline{#1}}
+\newcommand{\aOrdinal}{o}
+\newcommand{\ordinalSetToBinary}[1]{\lceil#1\rceil}
+\newcommand{\sequenceof}[1]{\left\langle#1\right\rangle}
+\newcommand{\defeq}{\overset{\mathrm{def}}{=}}
+\newcommand{\compose}{\mathbin{\circ}}
+\newcommand{\entails}{\mathrel{\vdash}}
+\newcommand{\dentails}{\mathrel{\vDash}}
+\newcommand{\conjunction}{\wedge}
+\newcommand{\disjunction}{\vee}
+\newcommand{\cardinalityof}[1]{\left\vert{#1}\right\vert}
+%\newcommand{\iff}{\Leftrightarrow}
+\newcommand{\placeholder}{\phantom{PH}}
+\newcommand{\traceOp}{\ensuremath{\text{Tr}}}
+\newcommand{\IH}{I.H.}
+\newcommand{\bnfSep}{\ |\ }
+\newcommand{\bnfEq}{\ ::=\ }
+\newcommand{\aBinOp}[2]{\operatorname{#1}(#2)}
+\newcommand{\B}{\ensuremath{\mathbb{B}}}
+\newcommand{\isoClass}[1]{[#1]}
+\newcommand{\disjointUnion}{\mathrel{\uplus}}
+\newcommand{\lbl}[2]{#1/#2}
+\newcommand{\comp}{\mathrel{;}}
+\newcommand{\tensor}{\mathrel{\otimes}}
+\newcommand{\withNetType}[2]{\ensuremath{: (#1,\, #2)}}
+\newcommand{\bisim}{\sim}
+\newcommand{\pairof}[2]{\left(#1,\, #2\right)}
+\newcommand{\aRel}{\mathcal{R}}
+\newcommand{\lang}{\mathcal{L}}
+\newcommand{\langOf}[1]{\operatorname{\lang}\left(#1\right)}
+\newcommand{\weakLangOf}[1]{\operatorname{\lang}^{\setminus \tau}\!\left(#1\right)}
+\newcommand{\langEquiv}{\sim_\lang}
+\newcommand{\weakLangEquiv}{\approx_\lang}
+
+% http://tex.stackexchange.com/questions/79657/how-to-get-double-angle-bracket-without-using-mnsymbol-package
+\makeatletter
+\DeclareFontFamily{OMX}{MnSymbolE}{}
+\DeclareSymbolFont{MnLargeSymbols}{OMX}{MnSymbolE}{m}{n}
+\SetSymbolFont{MnLargeSymbols}{bold}{OMX}{MnSymbolE}{b}{n}
+\DeclareFontShape{OMX}{MnSymbolE}{m}{n}{
+    <-6>  MnSymbolE5
+   <6-7>  MnSymbolE6
+   <7-8>  MnSymbolE7
+   <8-9>  MnSymbolE8
+   <9-10> MnSymbolE9
+  <10-12> MnSymbolE10
+  <12->   MnSymbolE12
+}{}
+\DeclareFontShape{OMX}{MnSymbolE}{b}{n}{
+    <-6>  MnSymbolE-Bold5
+   <6-7>  MnSymbolE-Bold6
+   <7-8>  MnSymbolE-Bold7
+   <8-9>  MnSymbolE-Bold8
+   <9-10> MnSymbolE-Bold9
+  <10-12> MnSymbolE-Bold10
+  <12->   MnSymbolE-Bold12
+}{}
+
+\let\llangle\@undefined
+\let\rrangle\@undefined
+\DeclareMathDelimiter{\llangle}{\mathopen}%
+                     {MnLargeSymbols}{'164}{MnLargeSymbols}{'164}
+\DeclareMathDelimiter{\rrangle}{\mathclose}%
+                     {MnLargeSymbols}{'171}{MnLargeSymbols}{'171}
+\makeatother
+
+\newcommand{\dangles}[1]{\left\llangle#1\right\rrangle}
+
+\DeclareMathOperator{\inl}{inl}
+\DeclareMathOperator{\inr}{inr}
+%\newcommand{\inl}[1]{\parens{#1, l}}
+%\newcommand{\inr}[1]{\parens{#1, r}}
+
+% Sets
+\newcommand{\singletonSet}[1]{\lbrace#1\rbrace}
+% See: http://tex.stackexchange.com/questions/5502/how-to-get-a-mid-binary-relation-that-grows
+\newcommand{\growMid}{\mathrel{}\middle|\mathrel{}}
+\newcommand{\setBuilder}[2]{\left\lbrace #1 \growMid{} #2 \right\rbrace}
+\newcommand{\intersection}{\cap}
+\renewcommand{\emptyset}{\varnothing}
+\newcommand{\intersect}{\mathop{\cap}}
+\newcommand{\union}{\mathop{\cup}}
+\newcommand{\bigUnion}{\mathop{\bigcup}}
+\newcommand{\setof}[1]{\left\lbrace#1\right\rbrace}
+\newcommand{\parens}[1]{\left(#1\right)}
+\newcommand{\powerset}[1]{2^{#1}}
+
+\newcommand{\aSet}{X}
+\newcommand{\bSet}{Y}
+\newcommand{\aSetElem}{x}
+\newcommand{\bSetElem}{y}
+
+\newcommand{\freeMonoidOn}[1]{{#1}^\ast}
+\newcommand{\freeMonoidUnit}{\epsilon}
+
+% Permutations
+\newcommand{\perm}{\ensuremath{\sigma}}
+\newcommand{\aPerm}{\ensuremath{\perm_1}}
+\newcommand{\bPerm}{\ensuremath{\perm_2}}
+\newcommand{\cPerm}{\ensuremath{\perm_3}}
+
+% Nats
+\newcommand{\N}{\ensuremath{\mathbb{N}}}
+\newcommand{\aN}{k}
+\newcommand{\bN}{l}
+\newcommand{\cN}{m}
+\newcommand{\dN}{n}
+\newcommand{\eN}{o}
+\newcommand{\fN}{p}
+
+% Indices
+\newcommand{\aI}{i}
+\newcommand{\bI}{j}
+
+% Petri Nets
+\newcommand{\aPlace}{p}
+\newcommand{\bPlace}{q}
+\newcommand{\cPlace}{r}
+
+\newcommand{\aTrans}{t}
+\newcommand{\bTrans}{u}
+\newcommand{\cTrans}{v}
+\newcommand{\dTrans}{w}
+\newcommand{\eTrans}{x}
+\newcommand{\fTrans}{y}
+\newcommand{\gTrans}{z}
+
+\newcommand{\aPnAllPlaces}{P}
+\newcommand{\aPnAllTrans}{T}
+\newcommand{\pre}[1]{{^\circ{#1}}}
+\newcommand{\post}[1]{{#1^\circ}}
+\newcommand{\prepost}[1]{\pre{\post{#1}}}
+
+
+\newcommand{\aPn}{N}
+\newcommand{\bPn}{M}
+
+\newcommand{\aPnTransSet}{S}
+\newcommand{\aPnPlacesSet}{P}
+
+\newcommand{\subPnMarking}{\le}
+
+\newcommand{\trans}[1]{\aBinOp{trans}{#1}}
+\newcommand{\places}[1]{\aBinOp{places}{#1}}
+
+\newcommand{\aPnMarking}{m}
+\newcommand{\bPnMarking}{m'}
+\newcommand{\PnAllMarkings}[1]{\operatorname{Mrk}(#1)}
+\newcommand{\markedAt}[2]{\operatorname{#1}(#2)}
+
+\newcommand{\enabledTrans}[2]{\textit{enabled}_{#2}(#1)}
+
+\newcommand{\PnFiringSemantics}[4]{#1_{#3} \rightarrow_{#2} #1_{#4}}
+
+\newcommand{\aMarkedNetInitial}{i}
+\newcommand{\aMarkedNetTarget}{t}
+
+% LTSs
+
+\newcommand{\bij}{f}
+\newcommand{\sbij}{\bij_\aLTSAllStates}
+\newcommand{\lbij}{\bij_\aLTSAllLabels}
+
+\newcommand{\TLTS}{2-LTS}
+\newcommand{\LTSB}[2]{\ensuremath{(#1,\,#2)\text{-LTS}}}
+\newcommand{\TLTSsemantics}[1]{\llbracket{#1}\rrbracket}
+
+\newcommand{\aLTS}{X}
+\newcommand{\bLTS}{Y}
+
+\newcommand{\aLTSAllStates}{S}
+\newcommand{\aLTSAllLabels}{L}
+\newcommand{\aLTSTransitionRel}{\LabelledTrans{}}
+
+\newcommand{\LabelledTrans}[1]{\xrightarrow{#1}}
+\newcommand{\LabelledTransNum}[2]{\LabelledTrans{#1}_#2}
+
+\newcommand{\LTSIso}{\cong}
+
+\newcommand{\aLTSState}{x}
+\newcommand{\bLTSState}{y}
+
+\newcommand{\aLTSLabel}{l}
+
+\newcommand{\aLTSTrace}{t}
+
+\newcommand{\aLbl}{\alpha}
+\newcommand{\bLbl}{\beta}
+\newcommand{\cLbl}{\gamma}
+\newcommand{\dLbl}{\delta}
+\newcommand{\eLbl}{\epsilon}
+\newcommand{\fLbl}{\zeta}
+
+\newcommand{\aTLTS}{X}
+\newcommand{\bTLTS}{Y}
+\newcommand{\cTLTS}{Z}
+\newcommand{\dTLTS}{W}
+
+\newcommand{\TLTSbr}[2]{\PermTLTS{\swPerm{#1}{#2}}}
+
+\newcommand{\PermTLTS}[1]{L_{#1}}
+\newcommand{\exPermTLTS}{\PermTLTS{\perm}}
+
+\newcommand{\abTLTSTensor}{\aTLTS \tensor \bTLTS}
+
+\newcommand{\idTLTS}[1]{L_{id_{#1}}}
+
+\newcommand{\TLTSIso}{\cong}
+
+\newcommand{\tensorStates}[2]{\left( #1 \tensor #2 \right)}
+\newcommand{\compStates}[2]{\left( #1 \comp #2 \right)}
+
+\newcommand{\syncRestriction}{\!\!_{\text{sync}}}
+\newcommand{\tensorRestriction}{\!\!_{\text{tens}}}
+
+% NFAs
+\newcommand{\aNFAAllStates}{Q}
+\newcommand{\aNFAAllLabels}{\Sigma}
+\newcommand{\aNFATransitionRel}{\LabelledTrans{}}
+
+\newcommand{\aNFAInitState}{i}
+\newcommand{\aNFAAcceptStates}{A}
+
+\newcommand{\aNFA}{N}
+\newcommand{\bNFA}{M}
+\newcommand{\cNFA}{O}
+
+\newcommand{\aNFAState}{x}
+\newcommand{\bNFAState}{y}
+\newcommand{\cNFAState}{z}
+\newcommand{\dNFAState}{w}
+
+\newcommand{\aNFALabel}{\sigma}
+
+\newcommand{\NFAIso}{\cong}
+\newcommand{\TNFAIso}{\cong}
+
+\newcommand{\aNFAWord}{w}
+\newcommand{\bNFAWord}{v}
+\newcommand{\cNFAWord}{x}
+
+\newcommand{\TNFA}{2-NFA}
+\newcommand{\NFAB}[2]{\ensuremath{(#1,\,#2)\text{-NFA}}}
+
+\newcommand{\aTNFA}{(\aTLTS, \aNFAInitState, \aNFAAcceptStates)}
+\newcommand{\bTNFA}{(\bTLTS, \aNFAInitState', \aNFAAcceptStates')}
+
+\newcommand{\tauLabel}[2]{\tau_{\parens{#1, #2}}}
+\newcommand{\stripTau}[1]{\widehat{#1}}
+\newcommand{\word}[1]{\vv{#1}}
+\newcommand{\tauCloseOp}[1]{\operatorname{\tau-\text{cl}}(#1)}
+\newcommand{\tauClosure}{$\tau$-closure}
+\newcommand{\tauClosed}{$\tau$-closed}
+
+% PNB
+
+\newcommand{\PNB}{PNB}
+\newcommand{\mPNB}{mPNB}
+
+\newcommand{\PNBid}[1]{P_{id_{#1}}}
+
+\newcommand{\aPNBMarking}{m}
+\newcommand{\bPNBMarking}{n}
+\newcommand{\cPNBMarking}{o}
+\newcommand{\dPNBMarking}{p}
+
+\newcommand{\amPNB}{(\aPNB, \aPNBMarking, \bPNBMarking)}
+\newcommand{\bmPNB}{(\bPNB, \aPNBMarking', \bPNBMarking')}
+
+\newcommand{\preandpost}[1]{{^\circ{#1^\circ}}}
+
+\newcommand{\contention}{\ensuremath{\mathrel{\bowtie}}}
+
+\newcommand{\source}[1]{{^\bullet{#1}}}
+\newcommand{\target}[1]{{#1^\bullet}}
+\newcommand{\readArc}[1]{{^\star{#1}}}
+
+\newcommand{\aPNBAllTrans}{T}
+\newcommand{\aPNBAllPlaces}{P}
+
+\newcommand{\aPNB}{\ensuremath{N}}
+\newcommand{\bPNB}{\ensuremath{M}}
+\newcommand{\cPNB}{\ensuremath{O}}
+
+\newcommand{\PermPNB}[1]{P_{#1}}
+
+\newcommand{\exPermPNB}{\PermPNB{\perm}}
+
+\newcommand{\aPermPNB}{\PermPNB{\aPerm}}
+\newcommand{\bPermPNB}{\PermPNB{\bPerm}}
+\newcommand{\cPermPNB}{\PermPNB{\cPerm}}
+
+\newcommand{\aPermComp}{\aPNB \comp \exPermPNB}
+
+\newcommand{\swPerm}[2]{\text{sw}(#1,\,#2)}
+\newcommand{\idPerm}[1]{\text{id}(#1)}
+
+\newcommand{\PNBbr}[2]{\PermPNB{\swPerm{#1}{#2}}}
+
+\newcommand{\aPNBTransSet}{U}
+\newcommand{\bPNBTransSet}{V}
+\newcommand{\cPNBTransSet}{W}
+\newcommand{\dPNBTransSet}{X}
+
+\newcommand{\aPNBTransSing}{\setof{\aTrans}}
+\newcommand{\bPNBTransSing}{\setof{\bTrans}}
+
+\newcommand{\aPNBSync}{(\aPNBTransSet, \bPNBTransSet)}
+\newcommand{\bPNBSync}{(\aPNBTransSet', \bPNBTransSet')}
+
+\newcommand{\aPNBBPort}{b}
+\newcommand{\bPNBBPort}{\aPNBBPort'}
+\newcommand{\cPNBBPort}{\aPNBBPort''}
+
+\newcommand{\aPNBTargetSet}{T}
+
+\newcommand{\abPNBComp}{\aPNB \comp \bPNB}
+\newcommand{\abPNBTensor}{\aPNB \tensor \bPNB}
+
+\newcommand{\aTypedPNB}{\aPNB \withNetType{\aN}{\bN}}
+\newcommand{\bTypedPNB}{\bPNB \withNetType{\bN}{\cN}}
+\newcommand{\bTypedPNBFree}{\bPNB \withNetType{\cN}{\dN}}
+
+\newcommand{\minsync}[2]{\operatorname{minsync}(#1,\,#2)}
+
+\newcommand{\PNBIso}{\cong}
+
+\newcommand{\PNBFiringSemantics}[4]{#1_{#3} \rightarrow_{#2} #1_{#4}}
+
+% Categories
+\newcommand{\PNBCat}{{\bf \PNB}}
+\newcommand{\TLTSCat}{\text{\bf \TLTS}}
+\newcommand{\TNFACat}{\text{\bf \TNFA}}
+\newcommand{\mPNBCat}{{\bf \mPNB}}
+\newcommand{\idArr}[1]{\ensuremath{\mathord{\operatorname{id}_{#1}}}}
+\newcommand{\obj}[1]{\ensuremath{\operatorname{obj}_{#1}}}
+\newcommand{\arr}[3]{\ensuremath{\operatorname{Hom}_{#1}(#2,#3)}}
+\newcommand{\arrComp}{\mathrel{;}}
+\newcommand{\PNBToTLTS}[1]{\dangles{#1}}
+\newcommand{\PNBToTNFA}[1]{\PNBToTLTS{#1}}
+\newcommand{\mPNBToTNFA}[1]{{}_m\PNBToTLTS{#1}}
+\newcommand{\mPNBToPNB}{U_{\text{\PNB}}}
+\newcommand{\TNFAToTLTS}{U_{\text{\TLTS}}}
+
+\DeclareMathAlphabet{\mathbfsf}{\encodingdefault}{\sfdefault}{bx}{n}
+
+% Components
+\newcommand{\component}[1]{\textsc{#1}}
+\newcommand{\mkC}[1]{\expandafter\newcommand\csname #1C\endcsname{\component{#1}}}
+\newcommand{\mkCArg}[1]{%
+    \expandafter\newcommand\csname #1C\endcsname[1]{\ensuremath{\component{#1}_{##1}}}}
+
+\newcommand{\rendC}[1]{\ensuremath{\mathord{\bot_{#1}}}}
+\newcommand{\lendC}[1]{\ensuremath{\mathord{\top_{\!#1}}}}
+
+% From: http://tex.stackexchange.com/questions/5191/how-to-raise-a-subscript
+\makeatletter
+\newcommand{\raisemath}[1]{\mathpalette{\raisem@th{#1}}}
+\newcommand{\raisem@th}[3]{\raisebox{#1}{$#2#3$}}
+\makeatother
+\newcommand{\negSpaceLower}[1]{\!\!\raisemath{-0.25em}{#1}}
+
+\newcommand{\ltermC}[1]{\ensuremath{\mathord{\pmb{\uparrow}_{\negSpaceLower{#1}}}}}
+\newcommand{\rtermC}[1]{\ensuremath{\mathord{\pmb{\downarrow}_{\negSpaceLower{#1}}}}}
+
+\mkCArg{id}
+\mkCArg{eta}
+\mkCArg{epsilon}
+\mkC{addtok}
+\mkC{task}
+\mkC{injector}
+\mkC{worker}
+\mkC{philo}
+\mkC{fork}
+\mkC{buffer}
+\mkC{replicator}
+\mkC{taketok}
+\mkC{choice}
+\mkC{car}
+\mkC{lock}
+\mkC{rLockInterface}
+\mkC{fLockInterface}
+
+\mkC{root}
+\newcommand{\leaf}[1]{\component{\ensuremath{\text{leaf}_{#1}}}}
+\newcommand{\node}[1]{\component{\ensuremath{\text{node}_{#1}}}}
+\newcommand{\conleaf}{\leaf{\con}}
+\newcommand{\connode}{\node{\con}}
+\newcommand{\disleaf}{\leaf{\dis}}
+\newcommand{\disnode}{\node{\dis}}
+
+
+% Systems
+
+\newcommand{\sysName}[1]{\text{\textsc{#1}}}
+\makeatletter
+\newcommand{\mkSys}[2][]{%
+\expandafter\newcommand\csname #2Sys\endcsname[1]{%
+    \ensuremath{\sysName{\@ifmtarg{#1}{#2}{#1}}(##1)}%
+}}
+\makeatother
+
+\mkSys[iter-choice]{iteratedchoice}
+\mkSys{hartstone}
+\mkSys{tokenring}
+\mkSys{buffer}
+\mkSys{clique}
+\mkSys{counter}
+\mkSys[cyclic]{cyclicscheduler}
+\mkSys{DAC}
+\mkSys{overtake}
+\mkSys[DPH]{diningphilosophers}
+\mkSys{replicators}
+\mkSys{powerset}
+
+\newcommand{\tree}[3]{\ensuremath{T_{#1}(#2,#3)}}
+\newcommand{\treenode}[3]{\ensuremath{{T\!N}_{#1}(#2,#3)}}
+\newcommand{\dis}{\!\disjunction}
+\newcommand{\con}{\!\conjunction}
+\newcommand{\contree}[2]{\tree{\con}{#1}{#2}}
+\newcommand{\distree}[2]{\tree{\dis}{#1}{#2}}
+
+% Inline list
+\newlist{inlinelist}{enumerate*}{1}
+\setlist*[inlinelist,1]{%
+  label=(\roman*),
+}
+
+% Language
+\newcommand{\DSL}{PNBml}
+\newcommand{\emptyEnv}{\bullet}
+\newcommand{\extendEnv}[3]{#1, #2 \mapsto #3}
+\newcommand{\opEnv}{E}
+\newcommand{\expr}{e}
+\newcommand{\val}{v}
+\newcommand{\varExpr}{x}
+\newcommand{\netExpr}{n}
+\newcommand{\natExpr}{p}
+\newcommand{\succNat}[1]{S(#1)}
+\newcommand{\bindExpr}[3]{\mathbfsf{bind}\; #1 \bm{=} #2 \;\mathbfsf{in}\; #3}
+\newcommand{\sequenceExpr}[2]{\mathbfsf{n\_sequence} \; #1 \; #2}
+\newcommand{\natRecursionExprName}{\mathbfsf{fold_\N}}
+\newcommand{\natRecursionExpr}[3]{\natRecursionExprName\; #1 \; #2 \; #3}
+\newcommand{\lamExpr}[3]{\bm{\lambda} \hasType{#1}{{\color[gray]{0.4} #2}} \bm{\mathrel{.}} #3}
+\newcommand{\appExpr}[2]{#1 \, #2}
+\newcommand{\compExpr}[2]{#1 \bm{\comp} #2}
+\newcommand{\tensExpr}[2]{#1 \bm{\tensor} #2}
+\newcommand{\type}{\tau}
+\newcommand{\hasType}[2]{#1 \mathrel{:} #2}
+\newcommand{\ruleitem}[4]{\inferrule*[left={#1},right={#2}]{#3}{#4}}
+\newcommand{\closure}[2]{\left\langle#1,\, #2\right\rangle}
+\newcommand{\tyRule}[2]{\tyEnv \entails \hasType{#1}{#2}}
+\newcommand{\tyExtendRule}[4]{\extendEnv{\tyEnv}{#1}{#2} \entails \hasType{#3}{#4}}
+\newcommand{\tyEnv}{\Gamma}
+\newcommand{\instTo}[2]{#1 \sqsubseteq #2}
+\newcommand{\natType}{\N}
+\newcommand{\netType}[2]{\mathrm{Net}\langle#1,\,#2\rangle}
+\newcommand{\arrType}[2]{#1 \rightarrow #2}
+\newcommand{\reducesTo}[2]{#1 \Downarrow #2}
+
+% Hack to get proper spacing in align environment
+\newcommand{\defeqsp}{\; \defeq \;\;}
+\newcommand{\varName}[1]{\mathit{#1}}
+
+% Wiring
+\newcommand{\wiringExpr}{\ensuremath{t}}
+\newcommand{\wiringVarAssign}{\ensuremath{\mathcal{V}}}
+\newcommand{\wiringDecomp}{\ensuremath{(\wiringExpr, \wiringVarAssign)}}
+
+\newcommand{\wiringVar}{\ensuremath{x}}
+\newcommand{\wiringExprs}{\ensuremath{\mathcal{W}}}
+\newcommand{\wiringInitMarks}{\mathcal{I}}
+\newcommand{\wiringFinalMarks}{\mathcal{F}}
+\newcommand{\wiringExprToPNB}[2]{\llbracket#1\rrbracket_#2}
+\newcommand{\wiringExprToTNFA}[2]{\dangles{#1}_#2}
+
+% BDDs
+\newcommand{\common}[1]{S_{\scriptscriptstyle #1}}
+\newcommand{\commonR}[1]{\ensuremath{\pairof{\common{R}}{#1}}}
+\newcommand{\commonL}[1]{\ensuremath{\pairof{\common{L}}{#1}}}
+\newcommand{\var}[2]{\ensuremath{\pairof{#1}{#2}}}
+\newcommand{\varL}[1]{\var{L}{#1}}
+\newcommand{\varR}[1]{\var{R}{#1}}
+
+\newcommand{\makeThreeCompTree}[3]{%
+\makebox[\textwidth][c]{%
+\begin{tikzpicture}[wiringTree]
+\Tree
+    [. \node[draw, circle]{$\comp$};
+        [. \node[draw, circle]{$\comp$};
+            [. \node[draw, circle]{$\comp$};
+                [. \node[draw, circle]{$\comp$};
+                    [. \node[draw] {#1}; ]
+                    [. \node[draw] {#2}; ]
+                ]
+                [. \node[draw] {#2}; ]
+            ]
+            [. \node[draw] {#2}; ]
+        ]
+        [. \node[draw] {#3}; ]
+    ]
+\end{tikzpicture}%
+}}
+
+\newcommand{\makeThreeCompTreeRAssoc}[3]{%
+\makebox[\textwidth][c]{%
+\begin{tikzpicture}[wiringTree]
+\Tree
+    [. \node[draw, circle]{$\comp$};
+        [. \node[draw] {#1}; ]
+        [. \node[draw, circle]{$\comp$};
+            [. \node[draw] {#2}; ]
+            [. \node[draw, circle]{$\comp$};
+                [. \node[draw] {#2}; ]
+                [. \node[draw, circle]{$\comp$};
+                    [. \node[draw] {#2}; ]
+                    [. \node[draw] {#3}; ]
+                ]
+            ]
+        ]
+    ]
+\end{tikzpicture}%
+}}
+
+\definecolor{ao}{rgb}{0.0, 0.5, 0.0}
+\newcommand{\bmmm}[1]{\bm{\bm{\bm{\bm{\pmb{#1}}}}}}
+\newcommand{\yesReachable}{\textcolor{ao}{\bmmm{\checkmark}}}
+\newcommand{\noReachable}{\textcolor{red}{\bmmm{\times}}}
+
+\newcommand{\highlightedResult}[1]{\underline{\textbf{#1}}}
+\newcommand{\failureResult}[1]{\textit{#1}}
+\newcommand{\nonCorbett}[1]{#1}%$\ast$}
+\newcommand{\timeoutResult}{T}
+\newcommand{\oomResult}{M}
+\newcommand{\incorrectResult}{/}
+\newcommand{\queryPortsUnhandledResult}{R}
+
+% Cat macros
+\newcommand{\aCat}{\mathcal{C}}
+\newcommand{\bCat}{\mathcal{D}}
+\newcommand{\aFunctor}{\mathcal{F}}
+\newcommand{\bFunctor}{\mathcal{G}}
+\newcommand{\oA}{X}
+\newcommand{\oB}{Y}
+\newcommand{\oC}{Z}
+\newcommand{\oD}{W}
+\newcommand{\aA}{f}
+\newcommand{\aB}{g}
+\newcommand{\aC}{h}
+\newcommand{\aD}{i}
+\newcommand{\tensorUnit}{I}
+\newcommand{\tensorAssocArgs}[3]{\tensorAssoc_{#1,\,#2,#3}}
+\newcommand{\tensorAssoc}{\alpha}
+\newcommand{\tensorLeftIDArg}[1]{\tensorLeftID_{#1}}
+\newcommand{\tensorLeftID}{\lambda}
+\newcommand{\tensorRightIDArg}[1]{\tensorRightID_{#1}}
+\newcommand{\tensorRightID}{\rho}
+\newcommand{\natTrans}{\eta}
+\newcommand{\prodCat}{\aCat \times \bCat}
+\newcommand{\braiding}{\ensuremath{\gamma}}
+\newcommand{\braidingArgs}[2]{\braiding_{\parens{#1,\,#2}}}
+\newcommand{\fA}{\aFunctor\parens{\oA}}
+\newcommand{\fB}{\aFunctor\parens{\oB}}
+\newcommand{\fC}{\aFunctor\parens{\oC}}
+\newcommand{\gA}{\bFunctor\parens{\oA}}
+\newcommand{\gB}{\bFunctor\parens{\oB}}
+\newcommand{\gC}{\bFunctor\parens{\oC}}
+

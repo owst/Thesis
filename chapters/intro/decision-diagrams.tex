@@ -1,0 +1,130 @@
+\label{sec:decision-diagrams}
+
+In this section we move on to lower-level optimisation techniques,
+concentrating on efficient symbolic representation of nets and their semantics.
+
+% BDDs for model checking
+Symbolic state space representations aim to be more efficient (in terms of
+memory-requirements) than explicit representations, often leading to vast
+improvements in the performance of corresponding model checkers. Rather than
+storing and exploring states one-by-one, symbolic model checkers store and
+explore multiple states at once. The most prominent initial work on symbolic
+model checking is due to McMillan, in his PhD thesis, and later published
+together with {Burch et al.}~\cite{Burch1992}. {Burch et al.} gave a symbolic
+method of model checking $\mu$-calculus formulae, using (Ordered) Binary
+Decision Diagrams (OBDDs); by checking $\mu$-calculus formulae, they were able
+to generalise previous BDD-based model checking techniques targetting concrete
+instances: {Coudert et al.}~\cite{Coudert1990} model checked Mealy
+machines~\cite{Mealy1955} (automata with state-dependent output), while {Browne
+et al.}~\cite{Dill1986} described a technique for model checking circuits
+against CTL specifications.
+
+% What are BDDs?
+Ordered Binary Decision Diagrams (OBDDs, more commonly just BDDs) were
+popularised by Bryant~\cite{Bryant1986}, who showed that BDDs canonically
+represented functions over the Booleans, whilst allowing efficient
+manipulation, e.g. performing conjunction or checking for tautology. A simple
+example is illustrated in \figref{fig:simpleBDD}, showing a
+representation\footnote{A dashed line represents that the source variable was
+false, a solid line, true.} of the formula $(a \conjunction b) \disjunction (a
+\conjunction c)$, which could represent the collection sets of states
+$\setof{\setof{a,b}, \setof{a,c}}$ where a particular property holds.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[bdd, node distance=1.5cm]
+        \node (a) [var]                    {$a$};
+        \node (b) [var, below=of a]        {$b$};
+        \node (c) [var, below=of b]        {$c$};
+        \node (f) [leaf, below left=of c]  {$\bot$};
+        \node (t) [leaf, below right=of c] {$\top$};
+
+        \falseEdge{a}{f}
+        \trueEdge{a}{b}
+        \trueEdge{b}{t}
+        \falseEdge{b}{c}
+        \trueEdge{c}{t}
+        \falseEdge{c}{f}
+    \end{tikzpicture}
+    \newcommand{\capt}{BDD representing $(a \conjunction b) \disjunction (a
+    \conjunction c)$}
+    \caption[\capt]{\capt: dashed edges represent false, solid represent true.}
+    \label{fig:simpleBDD}
+\end{figure}
+
+Using suitable encodings of states and transitions, entire state graphs can be
+represented, and properties (for example, reachability) can be checked using a
+fixed-point operation on the underlying BDDs. Detailed introductions to BDDs,
+their use and algorithms can be found by Andersen~\cite{Andersen1997} and
+{Drechsler and Sieling}~\cite{Drechsler2001}.
+
+% BDDs for model checking Petri nets
+Symbolic BDD representations can be applied to Petri nets.  {Pastor et
+al.}~\cite{Pastor1994} gave encodings of the markings, transitions and firing
+rules of 1-safe Petri nets as BDDs. These encodings were used to give the first
+symbolic method of calculating all reachable states of the net, and
+furthermore, verification of liveness and safeness properties.  Pastor and
+other collaborators later improved the algorithm~\cite{Pastor1998, Pastor1999},
+using more efficient representations of Petri net markings (using a suitable
+encoding method, structurally-related places could be represented using fewer
+variables).  {Semenov and Yakelov}~\cite{Semenov1995} took a different
+optimisation approach, combining the symbolic exploration method with the
+unfolding technique to discover ``clusters'' of places that are never
+simultaneously marked; such clusters have minimal BDD size, regardless of
+variable ordering and thus assigning ``close'' variables to elements of
+clusters helps minimise the size of the resulting BDD.
+
+{Miner and Ciado}~\cite{Miner1999} improved the efficiency of the statespace
+generation technique of {Pastor et al.}. Using Multi Decision Diagrams
+(MDDs)---a generalisation of BDDs introduced by {Srinivasan et
+al.}~\cite{Srinivasan1990}, which encode functions of the form $\N^n \to \N$
+rather than $\B^n \to \B$ as in BDDs---and suitably partitioning the input
+net's places into \emph{localities} (similar to the clusters of {Semenov and
+Yakelov}), Miner and Ciardo were able to generate the statespace with fewer
+iterations and a corresponding reduction in time. In later work, {Ciardo et
+al.}~\cite{Ciardo1999} further refined the use of event localities, to further
+improve the algorithm's performance. The benefit of using higher-level decision
+diagrams has been exhibited, for example by {Strehl and
+Thiele}~\cite{Strehl1999} and Tovchigrechko~\cite{Tovchigrechko2008}.
+
+% Generalise BDDs to MTBDDs
+While BDDs \emph{can} encode functions with (co-)domains other than the
+Booleans, using a direct encoding can be both more intuitive and storage-efficient.
+While MDDs fully generalise BDDs to functions on the naturals, a finer
+generalisation is to encode functions with co-domains other than the Booleans.
+This natural generalisation of BDDs was originally observed by Clarke et
+al.~\cite{Clarke1993} and {Bahar et al.}~\cite{Bahar1993}. Such generalised
+BDDs, known as Multi Terminal BDDs (MTBDDs) have been used for a variety of
+purposes, including: efficiently representing matrices~\cite{Fujita1997}, model
+checking of probabilistic timed-automata~\cite{Wang2005} and for representing
+specifications of parallel programs~\cite{Ciesinski2008}.
+
+% Problems of BDD
+
+A key problem related to the use of BDDs is that a particular ordering for the
+BDD's variables must be chosen a priori. Unfortunately, choosing an optimal
+variable ordering for a BDD is an NP-complete problem~\cite{Bollig1996}.
+However, heuristics have been developed, which attempt to minimise the size of
+a particular BDD. Static approaches attempt to determine a fixed variable
+order, during construction of the BDD; for example, the variable-interleaving
+technique of Fujii et al.~\cite{Fujii1993}, which aims to place
+semantically-related (Fujii et al. consider the topology of the logic circuit)
+variables near each other in the BDD. On the other hand, the dynamic approach
+of Felt et al.~\cite{Felt1993} recognises that statically-determined variable
+orders may not be optimal after operations have been applied to the BDD.
+Instead, they monitor the size of intermediate BDDs and rearrange small
+``windows'' of consecutive variables to reduce the resulting BDD's size.
+
+More recently, so-called \emph{exact} algorithms have been further
+investigated, to improve the non-optimal results of heuristic algorithms.
+Indeed, {Ebendt et al.}~\cite{Ebendt2005} improve on the original algorithm of
+{Friedman and Supowit}~\cite{Friedman1987} and improved algorithm of {Drechsler
+et al.}~\cite{Drechsler1998}, by using the A$^\ast$ search algorithm to explore
+(subsets of) the set of all variable orderings, and using local heuristics to
+choose the best next variable at each step.
+
+A recent, detailed overview of BDD optimisation techniques can be found in the
+book by {Ebendt et al.}~\cite{Ebendt2005a}. Finally, while it is common that
+(variants of) BDDs are used symbolic model checking, as pointed out by {Biere
+et al.}~\cite{Biere1999}, it is not the case that symbolic methods imply the use
+of BDDs, viable alternatives certainly do exist.

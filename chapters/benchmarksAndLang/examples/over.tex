@@ -1,0 +1,230 @@
+The \overtakeSys{\aN} net system simulates a queue of $\aN$ automated cars that
+can overtake one another. To ensure that no collisions occur, a collection of
+locks are used: one between each pair of cars. To overtake, a car must hold
+both the lock in front of it, and the lock behind it; this prevents, for
+example, a car attempting to overtake a car that is itself overtaking.
+
+To give a component-wise specification of such a system, we construct
+components that represent a single car, a single shared lock and then form a
+sequence of such components. Indeed, the component for a single car has simple
+local behaviour (where we name the states reached after each action):
+\begin{enumerate}
+    \item Request the rear lock $(\rho)$,
+    \item If request failed, reset $(\iota)$, if successful $(\dagger)$,
+        request the front lock $(\star)$,
+    \item If request failed, release rear lock $(\sharp)$, if successful,
+        $(\ddagger)$, perform overtake $(\odot)$,
+    \item Release the rear lock $(\ast)$,
+    \item Release the front lock $(\iota)$.
+\end{enumerate}
+
+A component embodying such a local behaviour is illustrated in
+\figref{fig:carC}, where the ``perform overtake'' transition is highlighted in
+blue.
+
+\begin{figure}[ht]
+\centering
+\scalebox{0.8}{
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, pnblabel=below:$\iota$] {};% pInit
+    \node[pnbplace] (p1) [rotate=180, below=of p0, pnblabel=below:$\rho$]        {};% pReqRear
+    \node[pnbplace] (p2) [below=of p1,rotate=-90,pnblabel=above:$\dagger$] {};% pGotRear
+    \node[pnbplace] (p3) [below=of p2,rotate=-90,pnblabel=above:$\star$] {};% pReqFront
+    \node[pnbplace] (p4) [xshift={-0.75 * \nodedist},rotate=90, pnblabel=below:$\sharp$] at ($ (p1)!.5!(p2)$) {};% pFrontFailed
+    \node[pnbplace] (p5) [right=of p3,rotate=90, pnblabel=above:$\ddagger$] {};% pGotFront
+    \node[pnbplace] (p6) [above=of p5,rotate=90, pnblabel=above:$\odot$] {};% pOvertaken
+    \node[pnbplace] (p7) [above=of p6,rotate=90, pnblabel=above:$\ast$] {};% pReleasedRear
+
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{pnbarrstyle1, bend left=60}{pos=0.4}
+    \labelledpnbarr[p1p0]{p1.out}{p0.in}{}{pnbarrstyle2, bend left=60}{pos=0.4}
+
+    \drawBoundaries[1.5][1.5]{4}{4}
+
+    \lBoundaryLabel{1}{RUnlock}
+    \lBoundaryLabel{2}{requestRLock}
+    \lBoundaryLabel{3}{RLockFail}
+    \lBoundaryLabel{4}{RLockOk}
+    \rBoundaryLabel{1}{FUnlock}
+    \rBoundaryLabel{2}{requestFLock}
+    \rBoundaryLabel{3}{FLockFail}
+    \rBoundaryLabel{4}{FLockOk}
+
+    \labelledpnbarr[p1p2]{p1.out}{p2.in}{}{pnbarrstyle2, out=180, in=90}{}
+
+    \draw (p0p1) edge[barr, pnbarrstyle1, out=160, in=0] (l2);
+    \draw (p1p0) edge[barr, pnbarrstyle2, out=-120, in=45] (l3);
+    \draw (p1p2) edge[barr, pnbarrstyle2, out=-100, in=0] (l4);
+
+
+    \labelledpnbarr[p2p3]{p2.out}{p3.in}{}{relative}{pos=0.3}
+    \labelledpnbarr[p3p4]{p3.out}{p4.in}{}{pnbarrstyle1, out=-120, in=-90}{pos=0.6}
+    \labelledpnbarr[p4p0]{p4.out}{p0.in}{}{out=90,in=180}{}
+    \labelledpnbarr[p3p5]{p3.out}{p5.in}{}{out=-60, in=-120}{}
+    \labelledpnbarr[p5p6]{p5.out}{p6.in}{}{blue, thick, out=90, in=-90}{}
+    \labelledpnbarr[p6p7]{p6.out}{p7.in}{}{pnbarrstyle1, out=90, in=-90}{}
+
+    \draw (p2p3) edge[barr, pnbarr, out=50, in=-130] (r2);
+    \draw (p3p4) edge[barr, pnbarrstyle1, out=-20, in=-170] (r3);
+    \draw (p3p5) edge[barr, pnbarrstyle1, out=-45, in=-120] (r4);
+    \draw (p4p0) edge[barr, pnbarr, out=-120, in=0] (l1);
+    \draw (p6p7) edge[barr, pnbarrstyle1, out=45, in=45, looseness=1.5] (l1);
+
+    \labelledpnbarr[p7p0]{p7.out}{p0.in}{}{out=90, in=120, looseness=1.5}{}
+
+    \draw (p7p0) edge[barr, pnbarr, out=0, in=120] (r1);
+\end{tikzpicture}
+}
+\caption{\carC{} \withNetType{4}{4}}
+\label{fig:carC}
+\end{figure}
+
+The lock component has three states:
+\begin{enumerate}
+    \item Unlocked $(U)$
+    \item Locked by the car behind $(B)$
+    \item Locked by the car in front $(F)$
+\end{enumerate}
+with partially-specified transitions that allow the cars in front/behind to
+lock/unlock and check if they can lock the lock. Such a component is
+illustrated in \figref{fig:lockC}.
+
+\begin{figure}
+    \centering
+    \begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1,rotate=-90, pnblabel=below:$U$] {};
+    \node[pnbplace] (p1) [below left=of p0,rotate=-90, pnblabel=above:$B$]  {};
+    \node[pnbplace] (p2) [below right=of p0,rotate=-90, pnblabel=below:$F$] {};
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{out=-90,in=90}{}
+    \labelledpnbarr[p0p2]{p0.out}{p2.in}{}{out=-90,in=90}{}
+
+    \drawBoundaries{3}{3}
+
+    \lBoundaryLabel{1}{unlockBehind}
+    \lBoundaryLabel{2}{lockBehind}
+    \lBoundaryLabel{3}{cantLockBehind}
+    \rBoundaryLabel{1}{unlockFront}
+    \rBoundaryLabel{2}{lockFront}
+    \rBoundaryLabel{3}{cantLockFront}
+
+    \useasboundingbox (current bounding box.north west) rectangle (current bounding box.south east);
+
+    \labelledpnbarr[p1p0]{p1.out}{p0.in}{}{looseness=2, out=-135,in=135}{pos=0.8}
+    \labelledpnbarr[p2p0]{p2.out}{p0.in}{}{looseness=2, out=-45,in=45}{pos=0.8}
+
+    \draw (l1) edge[barr,o0i180] (p1p0);
+    \draw (p2p0) edge[barr,o0i180] (r1);
+
+    \draw (l2) edge[barr,out=0, in=160] (p0p1);
+    \draw (p0p2) edge[barr,out=20, in=180] (r2);
+
+    \labelledpnbarr{l3}{p2.south}{}{barr,out=-35,in=-130}{}
+    \labelledpnbarr{r3}{p1.north}{}{barr,pnbarrstyle1,out=-145,in=-50}{}
+\end{tikzpicture}
+\caption{\lockC{} \withNetType{3}{3}}
+\label{fig:lockC}
+\end{figure}
+
+The desired system behaviour requires that cars can request the lock,
+which can then fail or succeed. In order to separate this behaviour into two
+steps, we require suitable ``impedance matcher'' interface components between
+each \carC{} and \lockC{}s. Such interfaces have local states to distinguish
+between request made/request response, passing signals to their boundaries as
+appropriate, as illustrated in \figref{fig:lockInterfaces}.
+
+\makesavebox{\lockBox}{
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, rotate=90] {};
+    \node[pnbplace] (p1) [left=of p0, rotate=-90]  {};
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{bend right=30}{}
+    \labelledpnbarr[p1p0]{p1.out}{p0.in}{}{pnbarrstyle1, bend right=45}{}
+
+    \drawBoundaries{4}{3}
+
+    \labelledpnbarr[p1p0Two]{p1.out}{p0.in}{}{bend right=60,looseness=1.7}{}
+
+    \labelledpnbarr{l1}{r1}{}{barr, out=20, in=160}{}
+
+    \draw (l2) edge[barr,out=0, in=150] (p0p1);
+
+    \draw (l4) edge[barr,out=0, in=-160] (p1p0Two);
+    \draw (p1p0Two) edge[barr, out=-20, in=180] (r2);
+
+    \draw (l3) edge[barr,pnbarrstyle1, out=0, in=-160] (p1p0);
+    \draw (r3) edge[barr,pnbarrstyle1, out=180, in=-20] (p1p0);
+\end{tikzpicture}
+}
+
+\begin{figure}
+    \centering
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \usebox\lockBox
+    \caption{\rLockInterfaceC{} \withNetType{4}{3}}
+    \end{subfigure}%
+    \begin{subfigure}{0.5\textwidth}
+        \centering
+        \reflectbox{\usebox\lockBox}
+    \caption{\fLockInterfaceC{} \withNetType{3}{4}}
+\end{subfigure}%
+\caption{Lock interface components}
+\label{fig:lockInterfaces}
+\end{figure}
+
+Given these components, we can define the \overtakeSys{\aN} net system:
+\begin{flalign*}
+    \overtakeSys{\aN} \defeqsp
+    &\bindExpr
+        {\varName{interfacedLock}}
+        {\compExpr{\rLockInterfaceC}{\compExpr{\lockC}{\fLockInterfaceC}}}
+        {}\\
+    &\bindExpr
+        {\varName{lockCar}}
+        {\compExpr{\varName{interfacedLock}}{\carC}}
+        {}\\
+    & \compExpr
+        {\ltermC{4}}
+        {\compExpr{\sequenceExpr{\aN}{\varName{lockCar}}}
+                  {\compExpr{\varName{interfacedLock}}
+                            {\rtermC{4}}}}
+\end{flalign*}
+
+\newcommand{\iLockC}{\ensuremath{\varName{iLock}}}
+Due to the complexity of the components, we do not draw the composite
+\overtakeSys{\aN} system. The schematic for \overtakeSys{2} is shown in
+\figref{fig:overtakeschematic}, where, for simplicity, we have collapsed the
+three constituents of $\varName{interfacedLock}$ into a single component,
+\iLockC.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[schematic]
+        \node[schematicnode] (1)              {\lendC{4}};
+        \node[schematicnode] (2) [right=of 1] {\iLockC};
+        \node[schematicnode] (3) [right=of 2] {\carC};
+        \node[schematicnode] (4) [right=of 3] {\iLockC};
+        \node[schematicnode] (5) [right=of 4] {\carC};
+        \node[schematicnode] (6) [right=of 5] {\iLockC};
+        \node[schematicnode] (7) [right=of 6] {\rendC{4}};
+
+        \foreach \name in {2,...,6}{%
+            \drawBoundaryPortsOn{\name}{4}{4}
+        }
+        \drawBoundaryPortsOn{1}{0}{4}
+        \drawBoundaryPortsOn{7}{4}{0}
+
+        \foreach \x in {1,...,6} {%
+           \pgfmathtruncatemacro{\next}{\x + 1}
+
+            \foreach \port in {1,...,4} {%
+               \draw(\x-r\port) -- (\next-l\port);
+            }
+        }
+    \end{tikzpicture}
+    \caption{Schematic of \overtakeSys{2}}
+    \label{fig:overtakeschematic}
+\end{figure}
+
+

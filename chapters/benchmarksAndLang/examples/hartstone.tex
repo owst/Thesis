@@ -1,0 +1,194 @@
+\mkC{opb}
+\mkC{controller}
+\mkC{master}
+The \hartstoneSys{\aN} system models a program that starts $\aN$ tasks in some
+order, lets them compute, before instructing them to stop them in the same
+order. In the original description of the problem, a central controller is
+directly connected to the $\aN$ tasks. Using PNBs, we can simplify this
+description: we construct $\aN$ ``single task'' controllers, each responsible
+for a single task, with each controller passing signals to the next controller.
+
+\begin{figure}[ht]
+\centering
+\setlength{\fboxsep}{0pt}
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1,rotate=0] {};
+    \node[pnbplace] (p1) [below of=p0, rotate=180] {};
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{pnbarrstyle1, bend left=40}{pos=0.15}
+    \labelledpnbarr[p1p0]{p1.out}{p0.in}{}{bend left=40}{pos=0.15}
+
+    \drawBoundaries[1.5]{1}{3}
+
+    \lBoundaryLabel{1}{reqIn}
+    \rBoundaryLabel{1}{startTask}
+    \rBoundaryLabel{2}{stopTask}
+    \rBoundaryLabel{3}{reqOut}
+
+    \draw (r1) edge[barr, pnbarrstyle1, o180i100] (p0p1);
+    \draw (r3) edge[barr, pnbarrstyle1, out=150, in=-60] (p0p1);
+    \draw (l1) edge[barr, out=-45, in=-100] (p1p0);
+    \draw (r2) edge[barr, out=180, in=100] (p1p0);
+
+    \useasboundingbox (current bounding box.north west) rectangle (current bounding box.south east);
+
+    \draw (l1) edge[barr, pnbarrstyle1, out=45, in=110, looseness=1.75] (p0p1);
+    \draw (r3) edge[barr, pnbarr, out=200, in=290, looseness=1.75] (p1p0);
+\end{tikzpicture}
+\caption{\controllerC{} \withNetType{1}{3}}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1, rotate=-90] {};
+    \node[pnbplace] (p1) [below of=p0, rotate=-90] {};
+
+    \drawBoundaries{2}{0}
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{relative}{}
+    \draw (p0p1) edge[barr,out=90, in=0] (l1);
+
+    \useasboundingbox (current bounding box.north west) rectangle (current bounding box.south east);
+
+    \labelledpnbarr[p1p0]{p1.out}{p0.in}{}{bend right=140, looseness=1.75}{pos=0.1}
+    \draw (p1p0) edge[barr,out=190, in=0] (l2);
+\end{tikzpicture}
+\caption{\taskC{}\withNetType{2}{0}}
+\label{fig:taskC}
+\end{subfigure}%
+\\
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [tokens=1] {};
+    \node[pnbplace] (p1) [below of=p0,rotate=180] {};
+
+    \drawBoundaries{1}{1}
+
+    \labelledpnbarr[p0p1]{p0.out}{p1.in}{}{bend left=50}{pos=0.3}
+    \labelledpnbarr[p1p0]{p1.out}{p0.in}{}{bend left=50}{pos=0.3}
+
+    \draw (l1) edge[barr, out=70, in=110, looseness=2.5] (p0p1);
+    \draw (l1) edge[barr, out=0, in=110] (p1p0);
+
+    \useasboundingbox (current bounding box.north west) rectangle (current bounding box.south east);
+    \draw (r1) edge[barr, out=180, in=-70] (p0p1);
+    \draw (r1) edge[barr, out=250, in=290, looseness=2.5] (p1p0);
+\end{tikzpicture}
+\caption{\masterC{} \withNetType{1}{1}}
+\end{subfigure}%
+\begin{subfigure}{0.5\textwidth}
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) {};
+    \drawBoundaries{1}{1}
+
+    \labelledpnbarr{l1}{p0.in}{}{barr}{}
+    \labelledpnbarr{p0.out}{r1}{}{barr}{}
+\end{tikzpicture}
+\caption{\opbC{} \withNetType{1}{1}}
+\label{fig:opbComponent}
+\end{subfigure}%
+\caption{\hartstoneSys{\aN} component nets}
+\end{figure}
+
+The component in \figref{fig:opbComponent} is a \emph{one-place buffer}
+(\opbC{}), which allows a token to asynchronously flow through a series of
+connected components. Without the \opbC{}s, the fully specified transitions
+would connect the ``ready'' place in each \controllerC{} component together,
+similarly for the ``working'' place; the tasks would therefore be
+simultaneously stopped, which is not what we wish to model.
+
+The \DSL{} expression to represent a \hartstoneSys{\aN} system, with $\aN$
+tasks is as follows:
+\begin{flalign*}
+    \hartstoneSys{\aN} \defeqsp
+    &\bindExpr
+        {\varName{asyncTask}}
+        {\compExpr{\opbC}{\compExpr{\controllerC}{(\tensExpr{\taskC}{\idC{}})}}} \\
+    &\bindExpr
+        {\varName{tasks}}
+        {\sequenceExpr{\aN}{\varName{asyncTask}}}
+        {}\\
+    & \compExpr
+        {\etaC{}}
+        {\compExpr
+            {\tensExpr{(\compExpr{\masterC}{\varName{tasks}})}{\idC{}}}
+            {\epsilonC{}}}
+\end{flalign*}
+This expression represents a sequence of controller/tasks, which are wired to a
+master controller (that models the protocol of repeatedly starting all
+processes and then stopping them). Signals are looped back around (via
+\etaC{}/\epsilonC{}), such that \masterC{} receives the
+signal when all controllers have already received it. The schematic of
+\hartstoneSys{2} is shown in \figref{fig:harstoneschematic}.
+
+\begin{figure}[ht]%
+\centering
+\makebox[\textwidth][c]{
+\begin{tikzpicture}[schematic]
+    \def\upperSizeRatio{5/8}
+    \def\lowerSizeRatio{2/8}
+    \def\innerSizeRatio{5/11}
+    \def\controllerC{\component{cont}}
+
+    \tikzset{main/.append style={minimum height=\mainsize}}
+    \tikzset{int21t/.append style={minimum height=\upperSizeRatio * \mainsize}}
+    \tikzset{int21b/.append style={minimum height=\lowerSizeRatio * \mainsize}}
+    \tikzset{int22/.append style={minimum height=\upperSizeRatio * \innerSizeRatio * \mainsize}}
+
+    \node [schematicnode] (eta) [main] {\etaC{}};
+    \node [schematicnode] (master) [int21t, aligntop=eta] {\masterC};
+    \node [schematicnode] (opb1) [int21t, right=of master] {\opbC};
+    \node [schematicnode] (cont1) [int21t, right=of opb1] {\controllerC};
+    \node [schematicnode] (task1) [int22, aligntop=cont1] {\taskC};
+    \node [schematicnode] (id1) [int22, alignbot=cont1, samewidthas={task1 and task1}] {\idC{}};
+    \node [schematicnode] (opb2) [int21t, aligntop=task1] {\opbC};
+    \node [schematicnode] (cont2) [int21t, right=of opb2] {\controllerC};
+    \node [schematicnode] (task2) [int22, aligntop=cont2] {\taskC};
+    \node [schematicnode] (id2) [int22, alignbot=cont2, samewidthas={task2 and task2}] {\idC{}};
+    \node [schematicnode] (idbot) [int21b, alignbot=eta, samewidthas={master and id2}] {\idC{}};
+    \node [schematicnode] (epsilon) [main, aligntop=task2] {\epsilonC{}};
+
+    \foreach \n in {master,opb1,id1,id2,idbot}{
+        \drawBoundaryPortsOn{\n}{1}{1}
+    }
+
+    \drawBoundaryPortsOn{opb2}{0}{1}
+    \lPortAtHeightOf{opb2}{id1-r1}{1}
+
+    \foreach \onwhat/\lc/\rc in {cont1/1/0,cont2/1/0,task1/2/0,task2/2/0}{
+        \drawBoundaryPortsOn{\onwhat}{\lc}{\rc}
+    }
+
+    \foreach \i in {1,2}{
+        \rPortAtHeightOf{cont\i}{task\i-l1}{1}
+        \rPortAtHeightOf{cont\i}{task\i-l2}{2}
+        \rPortAtHeightOf{cont\i}{id\i-l1}{3}
+    }
+
+    \rPortAtHeightOf{eta}{master-l1}{1}
+    \rPortAtHeightOf{eta}{idbot-l1}{2}
+    \lPortAtHeightOf{epsilon}{id2-r1}{1}
+    \lPortAtHeightOf{epsilon}{idbot-r1}{2}
+
+    \foreach \from/\to in {eta/master,master/opb1,opb1/cont1,id1/opb2,opb2/cont2,id2/epsilon}{
+        \draw(\from-r1) -- (\to-l1);
+    }
+
+    \foreach \i in {1,2}{
+        \foreach \p in {1,2}{
+            \draw(cont\i-r\p) -- (task\i-l\p);
+        }
+        \draw(cont\i-r3) -- (id\i-l1);
+    }
+
+    \draw(eta-r2) -- (idbot-l1);
+    \draw(epsilon-l2) -- (idbot-r1);
+\end{tikzpicture}
+}
+\caption{Schematic of \hartstoneSys{2}}
+\label{fig:harstoneschematic}
+\end{figure}

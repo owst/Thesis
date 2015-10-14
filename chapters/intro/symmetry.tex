@@ -1,0 +1,214 @@
+\label{sec:symmetryreduction}
+% What is it?
+Another technique, known as \emph{symmetry reduction}, exploits symmetries in
+the structure of a net (and thus its reachability graph): the goal is, roughly,
+to build a reduced, quotiented reachability graph that satisfies the same
+temporal properties as the original, with only one representative of each
+equivalence class of states.
+
+% Example
+As a simple example of the symmetry-reduction technique, consider the input net
+illustrated in \figref{fig:exampleNet}; the symmetry of this net is plain to
+see: the net is formed of two identical components. The LTS semantics of this
+net (omitting self-loops and labels for simplicity) is shown in
+\figref{fig:LTSSemanticsOfExampleNet}. The statespace explosion problem is
+self-evident: the semantics contains all interleavings of the concurrent
+transitions. However, taking the symmetry of the input net into account, we may
+identify sets of LTS states, giving the LTS semantics shown
+in~\figref{fig:quotientedLTSSemantics}. Intuitively, since the ``components''
+of \figref{fig:exampleNet} do not interact, we are free to ``permute'' them,
+removing the difference e.g. between the left component firing all its
+transitions before any in the right and vice-versa. Indeed, taking $[x]$ to be
+the partition of states equivalent (under the particular symmetry) to $x$, we
+have that marking $y$ is reachable in the net if there is a path from the state
+representing the initial marking, $i$, to $y$ in the LTS if there is a path
+from $[i]$ to $[y]$ in the quotiented LTS. Since the quotiented LTS has fewer
+states and paths, it is more efficient to check reachability using this LTS,
+compared to the full LTS.
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[node distance=2cm]
+    \node[pnbplace] (p00) [pnblabel={$\aPlace_0$}, tokens=1, rotate=-90] {};
+    \node[pnbplace] (p01) [pnblabel={$\aPlace_1$}, below=of p00, rotate=-90] {};
+    \node[pnbplace] (p02) [pnblabel={$\aPlace_2$}, below=of p01, rotate=-90] {};
+    \node[pnbplace] (p03) [pnblabel={$\aPlace_3$}, below=of p02, rotate=-90] {};
+
+    \node[pnbplace] (p10) [pnblabel={$\bPlace_0$}, right=of p00, tokens=1, rotate=-90] {};
+    \node[pnbplace] (p11) [pnblabel={$\bPlace_1$}, below=of p10, rotate=-90] {};
+    \node[pnbplace] (p12) [pnblabel={$\bPlace_2$}, below=of p11, rotate=-90] {};
+    \node[pnbplace] (p13) [pnblabel={$\bPlace_3$}, below=of p12, rotate=-90] {};
+
+    \foreach \x in {0,1,2} {
+        \pgfmathtruncatemacro{\next}{\x + 1}
+
+        \foreach \y in {0,1}{
+            \labelledpnbarr{p\y\x}{p\y\next}{}{relative}{}
+        }
+    }
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{Example Petri net}
+\label{fig:exampleNet}
+\end{figure}
+
+\newcommand{\betweenAnd}[3]{%
+    \path (#1) edge node [swap] {} (#2);
+    \path (#1) edge node        {} (#3);
+}
+
+\begin{figure}[ht]
+\centering
+\scalebox{0.75}{%
+\begin{tikzpicture}[nfa]
+    \node (00) [state] {$00$};
+
+    \node (10) [state, below left=of 00] {$10$};
+    \node (01) [state, below right=of 00] {$01$};
+
+    \node (20) [state, below left=of 10] {$20$};
+    \node (11) [state, below right=of 10] {$11$};
+    \node (02) [state, below right=of 01] {$02$};
+
+    \node (30) [state, below left=of 20] {$30$};
+    \node (21) [state, below right=of 20] {$21$};
+    \node (12) [state, below right=of 11] {$12$};
+    \node (03) [state, below right=of 02] {$03$};
+
+    \node (31) [state, below right=of 30] {$31$};
+    \node (22) [state, below right=of 21] {$22$};
+    \node (13) [state, below right=of 12] {$13$};
+
+    \node (32) [state, below right=of 31] {$32$};
+    \node (23) [state, below right=of 22] {$23$};
+
+    \node (33) [state, below right=of 32] {$33$};
+
+    \foreach \x/\y in {%
+30/31,%
+31/32,%
+32/33,%
+03/13,%
+13/23,%
+23/33%
+}{\path (\x) edge node [swap] {} (\y);}
+
+    \foreach \x/\y/\z in {%
+00/10/01,%
+10/20/11,%
+20/30/21,%
+01/11/02,%
+11/21/12,%
+02/12/03,%
+21/31/22,%
+12/22/13,%
+22/32/23%
+}{\betweenAnd{\x}{\y}{\z}}
+
+\end{tikzpicture}
+}
+\caption{LTS semantics of the net in \figref{fig:exampleNet}}
+\label{fig:LTSSemanticsOfExampleNet}
+\end{figure}
+
+\begin{figure}[ht]
+\centering
+\scalebox{0.75}{
+\begin{tikzpicture}[nfa]
+    \node (00) [state] {$00$};
+
+    \node (10) [state, below=of 00] {$01,10$};
+
+    \node (11) [state, below left=of 10] {$11$};
+    \node (20) [state, below right=of 10] {$02,20$};
+
+    \node (21) [state, below=of 11] {$12,21$};
+    \node (30) [state, below=of 20] {$03,30$};
+
+    \node (22) [state, below=of 21] {$22$};
+    \node (31) [state, below=of 30] {$13,31$};
+
+    \node (32) [state, below right=of 22] {$23,32$};
+    \node (33) [state, below=of 32] {$33$};
+
+    \foreach \x/\y in {%
+00/10,%
+10/11,%
+10/20,%
+20/30,%
+30/31,%
+31/32,%
+20/21,%
+21/31,%
+11/21,%
+21/22,%
+22/32,%
+32/33%
+}{\path (\x) edge node [swap] {} (\y);}
+\end{tikzpicture}
+}
+\caption{Quotient of LTS semantics in~\figref{fig:LTSSemanticsOfExampleNet}}
+\label{fig:quotientedLTSSemantics}
+\end{figure}
+
+
+% History
+The first technique for exploiting symmetry in model checking was due to
+Starke, in the context of checking reachability of Petri
+Nets~\cite{Starke1991}.  Essentially, the reachability graph construction
+algorithm only considers new states (i.e.  markings) if an equivalent state
+(w.r.t. the symmetry of the net) has not already been visited.
+
+Further initial results on model checking using symmetry reduction were
+obtained by {Clarke et al.}~\cite{Clarke1993a}, showing that symmetry reduction
+preserves satisfaction of CTL* formulas (preservation of formulas being the key
+property for the validity of symmetry reduction).  {Emerson and
+Sistla}~\cite{Emerson1993} presented theoretical results in the area of
+$\mu$-calculus model checking, while {Ip and Dill}~\cite{Ip1996} investigated
+the more practical problem of how to identify symmetries to be
+exploited.
+
+% Difficulties
+
+There are two key problems~\cite{Clarke1998} that must be solved in order to
+use symmetries:
+\begin{enumerate}
+    \item How to determine that two states, $s$ and $s'$ belong to the same
+        orbit (set of equivalent states), known as the \emph{orbit problem},
+    \item How to determine the symmetry group, from the input model.
+\end{enumerate}
+
+Indeed, for explicit-state representations, one can exploit a \emph{canonical
+representative} for each set of equivalent states. The transition relation is
+then explored up-to representatives, ensuring that only one representative
+state of each equivalence set is explored. Model checking using explicit-state
+systems is efficient if it is efficient to compute a canonical representative,
+or similarly, if two states are equivalent. Unfortunately, under arbitrary
+symmetries, checking state equivalence is as hard as the graph isomorphism
+problem~\cite{Clarke1998}, a computationally difficult problem that has no
+P-time algorithm, yet has not been shown to be NP-complete~\cite{Read1977}.
+Several successful explicit-state model checkers exploit
+symmetry~\cite{Sistla2000,Leuschel2003,Holzmann1997}.
+
+To determine the symmetry group, one approach is to explicitly specify the
+symmetries in the input model, such as the \emph{scalarset} data-type in the
+input language of {Ip and Dill}'s~\cite{Ip1996}, or components that may be
+permuted. Alternatively, an implicit approach attempts to determine the
+symmetry groups by examining the input model, for example,
+Schmidt~\cite{Schmidt2000} uses a partition refinement algorithm, to build the
+coarsest symmetry relation on input Petri nets that preserves the flow relation
+of the net in order to calculate the symmetries of a Petri net. The complexity
+of Schmidt's method is investigated by Junttila~\cite{Junttila2001}.
+The performance of three alternative symmetry-reduction implementations is
+contrasted by Schmidt~\cite{Schmidt2000c}, who examines the trade off between
+reduction time and effect on reachability checking performance.
+
+Summarising, for systems with inherent symmetry (i.e. those with collections
+of similar sub-systems), symmetry reduction can provide large reductions in the
+number of states that must be explored. However, the advantage can only be
+realised if efficient methods of detecting symmetry and checking equivalence of
+states under it are available.
+
+Thorough survey articles covering symmetry-reduction have been compiled by both
+{Wahl and Donaldson}~\cite{Wahl2010} and {Miller et al.}~\cite{Miller2006}.

@@ -1,0 +1,147 @@
+We briefly consider two related approaches, which solve Petri net model
+checking problems, by faithful translation into an alternate domain that
+possesses efficient algorithms. By translating to, and using efficient solving
+in the target domain, the statespace explosion can be avoided to a certain
+extent. The two approaches we cover are SAT and Linear/Integer Programming.
+
+% What is SAT
+
+The Boolean Satisfiability (SAT) problem is concerned with determining the
+existence of a satisfying variable assignment $V$ of a Boolean function, $F$.
+For example, the formula $F = x \disjunction (y \conjunction z)$ is satisfied
+by $V = \setof{x \mapsto 1, y \mapsto 1, z \mapsto 0}$, whereas the formula $(x
+\conjunction y) \conjunction (\neg x \conjunction z)$ is \emph{not}
+satisfiable. Using suitable encodings of the markings and transition relation
+of a net, it is possible to encode reachability problems as SAT problems. To
+restrict the size of input formulae, SAT solving is often used in a
+\emph{bounded} context, where counter-examples are only considered up to some
+maximal size. Indeed, by \emph{unrolling} the transition relation of a net
+$\aN$ times, Petri net model checking can be bounded by searching for occurrence
+sequences reaching the target marking with length $\leq \aN$. For example, in
+the net of \figref{fig:net}, the marking $\setof{\aPlace_2, \aPlace_3}$ can be
+reached in bound $3$.
+
+% How is it used to check Petri nets
+A SAT-based approach for bounded checking of 1-safe Petri nets was introduced
+by {Ogata et al.}~\cite{Ogata2004} that included checking of reachability and
+liveness properties, and illustrated the importance of compact encodings for
+efficient SAT solving. A related approach was used by
+Heljanko~\cite{Heljanko2001}, who gave an encoding into \emph{boolean
+circuits}, which generalise boolean formulae, highlighting the efficiency
+implications of using process~\cite{Devill1987}, step or interleaving
+semantics.
+
+% What is linear programming?
+Linear programming is the minimising of a linear equation, subject to linear
+constraints. Indeed, with suitable encodings of the markings and flow relation
+of an acyclic net, reachability problems can be approximated by determining the
+existence of a solution to a system of linear equations. For example, consider
+the net, $\aPNB$, shown in \figref{fig:net}.
+
+\begin{figure}[ht]
+    \centering
+    \begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [pnblabel=$\aPlace_0$, tokens=1] {};
+    \node[pnbplace] (p2) [pnblabel=$\aPlace_2$, below right=of p0] {};
+    \node[pnbplace] (p1) [pnblabel=below:$\aPlace_1$, tokens=1, below left=of p2] {};
+
+    \node[pnbplace] (p3) [pnblabel=$\aPlace_3$, right=of p2] {};
+    \node[pnbplace] (p4) [pnblabel=$\aPlace_4$, above right=of p3, xshift=0.5cm] {};
+    \node[pnbplace] (p5) [pnblabel=below:$\aPlace_5$, below right=of p3, xshift=0.5cm] {};
+
+    \labelledpnbarr{p0.out}{p2.in}{left:$\aTrans_0$}{}{}
+    \labelledpnbarr{p1.out}{p2.in}{left:$\aTrans_1$}{}{}
+    \labelledpnbarr{p2.out}{p3.in}{above:$\aTrans_2$}{}{}
+
+    \path let \p1 = ($(p3.out)!.6!(p4.in)$), \p2 = ($(p4.in)!.5!(p5.in)$) in coordinate (mid) at  (\x1, \y2);
+
+    \labelledpnbarr{p3.out}{mid}{{[pos=0.9]$\aTrans_3$}}{}{pos=1}
+
+    \draw (mid) edge[o0i180] (p4.in);
+    \draw (mid) edge[o0i180] (p5.in);
+
+    \drawBoundaries{0}{0}
+    \end{tikzpicture}
+    \caption{Example net, $\aPNB$}
+    \label{fig:net}
+\end{figure}
+
+The \emph{incidence matrix} of $\aPNB$ is a $\cardinalityof{\places{\aPNB}}
+\times \cardinalityof{\trans{\aPNB}}$ matrix, where $I_{i, j}$ denotes the
+effect of firing transition $\aTrans_j$ on the token count\footnote{1 signifies
+that a token is added, -1 that it is taken away and 0 denotes no effect.} of
+place $\aPlace_i$:
+\[
+    IM =
+\begin{bmatrix}
+    -1 &  0 &  0 &  0\\
+     0 & -1 &  0 &  0\\
+     1 &  1 & -1 &  0\\
+     0 &  0 &  1 & -1\\
+     0 &  0 &  0 &  1\\
+     0 &  0 &  0 &  1\\
+\end{bmatrix}
+\]
+The initial/target markings are column vectors with
+$\cardinalityof{\places{\aPNB}}$ rows:
+\[
+    M_I =
+\begin{bmatrix}
+    1\\
+    1\\
+    0\\
+    0\\
+    0\\
+    0\\
+\end{bmatrix}
+\qquad
+    M_T =
+\begin{bmatrix}
+    0\\
+    0\\
+    0\\
+    1\\
+    1\\
+    1\\
+\end{bmatrix}
+\]
+And finally, the \emph{marking}, or \emph{state equation}~\cite{Murata1989} is:
+\begin{equation}\label{eqn:marking}
+    M_T = M_I + IM \cdot
+\begin{bmatrix}
+    x_0\\
+    x_1\\
+    x_2\\
+    x_3\\
+\end{bmatrix}
+\end{equation}
+where the final column vector is referred to as the \emph{Parikh vector}, with
+its $x_i$ representing the number of occurrences of transition $i$ in a firing
+sequence starting in $M_I$ and reaches $M_T$. Marking equations are thus
+algebraic representations of the reachable markings of a net.
+
+For the example net of \figref{fig:net}, equation~\ref{eqn:marking} has a
+solution of $x_0\mapsto 1, x_1\mapsto1, x_2\mapsto2, x_3\mapsto1$,
+corresponding to the firing sequence:
+$\sequenceof{\aTrans_0,\aTrans_2,\aTrans_3,\aTrans_1,\aTrans_2}$.
+
+% How can it be used to check Petri nets?
+
+\newcommand{\mandr}{{Melzer and R\"{o}mer}}
+
+\mandr~\cite{Melzer1997} used linear programming to optimise the search
+strategy for certain instances of a deadlock-checking unfolding algorithm due
+to McMillan~\cite{McMillan1992}; indeed, since unfoldings are acyclic, the
+linear programming approach is sound. In later work, {Khomenko and
+Koutny}~\cite{Khomenko2000, Khomenko2007} improved \mandr's approach and
+extended it to check other properties such as reachability; furthermore, by
+encoding causality/conflict properties derived from the unfolding in the system
+of linear constraints, the solver's search space was reduced, exhibiting
+an impressive speed-up.
+
+However, as Esparza~\cite{Esparza2000} notes, since the linear programming
+solutions (over-)approximate reachable markings, the target marking may not in
+fact be reachable. However, the inverse implication does hold: if there are no
+solutions, the marking is certainly not reachable. Detailed overviews of the
+applications of linear programming techniques for analysing (P/T) nets can be
+found by {Desel}~\cite{Desel1998b} and {Silva et al.}~\cite{Silva1998}.

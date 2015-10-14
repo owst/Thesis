@@ -1,0 +1,215 @@
+% What is an (the point of) unfolding
+
+The \emph{unfolding} of a Petri net is a structure representing all of its
+possible behaviours, originally introduced by {Nielsen et
+al.}~\cite{Nielsen1981} under the name of \emph{Occurrence Nets}. Unfoldings
+were later described in more detail by Engelfriet~\cite{Engelfriet1991}, who
+used the name \emph{branching processes}. Essentially, a branching process
+represents some partial ``history'' of a Petri net from some initial marking,
+as another Petri net, but with the condition that at each conflict of
+transitions that could be fired, each alternative is represented by a copy of
+the (thus-far constructed) branching process. A branching process is thus an
+acyclic net without ``backward conflict'', where two transitions output to the
+same place; the lack of backwards conflict implies that each set of places in
+the unfolding has a unique trace of transitions that were fired to place a
+token in each place. An unfolding is therefore a compact representation of all
+possible computations of its underlying net.
+
+Intuitively, an unfolding is an tree-like structure: branching points in the
+net signify \emph{choices} of enabled-transition firing. The advantage of an
+unfolding (in fact, itself a Petri net), over a state graph, is that
+concurrency is represented explicitly, rather than implicitly. Simple
+structural properties of an unfolding determine whether or not a given pair of
+transitions can fire concurrently in the original net, or are causally related
+(i.e. the firing of one can lead to the other becoming enabled). While these
+properties can be derived from the state graph, it is certainly a more arduous
+task to do so. Furthermore, the well-known ``state-explosion'' problem leads to
+interleaving semantics (e.g. state graphs) of concurrent systems being large,
+even for small or simple systems. By explicitly representing points of choice
+and synchronisation (and not representing all possible interleavings of
+concurrent transition firings), unfoldings give much smaller representations.
+Indeed, unfoldings are often referred to as \emph{partial-order} semantics,
+since arbitrary transitions may not be causally related (i.e. firing one
+eventually enables the other), when the transitions are concurrent.
+
+\begin{example}\label{ex:unfolding}
+    An example Petri net is shown in \figref{fig:exampleNetToUnfold}, and its
+    unfolding is illustrated in \figref{fig:exampleUnfolding}. Note that the
+    unfolding is infinite --- we only show a small, finite prefix of it. The
+    graphical notation we use is not-standard, but should be intuitive; we
+    introduce this notation later in the thesis, in
+    \secref{sec:PNBgraphicalNotation}. Consider the transitions $\aTrans_1$ and
+    $\aTrans_2$; these transitions \emph{can} be fired concurrently, and in the
+    induced partial (causal) order of the unfolding, there is no relation
+    between the transitions, which witnesses this fact. Intuitively, this fact
+    is observed since there is no path from the post-set of $\aTrans_1$ to the
+    pre-set of $\aTrans_2$. Note however, that $\aTrans_3$ \emph{is}
+    causally-related to both of these transitions.  Furthermore, since there is
+    a (forward) conflict (i.e. firing choice) between $\aTrans_6$ and
+    $\aTrans_7$, the unfolding contains a branching point at these transitions.
+\end{example}
+
+\begin{figure}[ht]
+\centering
+\begin{tikzpicture}[pnb]
+    \node[pnbplace] (p0) [pnblabel={above:$\aPlace_0$}, tokens=1, rotate=-90] {};
+    \node[pnbplace] (p1) [pnblabel={below:$\aPlace_1$}, right=of p0, rotate=-90, tokens=1] {};
+    \node[pnbplace] (p2) [pnblabel={above:$\aPlace_2$}, below=of p0, rotate=-90] {};
+    \node[pnbplace] (p3) [pnblabel={below:$\aPlace_3$}, below=of p1, rotate=-90] {};
+    \node[pnbplace] (p4) [pnblabel={above:$\aPlace_4$}, rotate=-90] at ([yshift=-2cm]$(p2) !.5! (p3)$) {};
+
+    \node[pnbplace] (p5) [node distance=4cm, pnblabel={above:$\aPlace_5$}, below=of p2, rotate=180] {};
+    \node[pnbplace] (p6) [node distance=4cm, pnblabel={below:$\aPlace_6$}, below=of p3] {};
+
+    \coordinate (cjoin) at ([yshift=1cm]p4);
+
+    \labelledpnbarr{p0.out}{p2.in}{right:$\aTrans_1$}{o90i270}{}
+    \labelledpnbarr{p1.out}{p3.in}{left:$\aTrans_2$}{o90i270}{}
+
+    \labelledpnbarr{p2.out}{cjoin}{}{o-90i90}{draw=none}
+    \labelledpnbarr{p3.out}{cjoin}{}{o-90i90}{draw=none}
+    \labelledpnbarr{cjoin}{p4.in}{right:$\aTrans_3$}{pos=0,o90i270}{pos=0}
+
+    \labelledpnbarr{p4.out}{p5.in}{left:$\aTrans_4$}{o-120i20}{}
+    \labelledpnbarr{p4.out}{p6.in}{right:$\aTrans_5$}{o-60i160}{}
+
+    \coordinate (ljoin) at ([yshift=0.75cm]$(p0.in) !.2! (p1.in)$);
+    \coordinate (rjoin) at ([yshift=0.75cm]$(p0.in) !.8! (p1.in)$);
+
+    \begin{pgfinterruptboundingbox}
+        \labelledpnbarr{p5.out}{ljoin}{above right:$\aTrans_6$}{o150i110}{pos=1}
+    \end{pgfinterruptboundingbox}
+
+    \labelledpnbarr{ljoin}{p0.in}{}{o-110i90}{draw=none}
+    \labelledpnbarr{ljoin}{p1.in}{}{o-45i135}{draw=none}
+
+    \begin{pgfinterruptboundingbox}
+        \labelledpnbarr{p6.out}{rjoin}{above left:$\aTrans_7$}{o30i70}{pos=1}
+    \end{pgfinterruptboundingbox}
+
+    \labelledpnbarr{rjoin}{p0.in}{}{o-135i45}{draw=none}
+    \labelledpnbarr{rjoin}{p1.in}{}{o-60i90}{draw=none}
+
+    \drawBoundaries[1.5][1.5]{0}{0}
+
+\end{tikzpicture}
+\caption{An example Petri net}
+\label{fig:exampleNetToUnfold}
+\end{figure}
+
+\begin{figure}[ht]
+\newcommand{\drawOneLevel}[2]{
+    \node (start#2) [draw=none,#1] {};
+    \node[pnbplace] (p0#2) [pnblabel={above:$\aPlace_0$}, below left=of start#2, rotate=-90] {};
+    \node[pnbplace] (p1#2) [pnblabel={below:$\aPlace_1$}, below right=of start#2, rotate=-90] {};
+    \node[pnbplace] (p2#2) [pnblabel={above:$\aPlace_2$}, below=of p0#2, rotate=-90] {};
+    \node[pnbplace] (p3#2) [pnblabel={below:$\aPlace_3$}, below=of p1#2, rotate=-90] {};
+    \node[pnbplace] (p4#2) [pnblabel={above:$\aPlace_4$}, rotate=-90] at ([yshift=-2cm]$(p2#2) !.5! (p3#2)$) {};
+
+    \node[pnbplace] (p5#2) [node distance=4cm, pnblabel={above:$\aPlace_5$}, below=of p2#2, rotate=-90] {};
+    \node[pnbplace] (p6#2) [node distance=4cm, pnblabel={below:$\aPlace_6$}, below=of p3#2, rotate=-90] {};
+
+    \coordinate (cjoin#2) at ([yshift=1cm]p4#2);
+
+    \labelledpnbarr{p0#2.out}{p2#2.in}{right:$\aTrans_1$}{o90i270}{}
+    \labelledpnbarr{p1#2.out}{p3#2.in}{left:$\aTrans_2$}{o90i270}{}
+
+    \labelledpnbarr{p2#2.out}{cjoin#2}{}{o-90i90}{draw=none}
+    \labelledpnbarr{p3#2.out}{cjoin#2}{}{o-90i90}{draw=none}
+    \labelledpnbarr{cjoin#2}{p4#2.in}{right:$\aTrans_3$}{pos=0,o90i270}{pos=0}
+
+    \labelledpnbarr{p4#2.out}{p5#2.in}{above left:$\aTrans_4$}{o-120i90}{}
+    \labelledpnbarr{p4#2.out}{p6#2.in}{above right:$\aTrans_5$}{o-60i90}{}
+}
+
+\newcommand{\connect}[5]{
+    \coordinate (foo#1#2#3) at ([yshift=1cm]$ (#2) !.5! (#3) $);
+
+    \labelledpnbarr{#1.out}{foo#1#2#3}{#4:#5}{o-90i90}{}
+    \labelledpnbarr{foo#1#2#3}{#2.in}{}{o-90i90}{}
+    \labelledpnbarr{foo#1#2#3}{#3.in}{}{o-90i90}{}
+}
+
+\newcommand{\dotnode}[1]{
+    \node (dots#1) [node distance=1cm, below=of #1, rotate=90] {$\bm\cdots$};
+}
+
+\centering
+\begin{tikzpicture}[node distance=1.75cm]
+    \coordinate (foo);
+    \drawOneLevel{below=of foo}{1};
+    \drawOneLevel{below left of=p51}{2};
+    \drawOneLevel{below right of= p61}{3};
+
+    \connect{p51}{p02}{p12}{above left}{$\aTrans_6$};
+    \connect{p61}{p03}{p13}{above right}{$\aTrans_7$};
+
+    \foreach \d in {52,62,53,63}{
+        \dotnode{p\d};
+    }
+
+    \drawBoundaries{0}{0}
+\end{tikzpicture}
+\caption{Unfolding of the Petri net in \figref{fig:exampleNetToUnfold}}
+\label{fig:exampleUnfolding}
+\end{figure}
+
+Using unfoldings as a method of checking reachability in Petri nets was
+pioneered by McMillan~\cite{McMillan1992}, using the semantics proposed by
+{Nielsen et al.}~\cite{Nielsen1981} and Engelfriet~\cite{Engelfriet1991}.
+
+McMillan observed that by considering a suitable \emph{prefix} of the
+unfolding, which represents all reachable markings of the original net, the
+full (often infinite) unfolding need not be constructed. Such prefixes are
+known as \emph{finite (marking-) complete prefixes}. McMillan's algorithm used
+such prefixes to check reachability (precisely, coverability) of a set of
+places, $\aPNBTargetSet$, by supplementing the original net with a new
+transition, $\aTrans$, whose pre-set was $\aPNBTargetSet$. If, during the
+execution of the algorithm (that is, while the constructed unfolding was not a
+\emph{complete} prefix) $\aTrans$ was found to be enabled, then
+$\aPNBTargetSet$ \emph{was} indeed coverable. If the complete prefix was
+constructed before $\aTrans$ was encountered, the marking was not coverable.
+
+McMillan's algorithm, while correct and simple, is inefficient in terms of the
+size of the complete prefix generated, and has been subsequently improved by
+several authors. Esparza et al.~\cite{Esparza1996} improved the algorithm to
+construct smaller (complete) prefixes, by showing that more transitions in the
+unfolding can correctly be considered as ``cutoff'' points of the unfolding,
+which are not unfolded further. Heljanko~\cite{Heljanko1999} further refined
+the work of {Esparza et al.} to generate even smaller prefixes in some examples
+(though the author questioned the benefits of the size reduction vs. the
+creation effort involved). Khomenko and Koutny~\cite{Khomenko2001} suggested an
+alternative to the algorithm of {Esparza et al.}, using a different method of
+computing possible extensions of a (incomplete) unfolding, that is more
+efficient in the examples they present. Heljanko et al.~\cite{Heljanko2002}
+showed how the approach of {Esparza et al.} may be parallelised for further
+increases in efficiency. More recent work by {Bonet et al.}~\cite{Bonet2008}
+employed heuristic search algorithms in an attempt to ``direct'' the unfolding
+procedure towards the target transition, rather than existing approaches using
+simple search strategies. Khomenko et al.~\cite{Khomenko2003a}
+generalised the definition of complete prefix of an unfolding, that is
+applicable to nets with e.g. equivalent markings, or extra data that is to be
+considered along with markings. Finally, {Neumair et al.}~\cite{Neumair2004}
+show that even unbounded Petri nets (those without finitely many reachable
+states) may still have their statespaces by suitable extensions of unfoldings.
+
+In addition to McMillan's approach (and its improvements), several methods
+exist for checking the reachability problem in nets that use (complete prefixes
+of) unfoldings. Esparza and Schr\"{o}ter~\cite{Esparza2001} surveyed 4 such
+algorithms. They recommend an algorithm to use based on whether the
+marking is expected to be reachable or not. If reachability is not expected,
+they suggest the algorithm of Heljanko~\cite{Heljanko1999a}, which translates
+the reachability problem into a logic program and checks for the existence of a
+stable model of the program. If the marking is expected to be reachable, they
+suggest using (an improvement of) McMillan's algorithm.
+
+An important point to note regarding unfoldings, and indeed, finite complete
+prefixes, is that they carry more information about the computations of nets,
+than merely marking reachability. For instance, it is possible to check for
+deadlock, as shown in McMillan's seminal paper~\cite{McMillan1992}.
+Furthermore, automata-theoretic approaches to LTL model checking can be
+adapted~\cite{Heljanko2000, Wallner1998} to unfoldings.
+
+For an overview of the extensive field surrounding unfoldings and the
+corresponding model checking approaches, see~\cite{Esparza2008}
+and~\cite{Esparza2010}.

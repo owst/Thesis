@@ -1,0 +1,43 @@
+An alternative approach to aid the minimisation of a Petri net's reachability
+graph is to directly minimise or quotient the Petri net, intrinsically reducing
+its reachability graph. By removing redundant transitions or places, the net
+came become structurally smaller and thus lead to a smaller statespace to
+explore. Indeed, such simple fusion/elimination rules were discussed by
+Murata~\cite{Murata1989}, which were used to quotient Petri nets, whilst
+preserving their behavioural properties.
+
+{Esparza and Schr\"oter}~\cite{Esparza2001a} introduced a technique for
+checking LTL properties of 1-safe nets that combined global and local reduction
+techniques. Globally, dead places/transitions (places that are never marked and
+thus never enable their outgoing transitions) and implicit places (places that
+are redundant w.r.t the enabling/disabling of a particular outgoing transition)
+are identified and removed by the (linear programming) marking equations they
+satisfy. Locally, generalisations of Berthelot's~\cite{Berthelot1986}
+\emph{agglomeration} rules are used to remove certain intermediate places and
+their transitions, by bypassing such places. {Haddad et al.}~\cite{Haddad2006}
+also generalised Berthelot's approach, but without the restriction to 1-safe
+nets. Furthermore, by deriving structural conditions for reduction from the
+behavioural properties (i.e.  firing sequences) to be preserved, {Haddad et
+al.} were able to use weaker structural conditions, enhancing the effect of the
+reduction.
+
+More recently, Rakow~\cite{Rakow2009} also presented an approach for checking
+LTL properties on 1-safe nets, but used a decomposition into a ``kernel'' net,
+containing only the places mentioned in the LTL formula, and (reduced)
+environment subnets recording the remainder of the net's influence on the
+kernel.
+
+Originally proposed by Olderog~\cite{Olderog1989}, the notion of
+\emph{bisimulation} can be lifted from LTSs, to the places of a Petri net.
+Olderog's approach did not in fact lead to well-defined bisimulations, as
+{Autant et al.}~\cite{Autant1991} observed, while showing how to generalise the
+definition, and give a correct notion of place-bisimulation for Petri nets.
+Indeed, {Autant et al.} used the induced equivalence relation to define the
+quotient of a net (i.e. a structurally smaller, but bisimilar net), however,
+they gave no algorithm for calculating such quotients in order to reduce a
+given net. In a later paper~\cite{Autant1994}, {Autant et al.} did provide a
+simple algorithm to calculate such bisimulations, extending their approach to
+labelled nets with $\tau$ (internal) transitions. {Schnoebelen and
+Sidorova}~\cite{Schnoebelen2000} refined {Autant et al.}'s approach, showing
+that by considering a set of markings as relevant (as opposed to all markings),
+the effectiveness of the reduction can be improved.

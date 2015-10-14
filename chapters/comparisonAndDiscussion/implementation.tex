@@ -1,0 +1,167 @@
+We discuss three key design points of our implementation, each of which
+strongly influence its efficiency and performance. As discussed in the previous
+chapter, our technique uses weak \emph{language-preserving} reductions to
+reduce component semantics, while ensuring all interactions with neighbouring
+components are preserved (explored in~\secref{sec:boundaryProtocol}).
+Furthermore, since the component structure is exposed, we are able to use
+\emph{memoisation} to avoid repeating work by recognising already-computed
+compositions (up-to language-equivalence of the component \TNFA{}s) as
+discussed in~\secref{sec:memoisation}. Finally, as discussed in the related
+work section (\secref{sec:decision-diagrams}), using an efficient
+representation of transitions can radically improve performance; to this end we
+use MTBDDs to represent the transitions of \TNFA{}s.
+
+The three key design points are elaborated as follows:
+\begin{enumerate}
+    \item The algorithm for language-preserving reduction of
+        \TNFA{}s in \secref{sec:nfaReduction},
+    \item The algorithm for checking language-equvialence of
+        \TNFA{}s in \secref{sec:checkNfaLangEquiv},
+    \item The data structure used to represent \TNFA{}
+        transitions in \secref{sec:mtbdds}.
+\end{enumerate}
+
+Our tool, \penrose{}, is written in Haskell~\cite{PeytonJones2003}, a
+statically-typed, functional programming language. Commonly, model checkers are
+implemented using C or similar low-level programming languages, so the use of
+Haskell is unorthodox in this respect. Despite a highly performant compiler,
+the levels of abstraction that are present in Haskell (garbage-collection, data
+structures, etc.) can lead to an overhead that is not present in C. However,
+the two major benefits Haskell brings outweigh the potential lack of outright
+performance (which, in practice, is often very slight):
+\begin{enumerate}
+    \item A powerful static type system is particularly beneficial when
+        prototyping new implementation details: a large number of run time bugs
+        are ruled out, before the code is executed.
+    \item High level of abstraction and concise coding style, leads to more
+        direct translations of abstract design, using data structures such as
+        sets and BDDs as first-class abstractions.
+\end{enumerate}
+
+Later, we will see that \penrose{} performs favourably against other tools,
+implemented in standard languages, such as C.
+
+\subsection{NFA Reduction}\label{sec:nfaReduction}
+
+A key component of our technique is the algorithm for NFA reduction, that
+improves the performance of \TNFA{} composition by reducing component \TNFA{}
+sizes, as discussed in~\secref{sec:boundaryProtocol}. Indeed, as we showed at
+the end of \chpref{chp:improveEfficiency}, the size of \TNFA{}s encountered in
+certain examples grows rapidly and it is therefore important that we attempt to
+minimise this growth, to avoid performance degradation. Of course, this state
+growth phenomena is the well-known statespace explosion problem and
+minimisation is our approach to avoiding it.
+
+An obvious first choice of NFA minimisation algorithm is to use DFA
+minimisation techniques: by first converting the NFA to a language-equivalent
+DFA, for example, using the well-known powerset-construction, we can apply DFA
+minimisation techniques. There are several well-known techniques for DFA
+minimisation, such as the partition-refinement approaches of
+Moore~\cite{Moore1956} and Hopcroft~\cite{Hopcroft1971}. A simple-to-describe
+alternative that does not require prior determinisation is that of
+Brzozowski~\cite{Brzozowski1962}; Brzozowski showed that reversing an input
+NFA, determinising, reversing the resulting DFA (the result of which is not
+necessarily deterministic) and finally determinising generates a minimal DFA,
+language equivalent to the input NFA.
+
+Indeed, due to its simplicity, we chose Brzozowski's method in the first
+implementation of our technique~\cite{Sobocinski2013}. However, implicit in the
+use of this minimisation technique is the possibility of exponential blowup due
+to the (double) determinisation.
+
+On the other hand, a positive aspect of the DFA-minimisation approach is that
+it renders language equivalence checking almost trivial. Since the minimal DFA
+for a NFA with a particular language is unique, to check language equivalence
+of two NFA, it is sufficient to simply convert them both to the corresponding
+unique minimal DFA. If the resulting DFA are equal, the original NFA are
+language equivalent. However, as we further discuss in
+\secref{sec:checkNfaLangEquiv}, checking language equivalence in this way is
+still inefficient, since every pair of states of the determinised automata must
+be checked.
+
+Due to the potential exponential blowup effect of determinisation, it is
+preferable to directly minimise NFA, rather than determinise NFA before
+minimising the resulting DFA. Unfortunately, the minimisation problem is more
+difficult for NFA than DFA, indeed, it is NP-hard~\cite{Bjorklund2011} and
+furthermore, even approximating minimisation of NFA is
+intractable~\cite{Gramlich2007}.  However, practical algorithms with
+generally-high performance do exist, such as the recent technique due to
+{Clemente and Mayr}~\cite{Mayr2013}, which outperforms all prior techniques.
+Clemente and Mayr's algorithm operates by removing transitions \emph{and}
+states, whilst preserving the recognised language: transitions are
+pruned---those transitions that are subsumed by ``better'' transitions are
+removed---and states quotiented by an efficiently-computed under-approximation
+to language equivalence.
+
+Using NFA minimisation means that we can no-longer rely on uniqueness of
+minimal automata for checking language equivalence: whereas there necessarily
+exists a minimal DFA for a particular language, there may be several
+equally-minimal NFA (an example of such NFA is given by {Arnold et
+al.}~\cite{Arnold1992}), thus we must use an alternative method of checking
+language equivalence; in the next subsection, we describe such a method.
+
+\subsection{Checking NFA Language Equivalence} \label{sec:checkNfaLangEquiv}
+
+As previously mentioned, a naive method of checking language equivalence of NFA
+is to determinise and check for equality of the resulting DFA. However, once
+the minimisation technique does not use determinisation, we cannot employ this
+method. An alternative approach, originally due to {Hopcroft and
+Karp}~\cite{Hopcroft1971}, and further improved by {Bonchi and
+Pous}~\cite{Bonchi2013}, is to use an on-the-fly determinisation procedure to
+check equivalence, aiming to only \emph{partially} calculate the determinised
+automata. {Bonchi and Pous}' approach exploits the notion of \emph{bisimulation
+up-to context}; put briefly, if (sets of) states $X$ and $Y$ have equal
+language, as do $Z$ and $W$, then bisimulation up-to context asserts that $X
+\union Z$ has equal language to $Y \union W$. The advantage of such a
+compositional technique is that the language equivalence of $X \union Z$ and $Y
+\union W$ is not \emph{explicitly} checked. Thus, in the setting of NFA (where
+a set of NFA states forms a single set of its determinisation), the full
+corresponding DFA need not be explored.
+
+In practice, we can further improve the performance of checking language
+equivalence when reaching \emph{fixed-points} (which were introduced and
+discussed in \secref{sec:fixedPoints}). If we \emph{tag} all \TNFA{} with
+identifiers (that can be checked for equality in constant time), we can
+identify fixed-points \emph{without} explicitly checking language equivalence
+of the underlying \TNFA{}. Recall from~\secref{sec:memoisation} that we
+maintain two memoisation maps:
+\begin{enumerate}
+    \item From PNBs to their (tagged) \TNFA{} semantics,
+    \item From pairs of (tagged) \TNFA{} to their (tagged) \TNFA{} composition.
+\end{enumerate}
+We use the first to ensure that a given PNB is translated to its \TNFA{}
+semantics once, and that we use \TNFA{} as the representative of its
+equivalence class. In particular, any member of the same equivalence class will
+be assigned the same identifier. The second mapping ensures that we only
+perform a given (up-to language-equivalence) composition once.
+
+Now, consider composing a (left-associated) chain of PNBs: $\aPNB \comp \aPNB
+\comp \ldots \comp \aPNB$ that reaches a fixed-point after a single
+composition. The first memoisation map will contain a single entry\footnote{We
+write $N_i$ for a \TNFA{} $N$ tagged with identifier $i$.}:
+\[
+    \aPNB \mapsto \PNBToTNFA{\aPNB}_0
+\]
+When performing \TNFA{} compositions, if, having composed two \TNFA{} that
+\emph{do not} appear in the composition memoisation map, we find a
+language-equivalent \TNFA{} in the first map, we use it as the result of the
+composition (and the entry in the second memoisation map). To demonstrate, the
+first composition of \TNFA{} is $\PNBToTNFA{\aPNB}_0 \comp
+\PNBToTNFA{\aPNB}_0$, however, since we reach a fixed point after one
+composition, we have that $\PNBToTNFA{\aPNB} \comp \PNBToTNFA{\aPNB} \TNFAIso
+\PNBToTNFA{\aPNB}$, and thus the composition memoisation map is updated to
+contain a single entry:
+\[
+    \PNBToTNFA{\aPNB}_0 \comp \PNBToTNFA{\aPNB}_0 \mapsto \PNBToTNFA{\aPNB}_0
+\]
+Now, for every remaining composition in the chain, we will be considering
+$\PNBToTNFA{\aPNB}_0 \comp \PNBToTNFA{\aPNB}_0$ and thus simply perform two
+\emph{identifier} comparisons with the single entry in the composition map,
+before returning the result $\PNBToTNFA{\aPNB}_0$. In general then,
+fixed-points w.r.t. language-equivalence lead to (cheap) comparison of
+identifiers, rather than (expensive) checking of language equivalence, a clear
+optimisation in the case where the fixed-point is non-trivial, for example
+in~\figref{fig:philoFixedPoint}.
+
+\subsection{Representing \TNFA{} transitions}\label{sec:mtbdds}
+\subimport{mtbdds}{}

@@ -1,0 +1,19 @@
+In the following section, we explore related work from the literature.
+We introduce the required preliminaries in \chpref{chp:prelims}. In
+\chpref{chp:catStructure}, we elucide the categorical structure of PNBs and the
+LTSs that form their semantics, exposing the notion of compositionality as
+functoriality.  \chpref{chp:benchmarksAndLang} introduces the example systems
+that we will use to demonstrate and evaluate our technique. We introduce a
+specification DSL that uses a static type system to ensure that only valid
+component-wise specifications can be constructed.  In \chpref{chp:compChecking}
+we introduce a compositional technique for generating the statespace of systems
+specified using our DSL, and thus checking marking reachability. We prove the
+technique correct and give some example timings of a tool implementing the
+technique.  \chpref{chp:improveEfficiency} shows how to exploit the fact that
+language equivalence is a congruence to vastly improve the performance of our
+reachability-checking technique, introducing the notion of internal behaviour
+that we \emph{ignore} in order to aggressively prune statespace. We prove the
+more-efficient algorithm correct.  In \chpref{chp:comparisonAndDiscussion}, we
+discuss the implementation of our technique, and compare and discuss its
+performance relative to current state-of-the-art tools.  Finally,
+\chpref{chp:conclusion}, concludes and discusses future work.
