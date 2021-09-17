@@ -29,7 +29,7 @@
 
 \foreach \x in {A,B,C,D,E,F,G,H}{%
     \newcommand{\chap}{\csname chap\x\endcsname}
-    \includefrom{chapters/\chap/}{\chap}
+    \subimport{chapters/\chap/}{\chap}
 }
 
 \include{bibliography}
